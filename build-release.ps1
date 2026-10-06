@@ -34,6 +34,38 @@ function Find-Iscc {
         ForEach-Object { Join-Path $_ "ISCC.exe" } | Where-Object { Test-Path $_ } | Select-Object -First 1
 }
 
+# Inno Setup writes an installer's version strings in place and pads them with spaces ("AION2 DPS Meter        …").
+# Meters 0.2.0–0.2.3 compare the installer's ProductName exactly before they run it as an update, so the padding is
+# turned into NULs: every string then reads back exactly, and the resource keeps its size and layout. A string that
+# is nothing but padding stays: .NET only trusts a version block whose FileVersion string is not empty.
+function Repair-VersionStrings([string]$Path, [string]$ProductName) {
+    $bytes = [IO.File]::ReadAllBytes($Path)
+    $latin = [Text.Encoding]::GetEncoding(28591) # one char per byte: string offsets are byte offsets
+    $text = $latin.GetString($bytes)
+    $utf16 = { param($s) $latin.GetString([Text.Encoding]::Unicode.GetBytes($s)) }
+    $info = $text.IndexOf((& $utf16 "VS_VERSION_INFO"), [StringComparison]::Ordinal)
+    if ($info -lt 6) { throw "No version info in $Path" }
+    $start = $info - 6 # VS_VERSIONINFO: wLength, wValueLength, wType, key …
+    $end = $start + [BitConverter]::ToUInt16($bytes, $start)
+    foreach ($key in "CompanyName", "FileDescription", "FileVersion", "LegalCopyright", "ProductName", "ProductVersion") {
+        $at = $text.IndexOf((& $utf16 ($key + [char]0)), $start, $end - $start, [StringComparison]::Ordinal)
+        if ($at -lt 6) { continue }
+        $struct = $at - 6 # String: wLength, wValueLength, wType, key, padding to 32 bits, value
+        $structEnd = $struct + [BitConverter]::ToUInt16($bytes, $struct)
+        $value = $start + (($at + 2 * ($key.Length + 1) - $start + 3) -band -4)
+        $stop = $value
+        while ($stop + 1 -lt $structEnd -and ($bytes[$stop] -ne 0 -or $bytes[$stop + 1] -ne 0)) { $stop += 2 }
+        if ($latin.GetString($bytes, $value, $stop - $value).Replace([string][char]0, "").Trim().Length -eq 0) { continue }
+        while ($stop -gt $value -and $bytes[$stop - 2] -eq 0x20 -and $bytes[$stop - 1] -eq 0) {
+            $stop -= 2
+            $bytes[$stop] = 0
+        }
+    }
+    [IO.File]::WriteAllBytes($Path, $bytes)
+    $read = [Diagnostics.FileVersionInfo]::GetVersionInfo($Path).ProductName
+    if ($read -cne $ProductName) { throw "Version info of $Path still reads '$read'" }
+}
+
 $project = Join-Path $root "src\AionMeter.App\AionMeter.App.csproj"
 if (-not $Version) {
     $Version = (Select-Xml -Path $project -XPath "//Version").Node.InnerText | Select-Object -First 1
@@ -78,6 +110,7 @@ if ($iscc) {
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
     Remove-Item $setupStage -Recurse -Force
     $setupExe = Join-Path $dist "AION2DpsMeter-Setup-v$Version.exe"
+    Repair-VersionStrings $setupExe "AION2 DPS Meter"
     # Same file under a name that never changes: the download page links to
     # releases/latest/download/AION2DpsMeter-Setup.exe and always gets the newest version.
     $stableSetup = Join-Path $dist "AION2DpsMeter-Setup.exe"

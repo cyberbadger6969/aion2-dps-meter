@@ -103,7 +103,7 @@ supported) · Npcap · about 200 MB of disk space.
 | | |
 |---|---|
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> | show / hide the overlay |
-| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> | reset the meter |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> or ↻ on the overlay | restart the meter when the numbers look wrong: the fight so far is saved, counting starts over, known players and bosses stay known |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | click-through mode: clicks go to the game |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | boss timers |
 | left-click a player | open the breakdown |

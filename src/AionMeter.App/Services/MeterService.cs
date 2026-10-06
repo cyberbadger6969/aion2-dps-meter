@@ -40,13 +40,14 @@ public sealed class MeterService : IDisposable
             Timers.OnList(list);
         };
 
-        // Names learned before a restart (same zone, recent) come back immediately instead of "#id".
+        // Names and bosses learned before a restart (same zone, recent) come back immediately: no "#id" players, and a boss
+        // already in view keeps its name and real max HP.
         if (!settings.Transient && _names.Load() is { } cached)
         {
-            Tracker.ImportNames(cached.SelfId, cached.MapId, cached.Players);
-            Log.Info($"Restored {cached.Players.Count} cached player names");
+            Tracker.ImportCache(cached);
+            Log.Info($"Restored {cached.Players.Count} cached player names, {cached.Npcs.Count} bosses");
         }
-        _savedNamesVersion = Tracker.NamesVersion;
+        _savedNamesVersion = Tracker.CacheVersion;
 
         // Boss timers are per server: follow the character's (from the cache now, then on every login).
         Timers.SetCurrentServer(Tracker.SelfServerId);
@@ -72,6 +73,7 @@ public sealed class MeterService : IDisposable
 
     public CaptureStatus CaptureStatus =>
         _replay is { Status.State: CaptureState.Capturing } r ? r.Status
+        : _restarting ? new CaptureStatus(CaptureState.Starting, "Starting capture…")
         : _capture?.Status ?? new CaptureStatus(CaptureState.Stopped, "Capture not available");
 
     public bool DemoRunning => _demo?.IsRunning == true;
@@ -96,7 +98,7 @@ public sealed class MeterService : IDisposable
         {
             if (s.State != CaptureState.Stopped) return;
             Tracker.Tick(Tracker.LastEventMs + 3_600_000); // close the recording's last fight
-            _savedNamesVersion = Tracker.NamesVersion; // names from a recording must not overwrite the live cache
+            _savedNamesVersion = Tracker.CacheVersion; // names from a recording must not overwrite the live cache
             _replaying = false;
             if (_capture is not null) _capture.EventDecoded += Tracker.Process;
         };
@@ -106,28 +108,59 @@ public sealed class MeterService : IDisposable
 
     private volatile bool _replaying;
 
+    private readonly object _captureGate = new();
+    private volatile bool _restarting;
+
     public void StartCapture()
     {
-        if (CaptureFactory is null || _capture is not null) return;
-        try
+        lock (_captureGate)
         {
-            _capture = CaptureFactory(Data);
-            _capture.EventDecoded += Tracker.Process;
-            _capture.Start();
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Capture start failed", ex);
-            _capture?.Dispose();
-            _capture = new FailedSource(ex.Message);
+            if (CaptureFactory is null || _capture is not null) return;
+            try
+            {
+                _capture = CaptureFactory(Data);
+                _capture.EventDecoded += Tracker.Process;
+                _capture.Start();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Capture start failed", ex);
+                _capture?.Dispose();
+                _capture = new FailedSource(ex.Message);
+            }
         }
     }
 
     public void RestartCapture()
     {
-        _capture?.Dispose();
-        _capture = null;
-        StartCapture();
+        lock (_captureGate)
+        {
+            _restarting = true;
+            try
+            {
+                _capture?.Dispose();
+                _capture = null;
+                StartCapture();
+            }
+            finally
+            {
+                _restarting = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The "restart meter" button: the fight so far is closed and saved, capture starts over (adapter lookup, stream
+    /// sync) and the live view stays empty until the next hit. Names and bosses the meter already knows stay known —
+    /// unlike closing and starting the app in the middle of a fight.
+    /// </summary>
+    public void Restart()
+    {
+        _demo?.Dispose();
+        Tracker.Reset();
+        if (_replaying) return;
+        _restarting = true;
+        Task.Run(RestartCapture); // closing the adapter can take a moment: not on the UI thread
     }
 
     public void StartDemo(int seconds = 45)
@@ -156,11 +189,10 @@ public sealed class MeterService : IDisposable
 
     private void SaveNames()
     {
-        var version = Tracker.NamesVersion;
+        var version = Tracker.CacheVersion;
         if (version == _savedNamesVersion) return;
         _savedNamesVersion = version;
-        var (selfId, mapId, players) = Tracker.ExportNames();
-        _names.Save(selfId, mapId, players);
+        _names.Save(Tracker.ExportCache());
     }
 
     /// <summary>English / Russian for the interface and for skill / NPC names, applied without a restart.</summary>
@@ -217,10 +249,15 @@ public sealed class MeterService : IDisposable
             ? Data.MapName(id)
             : zone;
 
+    private bool _exiting;
+
     private void OnEncounterFinished(FightRecord record)
     {
         if (!ShouldSave(record.Summary)) return;
-        ThreadPool.QueueUserWorkItem(_ =>
+        if (_exiting) Save(); // the process is about to end: a worker thread would not get to it
+        else ThreadPool.QueueUserWorkItem(_ => Save());
+
+        void Save()
         {
             try
             {
@@ -231,16 +268,23 @@ public sealed class MeterService : IDisposable
             {
                 Log.Error("Saving fight failed", ex);
             }
-        });
+        }
     }
 
     public void Dispose()
     {
-        if (!Settings.Transient && !_replaying && !DemoRunning) SaveNames();
-        Updates.Dispose();
-        _demo?.Dispose();
+        var live = !Settings.Transient && !_replaying && !DemoRunning;
+        lock (_captureGate) _capture?.Dispose(); // no more packets: the running fight is as complete as it gets
         _replay?.Dispose();
-        _capture?.Dispose();
+        _demo?.Dispose();
+        if (live)
+        {
+            // Closing the meter mid-fight keeps the fight so far, like the restart button does.
+            _exiting = true;
+            Tracker.Reset();
+            SaveNames();
+        }
+        Updates.Dispose();
     }
 
     /// <summary>Placeholder source that only reports why capture could not start.</summary>

@@ -268,7 +268,8 @@ public sealed class OverlayViewModel : ObservableObject
         SegmentId = snap.Id;
         HasData = true;
         IsActive = snap.IsActive;
-        Title = snap.Title;
+        // A boss the meter never saw appear has no name, only its id.
+        Title = snap.Boss is { NpcCode: 0 } nameless && snap.Title == $"#{nameless.ActorId}" ? T.UnknownBoss : snap.Title;
         // Running: wall clock since the pull. Finished: the fight's real length (first to last hit).
         Clock = Format.ClockShort(snap.IsActive ? snap.ClockMs : snap.CombatMs);
         PartyDps = Format.Compact(snap.PartyDps) + "/s";
@@ -282,7 +283,15 @@ public sealed class OverlayViewModel : ObservableObject
             _ => T.Ended,
         };
         var zone = snap.Zone == "Open world" ? T.OpenWorld : snap.Zone;
-        Detail = string.IsNullOrEmpty(zone) ? result : $"{zone} · {result}";
+        // Part of the boss's HP went before the meter could count it (started or restarted mid-fight): say how much,
+        // in place of the zone, so the numbers are not taken for the whole fight.
+        var partial = snap.Boss switch
+        {
+            { MaxHpKnown: false, Hp: not 0 } => T.HpUnknown,
+            { CountedFrom: { } from } => string.Format(T.CountedFrom, Format.Percent(from, 0)),
+            _ => null,
+        };
+        Detail = partial is not null ? $"{result} · {partial}" : string.IsNullOrEmpty(zone) ? result : $"{zone} · {result}";
         Footer = $"{T.Players(snap.PlayerCount)} · " +
                  $"{(snap.CombatMs / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} {T.Seconds} · {T.Party} {PartyDps}";
 
@@ -295,7 +304,7 @@ public sealed class OverlayViewModel : ObservableObject
             HasBoss = true;
             BossHpFraction = boss.HpFraction;
             BossHpText = boss.Hp == 0 ? T.Defeated : Format.Grouped(boss.Hp) + " HP";
-            BossPercent = Format.Percent(boss.HpFraction);
+            BossPercent = boss.MaxHpKnown || boss.Hp == 0 ? Format.Percent(boss.HpFraction) : "?";
         }
         else
         {

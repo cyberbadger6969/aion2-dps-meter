@@ -154,6 +154,8 @@ public sealed class Encounter
     public int BossCode { get; set; }
     public string? BossName { get; set; }
     public long BossMaxHp { get; set; }
+    /// <summary>See <see cref="Game.NpcInfo.MaxHpKnown"/>.</summary>
+    public bool BossMaxHpKnown { get; set; }
     public long BossHp { get; set; } = -1;
     public long BossLowestHp { get; set; } = long.MaxValue;
 

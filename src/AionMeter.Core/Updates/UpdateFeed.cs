@@ -105,6 +105,13 @@ public sealed class UpdateFeed : IDisposable
     public static Version Normalize(Version v) => new(v.Major, v.Minor, Math.Max(0, v.Build));
 
     /// <summary>
+    /// A file's version-info product name is <paramref name="product"/>. Inno Setup writes an installer's version strings
+    /// in place and pads them with spaces, so padding does not count.
+    /// </summary>
+    public static bool IsProductName(string? productName, string product) =>
+        string.Equals(productName?.TrimEnd(' ', '\0'), product, StringComparison.Ordinal);
+
+    /// <summary>
     /// Downloads a release file into <paramref name="folder"/>, reporting progress from 0 to 1. Throws
     /// <see cref="InvalidDataException"/> when the file does not match the size or SHA-256 GitHub reported.
     /// </summary>

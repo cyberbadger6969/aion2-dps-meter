@@ -119,7 +119,7 @@ public partial class App : Application
         _tray = new TrayIcon(new TrayActions(
             ToggleOverlay: () => SetOverlayVisible(!_overlay.IsVisible),
             ToggleClickThrough: ToggleClickThrough,
-            Reset: () => _meter.Tracker.Reset(),
+            Reset: RestartMeter,
             History: ShowHistory,
             BossTimers: ShowBossTimers,
             Settings: ShowSettings,
@@ -128,7 +128,12 @@ public partial class App : Application
             ToggleLanguage: ToggleLanguage,
             Update: () => ShowUpdate(),
             CheckUpdates: () => _ = CheckUpdatesFromTrayAsync(),
-            Exit: Shutdown));
+            Exit: () =>
+            {
+                Log.Info("Exit chosen in the tray menu");
+                Shutdown();
+            }));
+        SessionEnding += (_, end) => Log.Info($"Windows {end.ReasonSessionEnding}: closing");
 
         // A new player's first start: without Npcap nothing can be measured — say so and offer the download.
         if (!LiveCapture.IsNpcapInstalled())
@@ -270,9 +275,22 @@ public partial class App : Application
         _hotkeys.UnregisterAll();
         var s = _meter.Settings;
         _hotkeys.Register(s.HotkeyToggleOverlay, () => SetOverlayVisible(!_overlay.IsVisible));
-        _hotkeys.Register(s.HotkeyReset, () => _meter.Tracker.Reset());
+        _hotkeys.Register(s.HotkeyReset, RestartMeter);
+        _overlay.ApplyHotkeyTips();
         _hotkeys.Register(s.HotkeyClickThrough, ToggleClickThrough);
         _hotkeys.Register(s.HotkeyTimers, ToggleBossTimers);
+    }
+
+    /// <summary>
+    /// The overlay's restart button, the tray item and its hotkey: when the numbers look wrong, start over without
+    /// closing the app — the fight so far is saved, capture restarts, and the players and bosses the meter knows stay
+    /// known (a restart of the whole app mid-fight could not learn them again until the next loading screen).
+    /// </summary>
+    public void RestartMeter()
+    {
+        Log.Info("Meter restarted by the user");
+        _meter.Restart();
+        _overlay.ShowLive();
     }
 
     // ------------------------------------------------------------ window management (used by windows via AppHost)
@@ -433,6 +451,7 @@ public partial class App : Application
 
     private readonly long _startedAt = Environment.TickCount64;
     private bool _installing;
+    private Version? _installFailed; // not retried by itself: the tray item and the update window remain
 
     /// <summary>
     /// A downloaded update goes in at a quiet moment: when the game is not running, at once (but not in the meter's first
@@ -443,7 +462,7 @@ public partial class App : Application
     {
         var updates = _meter.Updates;
         if (_installing || !updates.AutoInstall || updates.Downloaded is not { } ready || updates.Available?.Version != ready.Version ||
-            _meter.Tracker.LiveFight() is not null) return; // turned off, skipped, or a fight is on
+            ready.Version == _installFailed || _meter.Tracker.LiveFight() is not null) return; // turned off, skipped, failed, or a fight is on
         var quiet = Environment.TickCount64 - Math.Max(_lastEngagedTick, _startedAt);
         if (quiet < 60_000) return;
         if (quiet < 10 * 60_000 && GameProcessLocator.FindGameProcessIds().Length > 0) return;
@@ -465,6 +484,7 @@ public partial class App : Application
                                        or System.ComponentModel.Win32Exception)
         {
             _installing = false;
+            _installFailed = update.Version;
             Log.Error("Update could not start", ex);
         }
     }
@@ -546,6 +566,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        if (_meter is not null) Log.Info("Exiting");
         _timer?.Stop();
         _showWait?.Unregister(null);
         _showRequest?.Dispose();

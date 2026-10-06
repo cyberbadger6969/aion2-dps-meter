@@ -48,6 +48,7 @@ public partial class OverlayWindow : Window
         FrameBackground.Opacity = _settings.BackgroundOpacity;
         ApplyLock();
         UpdateModeLabel();
+        ApplyHotkeyTips();
         _meter.Updates.Changed += ShowUpdateBanner;
         ShowUpdateBanner();
 
@@ -136,6 +137,7 @@ public partial class OverlayWindow : Window
     {
         _vm.LanguageChanged();
         ShowUpdateBanner();
+        ApplyHotkeyTips();
         Refresh();
     }
 
@@ -545,13 +547,19 @@ public partial class OverlayWindow : Window
         _vm.TimersLabel = $"{shortName} {(left.TotalHours >= 1 ? left.ToString(@"h\:mm\:ss") : left.ToString(@"mm\:ss"))}";
     }
 
-    private void Reset_Click(object sender, RoutedEventArgs e)
+    private void Restart_Click(object sender, RoutedEventArgs e) => AppHost.Current.RestartMeter();
+
+    /// <summary>Back to the live view (after a restart of the meter: empty until the next hit).</summary>
+    public void ShowLive()
     {
         _segment = null;
         _saved = null;
-        _meter.Tracker.Reset();
         Refresh();
     }
+
+    /// <summary>Tooltips that name a hotkey the user can change.</summary>
+    public void ApplyHotkeyTips() =>
+        RestartButton.ToolTip = string.Format(UiText.Current.TipRestart, _settings.HotkeyReset);
 
     private void Lock_Click(object sender, RoutedEventArgs e)
     {

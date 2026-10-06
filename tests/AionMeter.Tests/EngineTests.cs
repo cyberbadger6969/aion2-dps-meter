@@ -145,11 +145,11 @@ public class EngineTests
         first.Process(new SelfIdentifiedEvent(0, Me, "Sylvaen", 2305, GameClass.Elementalist));
         first.Process(new PlayerSeenEvent(0, Mate, "Quill", 2305, GameClass.Sorcerer));
         first.Process(new PlayerSeenEvent(0, 102, "Faelis", 2305, GameClass.Elementalist));
-        var (selfId, mapId, players) = first.ExportNames();
+        var cache = first.ExportCache();
 
         // Restart in the same zone: names come back.
         var second = Tracker(TargetMode.All);
-        second.ImportNames(selfId, mapId, players);
+        second.ImportCache(cache);
         second.Process(new DamageEvent(1_000, Mate, Boss, 15020000, 1_000, HitFlags.None));
         // Id 102 now fights with Gladiator skills: it is someone else, the cached "Faelis" must go.
         second.Process(new DamageEvent(1_100, 102, Boss, 11020000, 1_000, HitFlags.None));
@@ -159,7 +159,122 @@ public class EngineTests
 
         // A loading screen reissues ids: only our own name is kept.
         second.Process(new ZoneChangedEvent(3_000, 600021, "Fire Temple", true));
-        Assert.Equal(["Sylvaen"], second.ExportNames().Players.Select(p => p.Name));
+        Assert.Equal(["Sylvaen"], second.ExportCache().Players.Select(p => p.Name));
+    }
+
+    /// <summary>A meter that saw the boss come into view, then restarted mid-fight (the button, an update, a crash).</summary>
+    private static SessionState CacheWithBoss(long maxHp)
+    {
+        var before = Tracker();
+        before.Process(new SelfIdentifiedEvent(0, Me, "Sylvaen", 2305, GameClass.Elementalist));
+        before.Process(new NpcSeenEvent(0, Boss, 2300218, maxHp));
+        before.Process(new NpcSeenEvent(0, Add, 2000002, 50_000)); // not a boss: not worth keeping
+        return before.ExportCache();
+    }
+
+    [Fact]
+    public void Restart_mid_fight_keeps_the_boss_and_says_how_much_went_uncounted()
+    {
+        var cache = CacheWithBoss(10_000_000);
+        Assert.Equal([new CachedNpc(Boss, 2300218, 10_000_000)], cache.Npcs);
+
+        var t = Tracker();
+        t.ImportCache(cache);
+        // The boss lost 2M before the restart; the restarted meter counts the next 1M.
+        t.Process(new NpcHpEvent(1_000, Boss, 8_000_000, 0));
+        t.Process(new DamageEvent(1_100, Me, Boss, 16040000, 1_000_000, HitFlags.None));
+        t.Process(new NpcHpEvent(1_200, Boss, 7_000_000, 0));
+
+        var boss = t.Snapshot(null, 2_000)!.Boss!;
+        Assert.Equal(2300218, boss.NpcCode);
+        Assert.Equal(10_000_000, boss.MaxHp);
+        Assert.True(boss.MaxHpKnown);
+        Assert.Equal(0.7, boss.HpFraction, 3);
+        Assert.Equal(2_000_000, boss.Uncounted);
+        Assert.Equal(0.8, boss.CountedFrom!.Value, 3);
+    }
+
+    [Fact]
+    public void Boss_never_seen_appearing_has_an_unknown_max_hp()
+    {
+        var t = Tracker();
+        t.Process(new SelfIdentifiedEvent(0, Me, "Sylvaen", 2305, GameClass.Elementalist));
+        t.Process(new DamageEvent(1_000, Me, Boss, 16040000, 100_000, HitFlags.None));
+        t.Process(new NpcHpEvent(1_100, Boss, 8_078_420, 0)); // first sight, mid-fight: its real max is higher
+
+        var boss = t.Snapshot(null, 2_000)!.Boss!;
+        Assert.Equal(0, boss.NpcCode);
+        Assert.Equal(8_078_420, boss.MaxHp);
+        Assert.False(boss.MaxHpKnown);
+        Assert.Null(boss.CountedFrom);
+        Assert.Empty(t.ExportCache().Npcs); // a guessed max is not worth keeping
+    }
+
+    [Fact]
+    public void Fully_counted_kill_has_nothing_uncounted()
+    {
+        var t = Tracker();
+        Setup(t);
+        t.Process(new DamageEvent(1_000, Me, Boss, 16040000, 40_000_000, HitFlags.None));
+        t.Process(new NpcHpEvent(1_100, Boss, 80_000_000, 0));
+        t.Process(new DamageEvent(2_000, Mate, Boss, 11020000, 40_000_000, HitFlags.None));
+        t.Process(new DamageEvent(2_050, Me, Boss, 16040000, 40_000_000, HitFlags.None));
+        FightRecord? saved = null;
+        t.EncounterFinished += r => saved = r;
+        t.Process(new NpcHpEvent(2_100, Boss, 0, 120_000_000));
+
+        Assert.Equal(0, saved!.Summary.Boss!.Uncounted);
+        Assert.Null(saved.Summary.Boss.CountedFrom);
+    }
+
+    [Fact]
+    public void Cached_boss_is_forgotten_when_its_id_now_belongs_to_another_npc()
+    {
+        var t = Tracker();
+        t.ImportCache(CacheWithBoss(10_000_000));
+        // More HP than the cached boss ever had: ids were reissued since the cache was written.
+        t.Process(new DamageEvent(1_000, Me, Boss, 16040000, 1_000, HitFlags.None));
+        t.Process(new NpcHpEvent(1_100, Boss, 30_000_000, 0));
+
+        var boss = t.Snapshot(null, 2_000)!.Boss!;
+        Assert.Equal(0, boss.NpcCode);
+        Assert.False(boss.MaxHpKnown);
+        Assert.Equal($"#{Boss}", boss.Name);
+    }
+
+    [Fact]
+    public void Fresh_announcement_replaces_the_cached_boss()
+    {
+        var t = Tracker();
+        t.ImportCache(CacheWithBoss(10_000_000));
+        t.Process(new NpcSeenEvent(500, Boss, 2300206, 5_220_000));
+        t.Process(new DamageEvent(1_000, Me, Boss, 16040000, 1_000, HitFlags.None));
+
+        var boss = t.Snapshot(null, 2_000)!.Boss!;
+        Assert.Equal(2300206, boss.NpcCode);
+        Assert.Equal(5_220_000, boss.MaxHp);
+    }
+
+    [Fact]
+    public void Reset_saves_the_running_fight_and_keeps_what_the_meter_knows()
+    {
+        var t = Tracker();
+        Setup(t);
+        FightRecord? saved = null;
+        t.EncounterFinished += r => saved = r;
+        t.Process(new DamageEvent(1_000, Me, Boss, 16040000, 1_000_000, HitFlags.None));
+        t.Process(new NpcHpEvent(1_100, Boss, 119_000_000, 0));
+
+        t.Reset();
+        Assert.Equal(EncounterEndReason.Manual, saved!.Summary.Reason);
+        Assert.Null(t.Snapshot(null, 2_000)); // the live view starts empty
+
+        t.Process(new DamageEvent(3_000, Mate, Boss, 11020000, 2_000_000, HitFlags.None));
+        t.Process(new NpcHpEvent(3_100, Boss, 117_000_000, 0));
+        var snap = t.Snapshot(null, 4_000)!;
+        Assert.Equal("Borgrim", Assert.Single(snap.Combatants).Name);
+        Assert.Equal(120_000_000, snap.Boss!.MaxHp);
+        Assert.Equal(1_000_000, snap.Boss.Uncounted); // the first fight's hit, now in its own saved segment
     }
 
     [Fact]

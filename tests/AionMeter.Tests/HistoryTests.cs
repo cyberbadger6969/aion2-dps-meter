@@ -51,6 +51,43 @@ public sealed class HistoryTests : IDisposable
         Assert.Equal("Berk", Assert.Single(list).Title);
     }
 
+    [Fact]
+    public void Fights_saved_by_older_versions_read_their_boss_as_fully_known()
+    {
+        var store = new HistoryStore(_dir);
+        var path = store.Save(Fight("Berk", 10, boss: true, selfPlace: 1));
+        // Strip the fields added in 0.2.4, as a fight file written by 0.2.3 lacks them.
+        var json = File.ReadAllText(path).Replace(",\"MaxHpKnown\":true", "").Replace(",\"Uncounted\":0", "");
+        Assert.DoesNotContain("MaxHpKnown", json);
+        File.WriteAllText(path, json);
+
+        var boss = store.Load(path)!.Summary.Boss!;
+        Assert.True(boss.MaxHpKnown);
+        Assert.Equal(0, boss.Uncounted);
+    }
+
+    [Fact]
+    public void Session_cache_keeps_bosses_for_a_short_time_and_reads_old_files()
+    {
+        var path = Path.Combine(_dir, "names-cache.json");
+        var cache = new NameCache(path);
+        cache.Save(new Core.Game.SessionState(5, 600012, [new(5, "Sylvaen", GameClass.Elementalist, 2305)], [new(23443, 2300218, 9_860_000)]));
+        var loaded = cache.Load()!;
+        Assert.Equal(600012, loaded.MapId);
+        Assert.Equal(9_860_000, Assert.Single(loaded.Npcs).MaxHp);
+
+        // Written 20 minutes ago: names are still trusted, bosses no longer.
+        var old = DateTimeOffset.UtcNow.AddMinutes(-20).ToString("O");
+        File.WriteAllText(path, $$"""{"SavedAt":"{{old}}","SelfId":5,"MapId":600012,"Players":[{"Id":5,"Name":"Sylvaen","Class":"Elementalist","ServerId":2305}],"Npcs":[{"Id":23443,"Code":2300218,"MaxHp":9860000}]}""");
+        loaded = cache.Load()!;
+        Assert.Single(loaded.Players);
+        Assert.Empty(loaded.Npcs);
+
+        // A cache written by 0.2.3 has no bosses at all.
+        File.WriteAllText(path, $$"""{"SavedAt":"{{DateTimeOffset.UtcNow:O}}","SelfId":5,"MapId":600012,"Players":[]}""");
+        Assert.Empty(cache.Load()!.Npcs);
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_dir, recursive: true); } catch (IOException) { }

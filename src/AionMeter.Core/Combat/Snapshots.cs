@@ -3,9 +3,16 @@ using AionMeter.Core.Events;
 namespace AionMeter.Core.Combat;
 
 /// <summary>Immutable copies handed to the UI and written to history; safe to read off the capture thread.</summary>
-public sealed record BossSnapshot(uint ActorId, int NpcCode, string Name, long Hp, long MaxHp)
+/// <param name="MaxHpKnown">False when the meter never saw the boss appear: <paramref name="MaxHp"/> is then only the
+/// highest HP it saw, and the percentage means little.</param>
+/// <param name="Uncounted">HP the boss lost that no counted hit explains — mostly damage dealt before the meter started.</param>
+public sealed record BossSnapshot(uint ActorId, int NpcCode, string Name, long Hp, long MaxHp, bool MaxHpKnown = true, long Uncounted = 0)
 {
     public double HpFraction => MaxHp > 0 && Hp >= 0 ? Math.Clamp((double)Hp / MaxHp, 0, 1) : 1;
+
+    /// <summary>The boss's HP (fraction of max) when the meter's count began, when a sizeable part went uncounted.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public double? CountedFrom => MaxHpKnown && MaxHp > 0 && Uncounted >= MaxHp * 0.05 ? 1 - (double)Uncounted / MaxHp : null;
 }
 
 public sealed record CombatantSnapshot(

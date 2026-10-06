@@ -205,7 +205,7 @@ tools may still be against the game's terms of service — use it at your own ri
 | Keys | Action |
 |---|---|
 | Ctrl+Shift+D | Show / hide the overlay |
-| Ctrl+Shift+R | Reset the meter |
+| Ctrl+Shift+R | Restart the meter (also ↻ on the overlay) |
 | Ctrl+Shift+L | Click-through mode |
 | Ctrl+Shift+T | Boss timers |
 
@@ -300,7 +300,7 @@ Third-party tools may be against the game's terms of service — use at your own
 | Клавиши | Действие |
 |---|---|
 | Ctrl+Shift+D | Показать / скрыть оверлей |
-| Ctrl+Shift+R | Сбросить метр |
+| Ctrl+Shift+R | Перезапустить метр (или ↻ на оверлее) |
 | Ctrl+Shift+L | Клики сквозь оверлей |
 | Ctrl+Shift+T | Таймеры боссов |
 

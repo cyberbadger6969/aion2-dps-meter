@@ -14,6 +14,12 @@ public sealed class PlayerInfo
 
 public sealed record CachedPlayer(uint Id, string Name, GameClass Class, int ServerId);
 
+/// <summary>A boss as the server announced it: its template (0 = unknown) and max HP (0 = unknown).</summary>
+public sealed record CachedNpc(uint Id, int Code, long MaxHp);
+
+/// <summary>What a meter restarted in the same zone needs: who is who, and the bosses around with their real max HP.</summary>
+public sealed record SessionState(uint? SelfId, int MapId, IReadOnlyList<CachedPlayer> Players, IReadOnlyList<CachedNpc> Npcs);
+
 /// <summary>A spawned pet / spirit / skill effect whose owner is not known yet.</summary>
 public sealed record UnownedEntity(long SpawnMs, int NpcCode, string? OwnerName);
 
@@ -22,18 +28,26 @@ public sealed class NpcInfo
     public required uint ActorId { get; init; }
     public int NpcCode { get; set; }
     public long MaxHp { get; set; }
+    /// <summary>
+    /// The max HP came from the server (the spawn record, or an HP record carrying it). False while it is only the
+    /// highest HP seen so far: the meter started after the NPC came into view, so the real max may be higher.
+    /// </summary>
+    public bool MaxHpKnown { get; set; }
     /// <summary>-1 until an HP record arrives; 0 = dead.</summary>
     public long Hp { get; set; } = -1;
     public bool InCombat { get; set; }
     public bool IsBoss { get; set; }
     public bool IsDummy { get; set; }
     public string? Name { get; set; }
+    /// <summary>Restored from the cache of a previous run rather than announced in this one.</summary>
+    public bool FromCache { get; set; }
 }
 
 /// <summary>
 /// Maps actor ids seen on the wire to players, NPCs and summons. Entity ids are reissued on every map load, so
 /// everything but the local player is dropped on zone change. The server announces a player's name only when they
-/// come into view or on a loading screen, so names are also exported to a cache that survives a meter restart.
+/// come into view or on a loading screen, and an NPC's template and max HP only when it comes into view, so both are
+/// also exported to a cache that survives a meter restart.
 /// </summary>
 public sealed class EntityRegistry
 {
@@ -55,8 +69,8 @@ public sealed class EntityRegistry
     public string? ZoneName { get; private set; }
     public int MapId { get; private set; }
 
-    /// <summary>Bumped whenever a player's identity changes, so the name cache knows when to save.</summary>
-    public int NamesVersion { get; private set; }
+    /// <summary>Bumped whenever a player's identity or a boss's changes, so the cache knows when to save.</summary>
+    public int CacheVersion { get; private set; }
 
     public void SetSelf(uint actorId, string name, int serverId, GameClass cls)
     {
@@ -79,7 +93,7 @@ public sealed class EntityRegistry
             _players[actorId] = p;
         }
         p.FromCache = false;
-        NamesVersion++;
+        CacheVersion++;
         if (!string.IsNullOrWhiteSpace(name))
         {
             // A name belongs to one entity at a time: forget stale ids still carrying it.
@@ -111,17 +125,38 @@ public sealed class EntityRegistry
                 n.IsBoss = def.IsBoss || def.IsDummy;
                 n.IsDummy = def.IsDummy;
             }
+            if (n.IsBoss) CacheVersion++;
         }
         return n;
     }
 
-    public void SetMaxHp(NpcInfo npc, long maxHp)
+    /// <param name="known">The value came from the server rather than being the highest current HP seen so far.</param>
+    public void SetMaxHp(NpcInfo npc, long maxHp, bool known)
     {
         if (maxHp <= 0) return;
+        var changed = npc.MaxHp != maxHp || (known && !npc.MaxHpKnown);
         npc.MaxHp = maxHp;
+        if (known) npc.MaxHpKnown = true;
         // Without a data entry, a big HP pool is the best boss signal we have.
-        var known = npc.NpcCode != 0 && _data.Npcs.ContainsKey(npc.NpcCode);
-        if (!known && maxHp >= BossHpThreshold) npc.IsBoss = true;
+        var listed = npc.NpcCode != 0 && _data.Npcs.ContainsKey(npc.NpcCode);
+        if (!listed && maxHp >= BossHpThreshold) npc.IsBoss = true;
+        if (changed && npc.IsBoss) CacheVersion++;
+    }
+
+    /// <summary>
+    /// Starts over on an NPC id: a fresh announcement replaces what the cache said about it, or the cache turned out to
+    /// describe another entity (ids are reissued on every map load).
+    /// </summary>
+    public NpcInfo ForgetNpc(uint actorId)
+    {
+        if (_npcs.Remove(actorId, out var old) && old.IsBoss) CacheVersion++;
+        return UpsertNpc(actorId);
+    }
+
+    /// <summary>A boss died: it leaves the cache.</summary>
+    public void NoteDeath(NpcInfo npc)
+    {
+        if (npc.IsBoss) CacheVersion++;
     }
 
     public void SetSummon(uint summonId, uint ownerId)
@@ -131,7 +166,7 @@ public sealed class EntityRegistry
         {
             if (!p.FromCache) return;
             _players.Remove(summonId); // a cached id now reused by someone's pet
-            NamesVersion++;
+            CacheVersion++;
         }
         _summonOwner[summonId] = ownerId;
         _npcs.Remove(summonId);
@@ -149,7 +184,7 @@ public sealed class EntityRegistry
         {
             if (!p.FromCache) return;
             _players.Remove(actorId);
-            NamesVersion++;
+            CacheVersion++;
         }
         _npcs.Remove(actorId);
         _summonOwner.Remove(actorId);
@@ -223,24 +258,38 @@ public sealed class EntityRegistry
         var self = Self;
         _players.Clear();
         if (self is not null) _players[self.ActorId] = self;
-        NamesVersion++;
+        CacheVersion++;
     }
 
-    // ------------------------------------------------------------------ name cache
+    // ------------------------------------------------------------------ cache (survives a meter restart)
 
-    public IReadOnlyList<CachedPlayer> ExportPlayers() =>
-        _players.Values.Where(p => p.Name.Length > 0).Select(p => new CachedPlayer(p.ActorId, p.Name, p.Class, p.ServerId)).ToList();
+    public SessionState Export() => new(
+        SelfId, MapId,
+        _players.Values.Where(p => p.Name.Length > 0).Select(p => new CachedPlayer(p.ActorId, p.Name, p.Class, p.ServerId)).ToList(),
+        // Living bosses the server described; a max HP only guessed from current HP is no better than nothing.
+        _npcs.Values.Where(n => n.IsBoss && n.Hp != 0 && (n.NpcCode != 0 || n.MaxHpKnown))
+            .Take(64)
+            .Select(n => new CachedNpc(n.ActorId, n.NpcCode, n.MaxHpKnown ? n.MaxHp : 0))
+            .ToList());
 
-    /// <summary>Restores names saved by a previous run in the same zone. Live announcements always win.</summary>
-    public void ImportPlayers(uint? selfId, int mapId, IEnumerable<CachedPlayer> players)
+    /// <summary>Restores what a previous run in the same zone knew. Live announcements always win.</summary>
+    public void Import(SessionState state)
     {
-        MapId = mapId;
-        foreach (var c in players)
+        MapId = state.MapId;
+        if (state.MapId != 0) ZoneName ??= _data.MapName(state.MapId);
+        foreach (var c in state.Players)
         {
             if (_players.ContainsKey(c.Id)) continue;
             _players[c.Id] = new PlayerInfo { ActorId = c.Id, Name = c.Name, Class = c.Class, ServerId = c.ServerId, FromCache = true };
         }
-        if (selfId is { } s && _players.ContainsKey(s)) SelfId = s;
+        foreach (var c in state.Npcs)
+        {
+            if (_players.ContainsKey(c.Id) || _npcs.ContainsKey(c.Id)) continue;
+            var npc = UpsertNpc(c.Id, c.Code);
+            SetMaxHp(npc, c.MaxHp, known: true);
+            npc.FromCache = true;
+        }
+        if (state.SelfId is { } s && _players.ContainsKey(s)) SelfId = s;
     }
 
     /// <summary>A cached name whose entity now fights as another class belongs to someone else: forget it.</summary>
@@ -251,14 +300,15 @@ public sealed class EntityRegistry
         {
             _players.Remove(actorId);
             if (SelfId == actorId) SelfId = null;
-            NamesVersion++;
+            CacheVersion++;
         }
     }
 
     private void DropCached()
     {
         foreach (var id in _players.Values.Where(p => p.FromCache).Select(p => p.ActorId).ToList()) _players.Remove(id);
-        NamesVersion++;
+        foreach (var id in _npcs.Values.Where(n => n.FromCache).Select(n => n.ActorId).ToList()) _npcs.Remove(id);
+        CacheVersion++;
     }
 
     public void Clear()

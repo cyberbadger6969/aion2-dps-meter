@@ -286,7 +286,7 @@
                             ToolTip="{Binding T.SwitchLanguage}" />
                     <Button Style="{StaticResource IconButton}" Content="&#xE81C;" Click="Segments_Click" ToolTip="Fight segments" />
                     <Button Style="{StaticResource IconButton}" Content="&#xE121;" Click="Timers_Click" ToolTip="{Binding T.TipTimers}" />
-                    <Button Style="{StaticResource IconButton}" Content="&#xE72C;" Click="Reset_Click" ToolTip="Reset (Ctrl+Shift+R)" />
+                    <Button x:Name="RestartButton" Style="{StaticResource IconButton}" Content="&#xE72C;" Click="Restart_Click" />
                     <ToggleButton x:Name="LockButton" Style="{StaticResource IconToggle}" Click="Lock_Click" ToolTip="Lock position">
                         <TextBlock x:Name="LockGlyph" Text="&#xE785;" />
                     </ToggleButton>

@@ -159,6 +159,11 @@ public sealed class UiText
     public string TopHit { get; init; } = "TOP HIT";
     public string TopHitBy { get; init; } = "Biggest single hit — {0}";
     public string Defeated { get; init; } = "Defeated";
+    public string UnknownBoss { get; init; } = "Unknown boss";
+    /// <summary>"counted from 82% HP": the meter started (or restarted) after the boss had already lost the rest.</summary>
+    public string CountedFrom { get; init; } = "counted from {0} HP";
+    public string HpUnknown { get; init; } = "max HP unknown";
+    public string TipRestart { get; init; } = "Restart the meter ({0}): the fight so far is saved, counting starts over";
     public string InProgress { get; init; } = "In progress";
     public string Kill { get; init; } = "Kill";
     public string Wipe { get; init; } = "Wipe";
@@ -303,7 +308,7 @@ public sealed class UiText
         "Open the download page now?";
     public string SecHotkeys { get; init; } = "HOTKEYS";
     public string HkToggle { get; init; } = "Show / hide overlay";
-    public string HkReset { get; init; } = "Reset meter";
+    public string HkReset { get; init; } = "Restart meter";
     public string HkClick { get; init; } = "Click-through";
     public string HotkeysHint { get; init; } = "Format: Ctrl+Shift+D, Alt+F9 … Applied after saving.";
     public string SecData { get; init; } = "DATA";
@@ -459,6 +464,10 @@ public sealed class UiText
         TopHit = "МАКС. УДАР",
         TopHitBy = "Самый сильный удар — {0}",
         Defeated = "Повержен",
+        UnknownBoss = "Неизвестный босс",
+        CountedFrom = "учтено с {0} HP",
+        HpUnknown = "макс. HP неизвестен",
+        TipRestart = "Перезапустить метр ({0}): бой сохранится, подсчёт начнётся заново",
         InProgress = "Идёт бой",
         Kill = "Убит",
         Wipe = "Вайп",
@@ -598,7 +607,7 @@ public sealed class UiText
             "Открыть страницу загрузки?",
         SecHotkeys = "ГОРЯЧИЕ КЛАВИШИ",
         HkToggle = "Показать / скрыть оверлей",
-        HkReset = "Сбросить метр",
+        HkReset = "Перезапустить метр",
         HkClick = "Клики сквозь оверлей",
         HotkeysHint = "Формат: Ctrl+Shift+D, Alt+F9 … Применяется после сохранения.",
         SecData = "ДАННЫЕ",

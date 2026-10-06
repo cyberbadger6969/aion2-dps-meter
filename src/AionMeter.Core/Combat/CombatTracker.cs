@@ -51,21 +51,23 @@ public sealed class CombatTracker
 
     public long LastEventMs { get; private set; }
 
-    // ---------------------------------------------------------------- name cache (survives a meter restart)
+    // ---------------------------------------------------------------- cache (survives a meter restart)
 
-    public int NamesVersion
+    /// <summary>Changes whenever something in <see cref="ExportCache"/> does.</summary>
+    public int CacheVersion
     {
-        get { lock (_gate) return _entities.NamesVersion; }
+        get { lock (_gate) return _entities.CacheVersion; }
     }
 
-    public (uint? SelfId, int MapId, IReadOnlyList<CachedPlayer> Players) ExportNames()
+    /// <summary>Players' names and the bosses around: what a meter restarted in this zone could not learn again.</summary>
+    public SessionState ExportCache()
     {
-        lock (_gate) return (_entities.SelfId, _entities.MapId, _entities.ExportPlayers());
+        lock (_gate) return _entities.Export();
     }
 
-    public void ImportNames(uint? selfId, int mapId, IEnumerable<CachedPlayer> players)
+    public void ImportCache(SessionState state)
     {
-        lock (_gate) _entities.ImportPlayers(selfId, mapId, players);
+        lock (_gate) _entities.Import(state);
     }
 
     public void Process(GameEvent e)
@@ -95,9 +97,12 @@ public sealed class CombatTracker
                     break;
                 case NpcSeenEvent n:
                     if (_entities.IsKnownPlayer(n.ActorId)) break;
+                    // The server's own announcement replaces whatever the cache of a previous run said about this id.
+                    if (_entities.TryGetNpc(n.ActorId, out var cached) && cached.FromCache) _entities.ForgetNpc(n.ActorId);
                     var npc = _entities.UpsertNpc(n.ActorId, n.NpcCode);
                     if (n.Name is not null) npc.Name = n.Name;
-                    _entities.SetMaxHp(npc, n.MaxHp);
+                    _entities.SetMaxHp(npc, n.MaxHp, known: true);
+                    if (_current is { IsActive: true } running && running.BossId == n.ActorId) RefreshBoss(running, npc);
                     NoticeBoss(npc, BossNoticeKind.Alive, n.TimeMs, n.X, n.Y, n.Z);
                     break;
                 case SummonSeenEvent s:
@@ -246,17 +251,25 @@ public sealed class CombatTracker
         // HP/MP updates are sent for players too: only trust them for entities already known to be NPCs.
         if (!e.IsNpc && !_entities.IsKnownNpc(e.ActorId)) return;
         var npc = _entities.UpsertNpc(e.ActorId);
-        if (e.CurrentHp <= 0 && npc.Hp > 0) NoticeBoss(npc, BossNoticeKind.Killed, e.TimeMs);
+        // A cached boss is only an assumption: an HP pool that does not fit it means the id now belongs to another NPC.
+        if (npc.FromCache && npc.MaxHp > 0 && (e.CurrentHp > npc.MaxHp || (e.MaxHp > 0 && e.MaxHp != npc.MaxHp)))
+            npc = _entities.ForgetNpc(e.ActorId);
+        if (e.CurrentHp <= 0 && npc.Hp > 0)
+        {
+            NoticeBoss(npc, BossNoticeKind.Killed, e.TimeMs);
+            _entities.NoteDeath(npc);
+        }
         npc.Hp = e.CurrentHp;
-        _entities.SetMaxHp(npc, Math.Max(e.MaxHp, Math.Max(npc.MaxHp, e.CurrentHp)));
+        var max = Math.Max(e.MaxHp, Math.Max(npc.MaxHp, e.CurrentHp));
+        _entities.SetMaxHp(npc, max, known: npc.MaxHpKnown || e.MaxHp >= max);
 
         if (_current is not { IsActive: true } enc) return;
 
         if (enc.BossId is null && npc.IsBoss && enc.DamageByTarget.ContainsKey(e.ActorId)) SetBoss(enc, npc);
         if (enc.BossId != e.ActorId) return;
 
+        RefreshBoss(enc, npc);
         enc.BossHp = e.CurrentHp;
-        enc.BossMaxHp = npc.MaxHp;
         if (e.CurrentHp < enc.BossLowestHp) enc.BossLowestHp = e.CurrentHp;
 
         if (e.CurrentHp <= 0)
@@ -272,7 +285,11 @@ public sealed class CombatTracker
     private void OnDeath(DeathEvent e)
     {
         if (!_entities.TryGetNpc(e.ActorId, out var npc)) return;
-        if (npc.Hp != 0) NoticeBoss(npc, e.AlreadyDead ? BossNoticeKind.SeenDead : BossNoticeKind.Killed, e.TimeMs);
+        if (npc.Hp != 0)
+        {
+            NoticeBoss(npc, e.AlreadyDead ? BossNoticeKind.SeenDead : BossNoticeKind.Killed, e.TimeMs);
+            _entities.NoteDeath(npc);
+        }
         npc.Hp = 0;
         if (_current is { IsActive: true } enc && enc.BossId == e.ActorId)
         {
@@ -443,10 +460,17 @@ public sealed class CombatTracker
     private void SetBoss(Encounter enc, NpcInfo npc)
     {
         enc.BossId = npc.ActorId;
+        enc.BossHp = npc.Hp;
+        RefreshBoss(enc, npc);
+    }
+
+    /// <summary>The boss's identity and max HP as known now: the server may announce them after the fight began.</summary>
+    private void RefreshBoss(Encounter enc, NpcInfo npc)
+    {
         enc.BossCode = npc.NpcCode;
         enc.BossName = _entities.NpcName(npc.ActorId);
         enc.BossMaxHp = npc.MaxHp;
-        enc.BossHp = npc.Hp;
+        enc.BossMaxHpKnown = npc.MaxHpKnown;
     }
 
     private void StartEncounter(long timeMs)
@@ -656,7 +680,12 @@ public sealed class CombatTracker
         {
             var hp = enc.BossHp;
             if (_entities.TryGetNpc(bossId, out var npc) && enc.IsActive) hp = npc.Hp;
-            boss = new BossSnapshot(bossId, enc.BossCode, enc.BossName ?? _entities.NpcName(bossId), hp, enc.BossMaxHp);
+            // HP the boss lost beyond every hit counted on it: the part of the fight the meter did not see.
+            var uncounted = enc.BossMaxHpKnown && enc.BossMaxHp > 0 && hp >= 0
+                ? Math.Max(0, enc.BossMaxHp - hp - enc.DamageByTarget.GetValueOrDefault(bossId))
+                : 0;
+            boss = new BossSnapshot(bossId, enc.BossCode, enc.BossName ?? _entities.NpcName(bossId), hp, enc.BossMaxHp,
+                enc.BossMaxHpKnown, uncounted);
         }
 
         return new EncounterSnapshot(

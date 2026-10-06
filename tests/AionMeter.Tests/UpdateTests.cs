@@ -54,6 +54,16 @@ public class UpdateTests
     }
 
     [Fact]
+    public void Installer_product_name_ignores_inno_setup_padding()
+    {
+        // What FileVersionInfo reads from an Inno Setup 7 installer: the name padded to its placeholder's length.
+        Assert.True(UpdateFeed.IsProductName("AION2 DPS Meter" + new string(' ', 45), "AION2 DPS Meter"));
+        Assert.True(UpdateFeed.IsProductName("AION2 DPS Meter", "AION2 DPS Meter"));
+        Assert.False(UpdateFeed.IsProductName("AION2 DPS Meter Pro", "AION2 DPS Meter"));
+        Assert.False(UpdateFeed.IsProductName(null, "AION2 DPS Meter"));
+    }
+
+    [Fact]
     public async Task Downloads_are_checked_against_size_and_sha256()
     {
         var body = new byte[300_000];

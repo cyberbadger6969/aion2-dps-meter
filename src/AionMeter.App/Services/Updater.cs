@@ -174,7 +174,7 @@ public sealed class Updater : IDisposable
     /// </summary>
     public static void LaunchInstaller(string path, bool quiet = false)
     {
-        if (FileVersionInfo.GetVersionInfo(path).ProductName != AppInfo.Name)
+        if (!UpdateFeed.IsProductName(FileVersionInfo.GetVersionInfo(path).ProductName, AppInfo.Name))
             throw new InvalidDataException($"{Path.GetFileName(path)} is not the {AppInfo.Name} installer");
         Process.Start(new ProcessStartInfo(path, (quiet ? "/VERYSILENT" : "/SILENT") + " /SUPPRESSMSGBOXES /NORESTART /RELAUNCH=1")
             { UseShellExecute = true });
