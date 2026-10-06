@@ -135,6 +135,7 @@ public sealed class UiText
     public string AutoShowHint { get; init; } =
         "When a boss is fought nearby or you hit any monster. Hide it during a fight and it waits for the next one.";
     public string AutoHide { get; init; } = "Hide again after combat (s, 0 = never)";
+    public string ShowOnStart { get; init; } = "Show the overlay when the meter or the game starts";
 
     // ---------------------------------------------------------------- overlay: columns
     public string ColPlayer { get; init; } = "PLAYER";
@@ -425,6 +426,7 @@ public sealed class UiText
         AutoShow = "Показывать сам, когда начинается бой",
         AutoShowHint = "Когда рядом бьют босса или вы ударили любого моба. Если скрыть его во время боя — появится в следующем.",
         AutoHide = "Скрывать после боя через (с, 0 — нет)",
+        ShowOnStart = "Показывать оверлей при запуске метра и игры",
 
         TipSkillDamage = "Урон",
         TipSkillHits = "Удары",

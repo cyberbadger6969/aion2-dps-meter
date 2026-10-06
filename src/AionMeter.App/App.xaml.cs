@@ -33,7 +33,10 @@ public static class AppHost
 
 public partial class App : Application
 {
+    private const string ShowRequestName = "AionMeter.ShowOverlay"; // set by a second start of the app
     private Mutex? _singleInstance;
+    private EventWaitHandle? _showRequest;
+    private RegisteredWaitHandle? _showWait;
     private MeterService _meter = null!;
     private OverlayWindow _overlay = null!;
     private TrayIcon? _tray;
@@ -72,7 +75,11 @@ public partial class App : Application
         _singleInstance = new Mutex(true, "AionMeter.SingleInstance", out var first);
         if (!first)
         {
-            MessageBox.Show($"{AppInfo.Name} is already running — look for the gold \"A\" in the notification area.", AppInfo.Name);
+            // Started again (the shortcut clicked twice): the running meter shows its overlay, this copy leaves quietly.
+            if (EventWaitHandle.TryOpenExisting(ShowRequestName, out var running))
+                using (running) running.Set();
+            else // a version from before 0.2.2 is running
+                MessageBox.Show($"{AppInfo.Name} is already running — look for the gold \"A\" in the notification area.", AppInfo.Name);
             Shutdown();
             return;
         }
@@ -99,7 +106,12 @@ public partial class App : Application
 
         _overlay = new OverlayWindow(_meter);
         if (settings.OverlayVisible || e.Args.Contains("--show")) _overlay.Show(); // --show: this run only, not saved
-        else new WindowInteropHelper(_overlay).EnsureHandle();
+        else
+        {
+            new WindowInteropHelper(_overlay).EnsureHandle();
+            // Hidden by choice: still up for a moment, so it is plain that the meter started.
+            if (settings.ShowOnStart) ShowByItself();
+        }
 
         _hotkeys = new HotkeyManager(new WindowInteropHelper(_overlay).Handle);
         RegisterHotkeys();
@@ -121,6 +133,11 @@ public partial class App : Application
         // A new player's first start: without Npcap nothing can be measured — say so and offer the download.
         if (!LiveCapture.IsNpcapInstalled())
             Dispatcher.BeginInvoke(ShowNpcapHelp, DispatcherPriority.ApplicationIdle);
+
+        // Another start of the app asks this one to show the overlay.
+        _showRequest = new EventWaitHandle(false, EventResetMode.AutoReset, ShowRequestName);
+        _showWait = ThreadPool.RegisterWaitForSingleObject(_showRequest,
+            (_, _) => Dispatcher.BeginInvoke(() => SetOverlayVisible(true)), null, Timeout.Infinite, executeOnlyOnce: false);
 
         // New versions on GitHub: tray item, the overlay's update button and one notification per version.
         _meter.Updates.Changed += OnUpdatesChanged;
@@ -182,6 +199,7 @@ public partial class App : Application
         {
             _tray?.Update(_overlay.IsVisible, _meter.Settings.ClickThrough, _meter.DemoRunning ? "demo" : _meter.CaptureStatus.Message);
             CheckBossAlerts();
+            CheckGameStart();
         }
     }
 
@@ -215,6 +233,34 @@ public partial class App : Application
             _overlay.Hide();
             _autoShown = false;
         }
+    }
+
+    /// <summary>Up without the user asking: goes away again after the usual idle time (Settings → Overlay).</summary>
+    private void ShowByItself()
+    {
+        if (_overlay.IsVisible) return;
+        _overlay.Show();
+        _autoShown = true;
+        _lastEngagedTick = Environment.TickCount64;
+    }
+
+    private CaptureState _lastCaptureState = CaptureState.Stopped;
+    private int[] _gameShownFor = [];
+
+    /// <summary>
+    /// The overlay comes up when the meter starts seeing the game's traffic, once per launch of the game: a reconnect
+    /// after a loading screen is the same game process and does not count.
+    /// </summary>
+    private void CheckGameStart()
+    {
+        var state = _meter.CaptureStatus.State;
+        var connected = state == CaptureState.Capturing && _lastCaptureState != CaptureState.Capturing;
+        _lastCaptureState = state;
+        if (!connected || !_meter.Settings.ShowOnStart || _meter.DemoRunning) return;
+        var game = GameProcessLocator.FindGameProcessIds().Order().ToArray();
+        if (game.Length == 0 || game.SequenceEqual(_gameShownFor)) return;
+        _gameShownFor = game;
+        ShowByItself();
     }
 
     private void RegisterHotkeys()
@@ -452,6 +498,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _timer?.Stop();
+        _showWait?.Unregister(null);
+        _showRequest?.Dispose();
         _hotkeys?.Dispose();
         _tray?.Dispose();
         if (_meter is not null)

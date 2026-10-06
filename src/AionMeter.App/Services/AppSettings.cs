@@ -38,6 +38,8 @@ public sealed class AppSettings
     public bool AutoShow { get; set; } = true;
     /// <summary>An overlay that came up by itself hides again after this long out of combat; 0 = stays up.</summary>
     public int AutoHideSeconds { get; set; } = 60;
+    /// <summary>Bring the overlay up when the meter starts and when it finds the game, so a player sees it is running.</summary>
+    public bool ShowOnStart { get; set; } = true;
 
     // Boss respawn timers
     /// <summary>Tray notification this many minutes before a tracked boss respawns; 0 = off.</summary>

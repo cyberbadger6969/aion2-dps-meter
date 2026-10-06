@@ -119,6 +119,8 @@ Hotkeys can be changed in Settings. The toolbar appears when the mouse is over t
 
 The overlay **shows up by itself** when a boss is fought nearby or you hit anything, and hides 60 s after the fight if
 it came up by itself (*Settings → Overlay*). Hide it by hand during a fight and it stays hidden until the next one.
+It also comes up when the meter starts and when the game starts (once per launch of the game), and starting the meter
+again — say, from the desktop shortcut — simply brings the overlay up.
 
 ### Fight history
 

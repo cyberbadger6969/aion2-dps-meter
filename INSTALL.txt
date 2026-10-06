@@ -22,7 +22,7 @@ AION2 DPS Meter — установка / installation
    Обновление — распакуйте новую версию поверх. Удаление — удалите папку.
 
 Как пользоваться
-Играйте — оверлей появится сам, когда начнётся бой. Ники игроков игра присылает при загрузке локации,
+Играйте — оверлей появится при запуске игры и в каждом бою. Повторный запуск метра (ярлык) тоже открывает оверлей. Ники игроков игра присылает при загрузке локации,
 поэтому метр лучше запускать до входа в подземелье.
 
 Значок «A» в трее (возле часов) — меню: оверлей, история боёв, таймеры боссов, настройки, язык.
@@ -65,7 +65,7 @@ Without installation (.zip)
    Update: unzip the new version over the old one. Uninstall: delete the folder.
 
 Using it
-Play: the overlay comes up by itself when a fight starts. The game sends player names on a loading screen,
+Play: the overlay comes up when the game starts and in every fight. Starting the meter again (the shortcut) shows it too. The game sends player names on a loading screen,
 so start the meter before entering a dungeon.
 
 The gold "A" in the notification area opens the menu: overlay, fight history, boss timers, settings, language.
