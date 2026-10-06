@@ -81,7 +81,7 @@ driver — see [Installation](#installation).
    programs, so it is a separate step.)
 2. **Run `AION2DpsMeter-Setup-v<version>.exe`.** If Windows says *"Windows protected your PC"*, click *More info* →
    *Run anyway*: the program is not code-signed yet. The installer speaks English and Russian, asks for a folder
-   (default `%LocalAppData%\Programs\AION2 DPS Meter`) and offers a desktop shortcut.
+   (default `%LocalAppData%\Programs\AION2 DPS Meter`) and puts shortcuts on the desktop and in the Start menu.
 3. **Start the meter before entering a dungeon** — the game sends player names on loading screens, so players who were
    already around show as `#12345` until the next loading screen. Then just play: the overlay comes up when the fight
    starts.

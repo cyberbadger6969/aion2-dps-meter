@@ -120,7 +120,10 @@ public sealed class AppSettings
     {
         if (Transient) return;
         Directory.CreateDirectory(AppDataDir);
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Json));
+        // Written aside, then swapped in: Windows shutting the app down mid-write must not leave an empty settings.json.
+        var tmp = FilePath + ".tmp";
+        File.WriteAllText(tmp, JsonSerializer.Serialize(this, Json));
+        File.Move(tmp, FilePath, overwrite: true);
     }
 
     public void ApplyTo(MeterOptions options)

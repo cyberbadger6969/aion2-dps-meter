@@ -606,7 +606,9 @@ public sealed class BossTimers
         {
             string text;
             lock (_gate) text = JsonSerializer.Serialize(_learned, Json);
-            File.WriteAllText(_learnedPath, text);
+            var tmp = _learnedPath + ".tmp";
+            File.WriteAllText(tmp, text);
+            File.Move(tmp, _learnedPath, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

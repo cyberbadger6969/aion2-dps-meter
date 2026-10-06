@@ -72,15 +72,12 @@ ru.NpcapContinue=Npcap всё ещё не установлен. Установи
 ru.CloseRunning=AION2 DPS Meter запущен. Закрыть его и продолжить?
 ru.RemoveUserData=Удалить также настройки, историю боёв и таймеры боссов?%n%n%1
 
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Check: DesktopShortcutWanted
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
@@ -175,6 +172,14 @@ begin
   Result := True;
   if (NpcapPage <> nil) and (CurPageID = NpcapPage.ID) and not NpcapInstalled and not WizardSilent then
     Result := MsgBox(CustomMessage('NpcapContinue'), mbConfirmation, MB_YESNO) = IDYES;
+end;
+
+// Every first install puts a shortcut on the desktop. An update keeps what the player did with it: a shortcut they
+// deleted is not put back. (The key is AppId's uninstall entry.)
+function DesktopShortcutWanted: Boolean;
+begin
+  Result := not RegValueExists(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{AE1B2590-0A93-4500-9CB1-0F543771957A}_is1', 'UninstallString')
+            or FileExists(ExpandConstant('{autodesktop}\{#AppName}.lnk'));
 end;
 
 function RelaunchAfterUpdate: Boolean;
