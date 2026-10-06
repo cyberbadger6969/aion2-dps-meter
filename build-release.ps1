@@ -91,7 +91,7 @@ else {
 # Source: everything tracked by the project, without recordings, build output or local tooling.
 $sourceStage = Join-Path $dist "AION2DpsMeter-v$Version-source"
 if (Test-Path $sourceStage) { Remove-Item $sourceStage -Recurse -Force }
-$skip = '\\(bin|obj|captures|dist|\.vs|\.claude|TestResults)(\\|$)'
+$skip = '\\(bin|obj|captures|dist|site-kit|\.git|\.vs|\.claude|TestResults)(\\|$)'
 Get-ChildItem $root -Recurse -File |
     Where-Object { $_.FullName.Substring($root.Length) -notmatch $skip -and $_.Extension -notin '.pcap', '.pcapng' } |
     ForEach-Object {
