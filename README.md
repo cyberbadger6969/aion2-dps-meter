@@ -107,6 +107,7 @@ supported) · Npcap · about 200 MB of disk space.
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | click-through mode: clicks go to the game |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | boss timers |
 | left-click a player | open the breakdown |
+| column header in the breakdown | sort the skills by it (skill, hits, damage, DPS, avg, max, crit, share, accuracy columns); click again to reverse |
 | right-click a player | copy the result for the game chat |
 | **BOSS / ALL** chip | count only the boss, or everything you hit |
 | **EN / RU** chip | interface and name language (English by default; also in Settings and the tray menu) |

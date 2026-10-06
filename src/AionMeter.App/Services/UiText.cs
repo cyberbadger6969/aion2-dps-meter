@@ -230,6 +230,7 @@ public sealed class UiText
     public string ThPerfect { get; init; } = "PERFECT";
     public string ThSmite { get; init; } = "SMITE";
     public string ThMulti { get; init; } = "MULTI";
+    public string SortTip { get; init; } = "Sort by this column · click again to reverse";
     public string QHitsMeasured { get; init; } = "{0} hits measured";
     public string QPositional { get; init; } = "positional";
     public string QExtraHits { get; init; } = "extra hits";
@@ -531,6 +532,7 @@ public sealed class UiText
         ThPerfect = "ИДЕАЛ",
         ThSmite = "СОКРУШ.",
         ThMulti = "МУЛЬТИ",
+        SortTip = "Сортировать по этой колонке · ещё щелчок — в обратном порядке",
         QHitsMeasured = "ударов учтено: {0}",
         QPositional = "по позиции",
         QExtraHits = "доп. удары",

@@ -30,12 +30,29 @@
             <Setter Property="FontSize" Value="17" />
             <Setter Property="Foreground" Value="{StaticResource Text}" />
         </Style>
-        <Style x:Key="Th" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="{StaticResource NumberFont}" />
-            <Setter Property="FontSize" Value="10.5" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{StaticResource TextMute}" />
+        <!-- A column header that sorts its table: gold when it is the sort column, brighter under the mouse. -->
+        <Style x:Key="ThButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
             <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Foreground" Value="{StaticResource TextMute}" />
+            <EventSetter Event="Click" Handler="SortHead_Click" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" Padding="0,2">
+                            <ContentPresenter x:Name="Label" TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontFamily="{StaticResource NumberFont}" TextElement.FontSize="10.5"
+                                              TextElement.FontWeight="SemiBold" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="TextElement.Foreground" Value="{StaticResource GoldBright}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="Td" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource NumberFont}" />
@@ -208,7 +225,7 @@
                                 <c:TimelineChart x:Name="Chart" Margin="0,14,0,0" />
                             </Grid>
                         </Border>
-                        <Grid Grid.Row="1" Margin="8,12,14,4">
+                        <Grid x:Name="SkillHead" Grid.Row="1" Margin="8,12,14,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="54" />
@@ -219,14 +236,14 @@
                                 <ColumnDefinition Width="64" />
                                 <ColumnDefinition Width="110" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding ThSkill, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" HorizontalAlignment="Left" />
-                            <TextBlock Grid.Column="1" Text="{Binding ThHits, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="2" Text="{Binding ThDamage, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="3" Text="{Binding ThDps, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="4" Text="{Binding ThAvg, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="5" Text="{Binding ThMax, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="6" Text="{Binding ThCrit, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="7" Text="{Binding ThShare, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
+                            <Button Tag="Name" Style="{StaticResource ThButton}" HorizontalAlignment="Left" />
+                            <Button Grid.Column="1" Tag="Hits" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="2" Tag="Damage" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="3" Tag="Dps" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="4" Tag="Average" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="5" Tag="Max" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="6" Tag="Crit" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="7" Tag="Share" Style="{StaticResource ThButton}" />
                         </Grid>
                         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                             <ItemsControl x:Name="SkillList">
@@ -281,7 +298,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <UniformGrid x:Name="QualityTiles" Rows="1" Margin="-6,0,0,0" />
-                        <Grid Grid.Row="1" Margin="8,16,14,4">
+                        <Grid x:Name="AccuracyHead" Grid.Row="1" Margin="8,16,14,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="54" />
@@ -293,15 +310,15 @@
                                 <ColumnDefinition Width="60" />
                                 <ColumnDefinition Width="78" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding ThSkill, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" HorizontalAlignment="Left" />
-                            <TextBlock Grid.Column="1" Text="{Binding ThHits, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="2" Text="{Binding ThCrit, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="3" Text="{Binding ThBack, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="4" Text="{Binding ThFront, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="5" Text="{Binding ThPerfect, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="6" Text="{Binding ThSmite, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="7" Text="{Binding ThMulti, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
-                            <TextBlock Grid.Column="8" Text="{Binding ThDamage, Source={x:Static s:UiText.Current}}" Style="{StaticResource Th}" />
+                            <Button Tag="Name" Style="{StaticResource ThButton}" HorizontalAlignment="Left" />
+                            <Button Grid.Column="1" Tag="Hits" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="2" Tag="Crit" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="3" Tag="Back" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="4" Tag="Front" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="5" Tag="Perfect" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="6" Tag="Heavy" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="7" Tag="Multi" Style="{StaticResource ThButton}" />
+                            <Button Grid.Column="8" Tag="Damage" Style="{StaticResource ThButton}" />
                         </Grid>
                         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                             <ItemsControl x:Name="AccuracyList">

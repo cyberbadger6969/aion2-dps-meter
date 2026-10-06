@@ -37,6 +37,13 @@ public partial class BreakdownWindow : Window
         string Back, string Front, string Perfect, string Heavy, string Multi);
 
     private static UiText T => UiText.Current;
+
+    // Each table sorts by a clicked column header; a new breakdown starts with the order chosen last (while the app runs).
+    private static SkillOrder _lastSkillOrder = SkillOrder.Default;
+    private static SkillOrder _lastAccuracyOrder = SkillOrder.Default;
+    private SkillOrder _skillOrder = _lastSkillOrder;
+    private SkillOrder _accuracyOrder = _lastAccuracyOrder;
+
     private readonly SkillIcons _icons;
     private readonly Func<int, string> _serverName;
     private bool _iconRefreshQueued;
@@ -52,6 +59,7 @@ public partial class BreakdownWindow : Window
         _icons = icons;
         _portraits = portraits;
         InitializeComponent();
+        ShowSortHeads();
         DragAnywhere.Attach(this);
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) =>
@@ -158,9 +166,9 @@ public partial class BreakdownWindow : Window
         StatTime.Text = Format.Clock(d.CombatMs);
 
         var maxShare = d.Skills.Count > 0 ? d.Skills.Max(s => s.Share) : 1;
-        var items = d.Skills.Select(s => ToItem(s, maxShare)).ToList();
-        SkillList.ItemsSource = items;
-        AccuracyList.ItemsSource = items.Where((_, i) => d.Skills[i].Hits > 0).ToList();
+        SkillList.ItemsSource = _skillOrder.Apply(d.Skills, T.Culture).Select(s => ToItem(s, maxShare)).ToList();
+        AccuracyList.ItemsSource = _accuracyOrder.Apply(d.Skills.Where(s => s.Hits > 0), T.Culture).Select(s => ToItem(s, maxShare)).ToList();
+        ShowSortHeads();
 
         var q = d.Quality;
         QualityTiles.Children.Clear();
@@ -216,6 +224,54 @@ public partial class BreakdownWindow : Window
             });
         panel.Children.Add(new Border { Style = (Style)FindResource("StatTile"), Child = stack, Padding = new Thickness(14, 10, 14, 10), MinWidth = 96 });
     }
+
+    /// <summary>A column header was clicked: sort its table by that column, or turn the order around.</summary>
+    private void SortHead_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string tag } head || !Enum.TryParse<SkillColumn>(tag, out var column)) return;
+        if (head.Parent == AccuracyHead) _lastAccuracyOrder = _accuracyOrder = _accuracyOrder.Toggle(column);
+        else _lastSkillOrder = _skillOrder = _skillOrder.Toggle(column);
+        Reload();
+    }
+
+    /// <summary>Header captions, with an arrow and gold on the column each table is sorted by.</summary>
+    private void ShowSortHeads()
+    {
+        Show(SkillHead, _skillOrder);
+        Show(AccuracyHead, _accuracyOrder);
+
+        void Show(Grid head, SkillOrder order)
+        {
+            foreach (var button in head.Children.OfType<Button>())
+            {
+                if (button.Tag is not string tag || !Enum.TryParse<SkillColumn>(tag, out var column)) continue;
+                var label = HeadLabel(column);
+                var arrow = order.Descending ? "▾" : "▴";
+                // The arrow goes on the outer side, so a caption stays lined up with its column's numbers.
+                button.Content = column != order.Column ? label : column == SkillColumn.Name ? $"{label} {arrow}" : $"{arrow} {label}";
+                button.Foreground = (Brush)FindResource(column == order.Column ? "Gold" : "TextMute");
+                button.ToolTip = T.SortTip;
+            }
+        }
+    }
+
+    private static string HeadLabel(SkillColumn column) => column switch
+    {
+        SkillColumn.Name => T.ThSkill,
+        SkillColumn.Hits => T.ThHits,
+        SkillColumn.Damage => T.ThDamage,
+        SkillColumn.Dps => T.ThDps,
+        SkillColumn.Average => T.ThAvg,
+        SkillColumn.Max => T.ThMax,
+        SkillColumn.Crit => T.ThCrit,
+        SkillColumn.Share => T.ThShare,
+        SkillColumn.Back => T.ThBack,
+        SkillColumn.Front => T.ThFront,
+        SkillColumn.Perfect => T.ThPerfect,
+        SkillColumn.Heavy => T.ThSmite,
+        SkillColumn.Multi => T.ThMulti,
+        _ => column.ToString(),
+    };
 
     private void PartyList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
