@@ -121,7 +121,16 @@ foreach ($lang in 'en', 'ru') {
     if ($LASTEXITCODE -ne 0) { throw "ffmpeg (gif) failed" }
 }
 
-# ---------------------------------------------------------------- texts, zip
+# ---------------------------------------------------------------- README pictures, texts, zip
+# The English ones also illustrate README.md on GitHub.
+$readme = Join-Path $root "docs\images"
+New-Item -ItemType Directory -Force $readme | Out-Null
+@{ "images\icon-256.png" = "icon-256.png"; "video\overlay-fight-en.gif" = "overlay-fight.gif"; "images\overlay-en.png" = "overlay.png"
+   "images\breakdown-dps-en.png" = "breakdown-dps.png"; "images\breakdown-accuracy-en.png" = "breakdown-accuracy.png"
+   "images\breakdown-rotation-en.png" = "breakdown-rotation.png"; "images\boss-timers-en.png" = "boss-timers.png"
+   "images\update-window-en.png" = "update-window.png"; "images\update-banner-en.png" = "update-banner.png" }.GetEnumerator() |
+    ForEach-Object { if (Test-Path (Join-Path $kit $_.Key)) { Copy-Item (Join-Path $kit $_.Key) (Join-Path $readme $_.Value) -Force } }
+
 Copy-Item (Join-Path $root "docs\site\*") $kit -Recurse
 $zip = Join-Path $root "dist\AION2DpsMeter-site-kit.zip"
 New-Item -ItemType Directory -Force (Split-Path $zip) | Out-Null

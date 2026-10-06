@@ -1,196 +1,279 @@
-# AION2 DPS Meter — DPS-метр для AION 2 (Global / EU)
+<p align="center">
+  <img src="docs/images/icon-256.png" width="88" alt="">
+</p>
 
-**[Скачать последнюю версию](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest)** — установщик
-`AION2DpsMeter-Setup-v<версия>.exe` или zip без установки.
+<h1 align="center">AION2 DPS Meter</h1>
 
-> **English:** a live DPS meter overlay for AION 2 Global (EU / NA). Get the installer from the
-> [latest release](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest); English install notes are in the
-> release description and in `INSTALL.txt`. The interface switches between English and Russian.
+<p align="center">
+  A free, open-source live DPS meter for <b>AION 2 Global (EU / NA)</b>.<br>
+  Party DPS, boss HP, a full skill breakdown and field boss respawn timers — right on top of the game.
+</p>
 
-Живой оверлей урона в стиле AionFlex / встроенного метра WoW: DPS пати, HP босса, разбор по скиллам,
-точность (крит / спина / фронт / перфект / смайт), ротация, история боёв.
+<p align="center">
+  <a href="https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest"><img alt="Download the latest release" src="https://img.shields.io/github/v/release/cyberbadger6969/aion2-dps-meter?label=download&color=c9a45c&style=for-the-badge"></a>
+  <img alt="Windows 10 / 11, 64-bit" src="https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-2b3a67?style=for-the-badge">
+  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-3dd68c?style=for-the-badge"></a>
+</p>
 
-Метр **только слушает** собственное сетевое соединение игры через Npcap. Он не читает память игры, ничего не
-внедряет и не отправляет в игру ни байта. Тем не менее сторонние программы могут нарушать правила игры —
-используйте на свой риск.
+<p align="center"><b>English</b> · <a href="README.ru.md">Русский</a></p>
 
-## Установка (для игроков)
+<p align="center">
+  <img src="docs/images/overlay-fight.gif" width="400" alt="The overlay during a boss fight: places change as the damage comes in">
+</p>
 
-**Установщик** — `AION2DpsMeter-Setup-v<версия>.exe`: запустить и нажимать «Далее». Ставится для текущего пользователя
-(без прав администратора) в `%LocalAppData%\Programs\AION2 DPS Meter`, создаёт ярлыки на рабочем столе и в «Пуске»,
-удаляется через «Параметры → Приложения». Если нет [Npcap](https://npcap.com/#download) (бесплатный драйвер захвата),
-установщик покажет страницу с кнопкой загрузки — Npcap ставится с настройками по умолчанию, они подходят и для ExitLag.
-Обновление — запустить установщик новой версии: он сам закроет запущенный метр. На предупреждение SmartScreen:
-«Подробнее» → «Выполнить в любом случае».
+> The party in the pictures is made up; the fight is scripted to show the overlay at work.
 
-**Без установки** — `AION2DpsMeter-v<версия>-win-x64.zip`: поставить Npcap, распаковать архив в любую папку и запустить
-`AION2DpsMeter.exe`. .NET ставить не нужно ни в одном из вариантов — он внутри.
+## Download
 
-Настройки, история и таймеры лежат в `%AppData%\AionMeter` и переживают обновления. Подробная инструкция на русском и
-английском — `INSTALL.txt`.
+Get it from the **[latest release](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest)**:
 
-## Выпуск версии (для автора)
+- **`AION2DpsMeter-Setup-v<version>.exe`** — the installer (recommended). Installs for your Windows user without
+  administrator rights, adds Start menu and desktop shortcuts, uninstalls from *Settings → Apps*.
+- **`AION2DpsMeter-v<version>-win-x64.zip`** — the same program without installation: unzip anywhere, run
+  `AION2DpsMeter.exe`.
 
-```powershell
-.\build-release.ps1
-```
+Neither needs .NET installed: it is built in. You also need [Npcap](https://npcap.com/#download), the free capture
+driver — see [Installation](#installation).
 
-Скрипт собирает в `dist\`:
+## Features
 
-- `AION2DpsMeter-Setup-v<версия>.exe` — установщик ([Inno Setup 7](https://jrsoftware.org/isdl.php), скрипт
-  `installer/AION2DpsMeter.iss`; если Inno Setup не установлен, этот шаг пропускается с предупреждением);
-- `AION2DpsMeter-v<версия>-win-x64.zip` — то же без установки (самодостаточный exe, папка `data`, `LICENSE`, `INSTALL.txt`);
-- `AION2DpsMeter-v<версия>-source.zip` — исходники без записей трафика (по GPL-3.0 их нужно давать вместе с программой).
+- **Live overlay** — party DPS, damage and share for every player, the boss's HP and the biggest hit, updated five
+  times a second. Class colours and emblems, your own row highlighted, your place in the group (★ 2 / 9).
+- **Shows up when you fight** — the overlay appears when a boss is fought nearby or you hit anything, and hides again
+  60 s after the fight. Lock it in place, make it click-through, set the opacity. It never takes focus from the game.
+- **Full breakdown** — click a player for their fight: DPS timeline against the party, every skill with hits, damage,
+  DPS, average and biggest hit, crit rate and share.
+- **Accuracy and rotation** — crit, back, front, perfect and smite rates per skill, and every cast in order with crits
+  ringed in gold.
+- **Fight history** — boss fights (and longer regular ones) are saved automatically; scroll through them right in the
+  overlay or browse the history window.
+- **Field boss timers from the game** — open the field boss list on the in-game map once and the meter keeps every
+  respawn counting down, per server, with a tray alert before a boss you watch returns.
+- **Share in chat** — right-click a player to copy a one-line result for the game chat.
+- **English and Russian** — interface and skill / NPC names in either language, switchable at any time.
+- **Updates itself** *(coming in 0.2.0)* — a new version is announced in the meter and installed in one click.
+- **Passive** — reads only your own game's network traffic; never touches game memory or sends anything to the game.
 
-Версия берётся из `<Version>` в `src/AionMeter.App/AionMeter.App.csproj` — поднимите её перед выпуском. Всё
-выкладывается вместе в GitHub Releases с тегом `v<версия>`. Проверка обновлений в метре смотрит на последний релиз
-(`/releases/latest`: черновики и pre-release пропускаются) и берёт из него файл `*Setup*.exe` — без него установленные
-копии предложат только страницу загрузки.
+## Screenshots
 
-```powershell
-gh release create v<версия> dist\AION2DpsMeter-Setup-v<версия>.exe dist\AION2DpsMeter-Setup.exe dist\AION2DpsMeter-v<версия>-win-x64.zip dist\AION2DpsMeter-win-x64.zip dist\AION2DpsMeter-v<версия>-source.zip --title "AION2 DPS Meter <версия>" --notes-file notes.md
-```
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/breakdown-dps.png" alt="Breakdown: DPS timeline and per-skill table"><br><sub><b>Breakdown</b> — DPS timeline and every skill of the player</sub></td>
+    <td width="50%"><img src="docs/images/breakdown-accuracy.png" alt="Accuracy: crit, back, front, perfect and smite rates"><br><sub><b>Accuracy</b> — crit, back, front, perfect and smite per skill</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/breakdown-rotation.png" alt="Rotation: every cast in order"><br><sub><b>Rotation</b> — every cast in order, crits ringed in gold</sub></td>
+    <td width="50%"><img src="docs/images/boss-timers.png" alt="Field boss respawn timers"><br><sub><b>Boss timers</b> — read from the in-game map, counted down to the second</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/overlay.png" alt="The overlay"><br><sub><b>Overlay</b> — nine players, every class</sub></td>
+    <td width="50%"><img src="docs/images/update-window.png" alt="Update window"><br><img src="docs/images/update-banner.png" alt="Update banner on the overlay"><br><sub><b>Updates</b> (0.2.0) — the overlay announces a new version, one click installs it</sub></td>
+  </tr>
+</table>
 
-Файлы без номера версии (`AION2DpsMeter-Setup.exe`, `AION2DpsMeter-win-x64.zip`) нужны для постоянных ссылок: сайт ведёт на
-`https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe` и всегда отдаёт
-последнюю версию.
+## Installation
 
-## Требования для сборки из исходников
+1. **Install [Npcap](https://npcap.com/#download)** — the free packet capture driver Wireshark uses. Keep its default
+   options: they also capture traffic relayed by ExitLag and other ping boosters. The meter's installer checks for
+   Npcap and opens the download page if it is missing. (Npcap's licence does not allow bundling it with other
+   programs, so it is a separate step.)
+2. **Run `AION2DpsMeter-Setup-v<version>.exe`.** If Windows says *"Windows protected your PC"*, click *More info* →
+   *Run anyway*: the program is not code-signed yet. The installer speaks English and Russian, asks for a folder
+   (default `%LocalAppData%\Programs\AION2 DPS Meter`) and offers a desktop shortcut.
+3. **Start the meter before entering a dungeon** — the game sends player names on loading screens, so players who were
+   already around show as `#12345` until the next loading screen. Then just play: the overlay comes up when the fight
+   starts.
 
-- Windows 10/11 x64
-- [Npcap](https://npcap.com) (настройки по умолчанию; захват loopback для ExitLag и других «ускорителей» в нём есть всегда)
-- .NET 10 SDK
+**Portable zip:** install Npcap, unzip the archive into any folder (not inside the zip itself), run
+`AION2DpsMeter.exe`. Update by unzipping a newer version over it.
 
-## Сборка и запуск
+**Updating:** run the newer installer (it closes the running meter by itself) — from 0.2.0 the meter offers updates on
+its own. **Uninstalling:** *Settings → Apps → AION2 DPS Meter*; it asks whether to delete your settings and history too.
+
+Settings, fight history and timers live in `%AppData%\AionMeter` and survive updates. `INSTALL.txt` in the download has
+the same instructions in English and Russian.
+
+**Requirements:** Windows 10 or 11 (64-bit) · AION 2 on Global servers (EU or NA; Korean and Taiwanese clients are not
+supported) · Npcap · about 200 MB of disk space.
+
+## Using the meter
+
+| | |
+|---|---|
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> | show / hide the overlay |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> | reset the meter |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | click-through mode: clicks go to the game |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | boss timers |
+| left-click a player | open the breakdown |
+| right-click a player | copy the result for the game chat |
+| **BOSS / ALL** chip | count only the boss, or everything you hit |
+| **EN / RU** chip | interface and name language (English by default; also in Settings and the tray menu) |
+| fights button in the header | pick a fight: live, this session's, or saved ones by day |
+| clock button / gold *Boss timers* pill | boss respawn timers |
+| mouse wheel over the fight title | scroll through fights (down = older, up = newer, top = live) |
+| gold **A** in the notification area | history, timers, settings, language, updates, exit |
+
+Hotkeys can be changed in Settings. The toolbar appears when the mouse is over the overlay.
+
+The overlay **shows up by itself** when a boss is fought nearby or you hit anything, and hides 60 s after the fight if
+it came up by itself (*Settings → Overlay*). Hide it by hand during a fight and it stays hidden until the next one.
+
+### Fight history
+
+Fights are saved to `%AppData%\AionMeter\fights` (one file per fight plus `index.jsonl`). By default: every boss fight
+and regular fights longer than 20 s — change it in *Settings → Fight history*. Open a saved fight in the overlay (fights
+button or mouse wheel over the title) or in the *Fight history* window (filters All / Bosses / Kills, *Show in
+overlay*). When a new fight starts, the overlay returns to live by itself.
+
+### Field boss respawn timers
+
+The timers come **from the game**. While the field boss list is open on the in-game map (*Map → Exploration → Field
+monsters*), the server sends packet `01 91`: the map number and, for each boss, "alive since …" or "back at …". The meter
+shows the same timers in its window, counted down to the second. They refresh whenever the list is open; in between,
+the meter notices boss kills nearby and starts the countdown from a learned interval (marked "≈"; it can also be set by
+hand).
+
+The packet has no NPC codes — only a slot (map number × 100 + place in the list), and the list holds the map's bosses
+sorted by code, all from one block of a thousand codes (Altgard, map 1110 → 2400xxx). Known maps are in
+`data/field_boss_maps.json`; for a new map the block is learned from the first boss the meter sees there, and only
+accepted when the block's boss count matches the list. Until then bosses show as "Field boss #N".
+
+The 🔔 on a boss gives a tray alert 2 minutes before it respawns (adjustable in the timers window); the bell turns on by
+itself when you are near a boss kill. Every server has its own bosses and times, so timers are kept **per server** —
+the server of the character you play (known from the login packet and the name cache). The window header shows it
+("Marchutan EU ▾") and can switch to another server you played on; alerts and the overlay pill follow the current one.
+
+### Updates *(0.2.0)*
+
+The meter checks GitHub for a new version shortly after start and every 6 hours (*Settings → Updates*, or *Check for
+updates* in the tray menu). A new version brings a tray notification, a green banner above the overlay footer and an
+*Update to …* tray item; the update window shows what's new with *Update*, *Later* and *Skip this version*.
+
+An installed copy updates itself: the meter downloads the installer from the release, checks its size and SHA-256
+against what GitHub reports, runs it silently (`/SILENT /RELAUNCH=1`) and exits; the installer puts the new version in
+place and starts it (with `--updated`, the meter then says "Updated to …"). A portable copy opens the download page
+instead. The only thing sent is the request to `api.github.com` itself (user agent `AION2DpsMeter/<version>`).
+
+### Who counts as a player
+
+Elementalist spirits, pets and "living" skill effects (Bittercold Wind, Wall of Fire …) appear in the game as separate
+objects with their own ids. Their damage goes to the owner — through the spawn packet's owner link, the summoner's name,
+the cast (an effect ticks with the same skill variant that created it) or the power scalar. When no owner can be found,
+the damage goes to a "Summons (owner unknown)" row, listed last and left out of the player count and places. Players
+with less than 0.1 % of the damage show "<0.1%".
+
+### Skill icons and boss portraits
+
+Skill icons are downloaded from the official AION 2 CDN (`assets.playnccdn.com`), boss portraits from
+[MetaBot.GG](https://metabot.gg/en/aion-2/bosses). Every picture is requested once and cached in
+`%AppData%\AionMeter\icons` and `…\portraits`; portraits the site does not have are not asked for again for a week.
+Turn it off in *Settings* ("Download skill icons and boss portraits") and a skull stands in for the portrait.
+
+## FAQ
+
+**Can I get banned for this?**
+The meter does not touch the game: no memory reading, no injection, nothing is sent to the game. Still, any
+third-party tool may be against the game's terms of service — use it at your own risk.
+
+**Some players show as "#12345" instead of a name.**
+The game sends names on loading screens. Start the meter before entering a dungeon; players who were already around get
+their names after the next loading screen.
+
+**Does it work with ExitLag or a VPN?**
+Yes with ExitLag and other ping boosters. If a VPN hides the game connection, choose the network adapter in
+*Settings → Capture*.
+
+**The boss timers are empty.**
+Open the field boss list on the in-game map (*Map → Exploration → Field monsters*) once: the meter reads the timers from
+it and keeps counting.
+
+**My antivirus or SmartScreen complains.**
+The program is new, not code-signed, and it captures network traffic, which some antiviruses dislike. The source is
+here: read it or build it yourself.
+
+**My crit rate on a crowded field boss is almost zero.**
+On busy field bosses the game reports very few critical hits for some classes; the meter shows exactly what the server
+sends. On other targets the numbers look as usual.
+
+**Where are my settings and fights? How do I uninstall?**
+In `%AppData%\AionMeter`. Uninstall from *Settings → Apps*; it asks whether to delete settings and history as well.
+
+## Privacy
+
+The meter reads the game's traffic on your PC and keeps everything there. Its own network requests are: skill icons
+from the official AION 2 CDN and boss portraits from MetaBot.GG (both can be turned off) and, from 0.2.0, the update
+check to `api.github.com`. No telemetry, no accounts. Packet recordings (*Settings → Capture → Record packets*, off by
+default) contain your game traffic including character names — do not publish them.
+
+## Building from source
+
+Requirements: Windows 10/11 x64, [.NET 10 SDK](https://dotnet.microsoft.com/download), [Npcap](https://npcap.com)
+(default options).
 
 ```bash
 dotnet build AionMeter.sln -c Release
+dotnet test tests/AionMeter.Tests
 ```
 
 ```bash
 src/AionMeter.App/bin/Release/net10.0-windows/AION2DpsMeter.exe
 ```
 
-Запускайте метр **до** входа в подземелье. Игра присылает ники только на экране загрузки, поэтому игроки, которые
-уже были рядом при старте метра, показываются как `#id` до следующей загрузки или телепорта.
+**Releases:** bump `<Version>` in `src/AionMeter.App/AionMeter.App.csproj`, then run `.\build-release.ps1`. It writes to
+`dist\` the installer (needs [Inno Setup 7](https://jrsoftware.org/isdl.php); script `installer/AION2DpsMeter.iss`),
+the portable zip, the source zip, and copies of the installer and zip under fixed names (`AION2DpsMeter-Setup.exe`,
+`AION2DpsMeter-win-x64.zip`) so that `releases/latest/download/<name>` always gives the newest version. Publish them
+together as a GitHub release tagged `v<version>` (not a pre-release: the update check reads `/releases/latest` and needs
+the `*Setup*.exe` asset).
 
-## Управление
+```powershell
+gh release create v<version> dist\AION2DpsMeter-Setup-v<version>.exe dist\AION2DpsMeter-Setup.exe dist\AION2DpsMeter-v<version>-win-x64.zip dist\AION2DpsMeter-win-x64.zip dist\AION2DpsMeter-v<version>-source.zip --title "AION2 DPS Meter <version>" --notes-file notes.md
+```
 
-| | |
-|---|---|
-| Ctrl+Shift+D | показать / скрыть оверлей |
-| Ctrl+Shift+R | сбросить метр |
-| Ctrl+Shift+L | «сквозной» режим: клики проходят в игру |
-| ЛКМ по игроку | разбор боя |
-| ПКМ по игроку | скопировать результат в чат |
-| BOSS / ALL | считать только босса или всё подряд |
-| EN / RU | язык интерфейса и названий (английский по умолчанию; также в Настройках и в трее) |
-| кнопка истории ⟲ в шапке | выбрать бой: Live, бои этого сеанса, сохранённые по дням |
-| кнопка часов 🕓 в шапке | таймеры респауна боссов (также в трее) |
-| колесо мыши над названием боя | листать бои (вниз — старее, вверх — новее, выше всех — Live) |
-| значок «A» в трее | история, настройки, демо-бой, повтор записи |
+**Screenshots and video:** `tools/make-site-kit.ps1` renders the pictures in this README, English and Russian
+screenshots, a social preview and the fight animation (MP4 / GIF, needs ffmpeg) into `site-kit\` and
+`dist\AION2DpsMeter-site-kit.zip`, together with the download page brief from `docs/site`.
 
-Хоткеи меняются в настройках. Окно оверлея не забирает фокус у игры.
-
-Оверлей **появляется сам**, когда рядом бьют босса или вы ударили любого моба, и прячется через 60 с после боя, если
-появился сам (Настройки → Оверлей). Если скрыть его вручную во время боя, он появится в следующем.
-
-### Таймеры боссов
-
-Таймеры берутся **из игры**. Когда на карте открыт список полевых боссов (карта → Исследование), сервер присылает
-пакет `01 91`: номер карты и для каждого босса «жив с …» или «вернётся в …». Метр показывает те же таймеры в своём окне
-(кнопка с часами на оверлее или пункт в трее) с отсчётом до секунды. Они обновляются каждый раз, когда список открыт;
-в промежутках метр сам замечает убийства боссов рядом и запускает отсчёт по выученному интервалу (помечается «≈»,
-его можно выбрать и вручную).
-
-В пакете нет кодов NPC — только ячейка = номер карты × 100 + место в списке, а список состоит из боссов карты,
-отсортированных по коду; все они из одного «блока» кодов (Альтгард, карта 1110 → 2400xxx). Известные карты лежат в
-`data/field_boss_maps.json`. Для новой карты блок узнаётся по первому боссу, которого метр там увидит, и принимается,
-только если число боссов в блоке совпадает с длиной списка. До этого боссы показываются как «Полевой босс №N».
-
-🔔 у босса — уведомление в трее за 2 мин до респауна (время настраивается в окне таймеров). Колокольчик ставится сам,
-когда вы рядом с убийством босса. Таймеры хранятся в `%AppData%\AionMeter\boss-timers.json`.
-
-На каждом сервере свои боссы и своё время, поэтому таймеры хранятся **отдельно по серверам** — по серверу персонажа,
-которым вы играете (его метр знает из пакета входа и кэша ников). В шапке окна виден сервер («Маркутан EU ▾»); там же
-можно посмотреть таймеры другого сервера, если вы играли и там. Оповещения и кнопка на оверлее — только для текущего.
-
-Окно таймеров: золотая кнопка «⏱ Таймеры боссов» в подвале оверлея (на ней — ближайший респаун) или Ctrl+Shift+T.
-
-### Кто считается игроком
-
-Духи Заклинателей, питомцы и «живые» эффекты умений (Леденящий ветер, Стена огня …) появляются в игре отдельными
-объектами со своим id. Их урон приписывается хозяину: по ссылке в пакете появления, по имени заклинателя, по касту
-(эффект тикает тем же вариантом умения, которым его вызвали) или по множителю силы. Если хозяина найти не удалось,
-урон попадает в строку «Призывы (владелец неизвестен)» — она стоит последней и в число игроков и места не входит.
-Игроки с вкладом меньше 0,1% показываются как «<0.1%».
-
-### История боёв
-
-Бои сохраняются автоматически в `%AppData%\AionMeter\fights` (по файлу на бой + `index.jsonl`). По умолчанию —
-все боссы и обычные бои длиннее 20 с; правило меняется в Настройки → Fight history. Сохранённый бой можно открыть
-прямо в оверлее (кнопка истории или колесо мыши над названием) или в окне «Fight history» (фильтры All / Bosses /
-Kills, кнопка «Show in overlay»). Когда начинается новый бой, оверлей сам возвращается в Live.
-
-### Обновления
-
-Метр сам проверяет новые версии на GitHub: вскоре после запуска и раз в 6 часов (Настройки → Обновления, там же
-«Проверить сейчас»; в трее — «Проверить обновления»). Когда выходит новая версия, появляются уведомление в трее, зелёная
-полоса над подвалом оверлея и пункт «Обновить до …» в меню трея. В окне обновления — что нового и кнопки «Обновить»,
-«Позже», «Пропустить эту версию».
-
-Установленная копия обновляется сама: метр скачивает установщик из релиза, сверяет размер и SHA-256 с тем, что сообщает
-GitHub, запускает его тихо (`/SILENT /RELAUNCH=1`) и закрывается; установщик ставит новую версию поверх и запускает её
-(с `--updated`, метр показывает «Обновлено до …»). Копия из zip открывает страницу загрузки. Метр отправляет только сам
-запрос к `api.github.com` (заголовок `AION2DpsMeter/<версия>`), ничего о пользователе и боях.
-
-Проверить то, что видит метр, можно из консоли: `aionmeter-cli update-check [--pretend 0.0.1] [--download <папка>]`.
-
-### Иконки и портреты боссов
-
-Иконки умений скачиваются с официального CDN AION 2 (`assets.playnccdn.com`), портреты боссов — из базы
-[MetaBot.GG](https://metabot.gg/en/aion-2/bosses) (`metabot.gg/web/aion2/npcs/…`). Каждая картинка запрашивается один
-раз и хранится в `%AppData%\AionMeter\icons` и `…\portraits`; портреты, которых на сайте нет, повторно не запрашиваются
-неделю (`portraits\missing.json`). Полевые боссы лежат там под своим кодом NPC, данжевые — под именем модели, привязка в
-`data/boss_portraits.json`. Отключается в Настройках («Скачивать иконки умений и портреты боссов») — тогда вместо
-портрета показывается череп.
-
-## Как это устроено
+## How it works
 
 ```
 Npcap (loopback / NIC) ─► PacketPipeline ─► TcpReassembler ─► FrameDecoder ─► PacketParser ─► CombatTracker ─► UI
-   поиск соединения        поток по         порядок, дыры      varint-кадры,     опкоды →         сегменты боя,
-   AION2.exe в TCP-        «пульсу»                            LZ4-бандлы        события          босс, вайп, DPS
-   таблице Windows         0E 00 36
+   finds AION2.exe's        locks onto the     order, gaps        varint frames,    opcodes →        fight segments,
+   TCP connections in       stream by its                         LZ4 bundles       events           boss, wipe, DPS
+   the Windows TCP table    heartbeat 0E 00 36
 ```
 
-- `src/AionMeter.Core` — захват, протокол, движок боя, история (без UI)
-- `src/AionMeter.App` — WPF-оверлей, окно разбора, история, настройки, трей
-- `src/AionMeter.Cli` — инструмент разработчика (`aionmeter-cli`)
-- `tests/AionMeter.Tests` — тесты на байтах из реальных EU-захватов
-- `data/` — таблицы имён скиллов / мобов / боссов на 10 языках (см. `data/NOTICE.md`)
+- `src/AionMeter.Core` — capture, protocol, combat engine, history, update feed (no UI)
+- `src/AionMeter.App` — the WPF overlay, breakdown, history, timers, settings, updates, tray
+- `src/AionMeter.Cli` — developer tool `aionmeter-cli`
+- `tests/AionMeter.Tests` — tests on bytes from real EU captures
+- `data/` — skill / NPC / boss name tables in 10 languages (see `data/NOTICE.md`)
+- `installer/` — Inno Setup script and wizard art
 
 ### aionmeter-cli
 
 ```bash
-aionmeter-cli conns                       # процесс игры и его соединения
-aionmeter-cli live 60 --record            # живой захват + запись в captures/*.pcap
+aionmeter-cli conns                          # the game process and its connections
+aionmeter-cli live 60 --record               # live capture + recording to captures/*.pcap
 aionmeter-cli replay captures/x.pcap --boss --lang ru
-aionmeter-cli dump captures/x.pcap 0438   # сырые пакеты урона
+aionmeter-cli dump captures/x.pcap 0438      # raw damage packets
+aionmeter-cli update-check --pretend 0.0.1   # what the update check sees on GitHub
 ```
 
-Записи `.pcap` содержат ваш игровой трафик, включая ники, — не публикуйте их.
-
-### Флаги AionMeter.exe для разработки
+### Development switches of AION2DpsMeter.exe
 
 | | |
 |---|---|
-| `--render-sample out.png` | нарисовать оверлей с тестовой пати всех классов в PNG и выйти (без окна, захвата, настроек и истории — можно при запущенной игре) |
-| `--demo` | синтетический бой (смешивается с живым — не запускать во время игры) |
-| `--replay file.pcap --open-last [--tab rotation]` | прогнать запись и открыть разбор |
-| `--show` | показать оверлей в этом запуске, даже если он скрыт в настройках |
+| `--render-sample out.png` | draw the overlay with a scripted fight of every class into a PNG and exit — no window, no capture, no settings or history touched, safe while the game runs. Also `--window breakdown\|timers\|update\|overlay-update`, `--tab accuracy\|rotation`, `--lang ru`, `--backdrop game\|dark\|none`, `--width`, `--height`, `--scale` |
+| `--render-sample <folder> --animate 12 --fps 10` | the overlay frame by frame through the scripted fight, for videos |
+| `--demo` | a synthetic fight (mixes with live data — not while playing) |
+| `--replay file.pcap --open-last [--tab rotation]` | run a recording through the meter and open the breakdown |
+| `--show` | show the overlay this run even if it is hidden in settings |
 
-## Лицензия
+## License and credits
 
-GPL-3.0 (см. `LICENSE`). Таблицы игровых данных взяты из открытых GPL-проектов, см. `data/NOTICE.md`.
-Портреты боссов — [MetaBot.GG](https://metabot.gg). Игровые данные и арт © NCSOFT.
+GPL-3.0 — see [LICENSE](LICENSE). Game data tables come from the GPL-3.0 projects
+[A2Tools-DPS-Meter](https://github.com/taengu/A2Tools-DPS-Meter) (taengu) and
+[AIon2-Dps-Meter](https://github.com/Kuroukihime/AIon2-Dps-Meter) (Kuroukihime), see [data/NOTICE.md](data/NOTICE.md).
+Skill icons come from the official AION 2 CDN, boss portraits from [MetaBot.GG](https://metabot.gg). AION 2 and its game
+data and art are © NCSOFT; this project is not affiliated with NCSOFT.
