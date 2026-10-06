@@ -48,8 +48,12 @@
 копии предложат только страницу загрузки.
 
 ```powershell
-gh release create v<версия> dist\AION2DpsMeter-Setup-v<версия>.exe dist\AION2DpsMeter-v<версия>-win-x64.zip dist\AION2DpsMeter-v<версия>-source.zip --title "AION2 DPS Meter <версия>" --notes-file notes.md
+gh release create v<версия> dist\AION2DpsMeter-Setup-v<версия>.exe dist\AION2DpsMeter-Setup.exe dist\AION2DpsMeter-v<версия>-win-x64.zip dist\AION2DpsMeter-win-x64.zip dist\AION2DpsMeter-v<версия>-source.zip --title "AION2 DPS Meter <версия>" --notes-file notes.md
 ```
+
+Файлы без номера версии (`AION2DpsMeter-Setup.exe`, `AION2DpsMeter-win-x64.zip`) нужны для постоянных ссылок: сайт ведёт на
+`https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe` и всегда отдаёт
+последнюю версию.
 
 ## Требования для сборки из исходников
 

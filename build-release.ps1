@@ -2,6 +2,8 @@
 #   dist\AION2DpsMeter-Setup-v<version>.exe    - installer: shortcuts, uninstall, Npcap check (needs Inno Setup 7)
 #   dist\AION2DpsMeter-v<version>-win-x64.zip  - the same program without installation (no .NET install needed)
 #   dist\AION2DpsMeter-v<version>-source.zip   - the source code (GPL-3.0: hand it out alongside the program)
+#   dist\AION2DpsMeter-Setup.exe, dist\AION2DpsMeter-win-x64.zip - copies under names that never change, for links
+#   that always give the newest version (releases/latest/download/<name>)
 # Packet recordings (captures\) and build output never go into any of them.
 param([string]$Version = "")
 
@@ -57,7 +59,9 @@ if (-not (Test-Path (Join-Path $stage "data\npcs\en.json"))) { throw "data folde
 
 $programZip = Join-Path $dist "$name.zip"
 New-Zip $stage $programZip
-$outputs = @($programZip)
+$stableZip = Join-Path $dist "AION2DpsMeter-win-x64.zip" # the never-changing name, as for the installer below
+Copy-Item $programZip $stableZip -Force
+$outputs = @($programZip, $stableZip)
 
 # Installer: a regular (not single-file) publish starts faster once installed, and Inno Setup's LZMA2 packs it
 # smaller than the single-file exe.
@@ -73,7 +77,12 @@ if ($iscc) {
     & $iscc /Qp "/DAppVer=$Version" "/DPayloadDir=$setupStage" "/O$dist" (Join-Path $root "installer\AION2DpsMeter.iss")
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
     Remove-Item $setupStage -Recurse -Force
-    $outputs = @(Join-Path $dist "AION2DpsMeter-Setup-v$Version.exe") + $outputs
+    $setupExe = Join-Path $dist "AION2DpsMeter-Setup-v$Version.exe"
+    # Same file under a name that never changes: the download page links to
+    # releases/latest/download/AION2DpsMeter-Setup.exe and always gets the newest version.
+    $stableSetup = Join-Path $dist "AION2DpsMeter-Setup.exe"
+    Copy-Item $setupExe $stableSetup -Force
+    $outputs = @($setupExe, $stableSetup) + $outputs
 }
 else {
     Write-Warning "Inno Setup 7 not found (https://jrsoftware.org/isdl.php): no installer this time, the zip is ready."

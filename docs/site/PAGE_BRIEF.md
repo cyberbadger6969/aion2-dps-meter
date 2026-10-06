@@ -18,24 +18,78 @@
 4. Сделать вёрстку в стиле сайта, но сохранить порядок блоков (раздел 4) и тексты (разделы 5 и 6).
    Оформление из `page-preview.html` — образец: тёмный фон, золотые акценты, как у самой программы.
 5. Добавить метатеги (раздел 7).
-6. Проверить: ширина телефона 375 px, видео играет само без звука и по кругу, у всех картинок есть alt, все ссылки
-   открываются, кнопка «Скачать» ведёт на релизы.
+6. Сделать скачивание прямо с сайта: адрес `/download/aion2-dps-meter` с переадресацией на установщик (раздел 2).
+7. Проверить: ширина телефона 375 px, видео играет само без звука и по кругу, у всех картинок есть alt, все ссылки
+   открываются, кнопка «Скачать» сразу скачивает `AION2DpsMeter-Setup.exe`.
 
 ## 2. Ссылки
 
 | Что | Адрес |
 |---|---|
-| Скачать (всегда последняя версия) | https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest |
+| Скачать установщик (последняя версия, с 0.2.0) | https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe |
+| Страница последнего релиза | https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest |
 | Исходный код | https://github.com/cyberbadger6969/aion2-dps-meter |
 | Сообщить об ошибке | https://github.com/cyberbadger6969/aion2-dps-meter/issues |
 | Лицензия GPL-3.0 | https://github.com/cyberbadger6969/aion2-dps-meter/blob/main/LICENSE |
 | Npcap (нужен для работы) | https://npcap.com/#download |
 
-**Прямая ссылка на установщик.** Сейчас у файлов в релизе номер версии в имени
-(`AION2DpsMeter-Setup-v0.1.0.exe`), поэтому кнопка «Скачать» ведёт на страницу релиза. Начиная с версии 0.2.0 в каждом
-релизе будет копия с постоянным именем, и тогда кнопку можно сделать прямой:
-`https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe`
-(и `.../AION2DpsMeter-win-x64.zip` для версии без установки).
+### Скачивание прямо с сайта
+
+Кнопка «Скачать» должна сразу отдавать файл `AION2DpsMeter-Setup.exe` — без перехода на GitHub. Начиная с версии 0.2.0
+в каждом релизе есть копии с постоянными именами, поэтому эти адреса всегда отдают самую новую версию:
+
+- установщик: `https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe`
+- без установки: `https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip`
+
+**Рекомендуемый способ — свой адрес с переадресацией.** Сделать на сайте адреса
+`/download/aion2-dps-meter` и `/download/aion2-dps-meter-zip`, которые отвечают переадресацией (302) на адреса выше.
+Посетитель видит ссылку сайта, нажимает — и браузер сразу скачивает файл (сам файл отдаёт быстрый CDN GitHub).
+Новые версии на сайте ничего менять не требуют. Примеры для разных движков:
+
+```js
+// Next.js — next.config.js
+module.exports = {
+  async redirects() {
+    return [
+      { source: '/download/aion2-dps-meter', destination: 'https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe', permanent: false },
+      { source: '/download/aion2-dps-meter-zip', destination: 'https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip', permanent: false },
+    ];
+  },
+};
+```
+
+```nginx
+# nginx
+location = /download/aion2-dps-meter     { return 302 https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe; }
+location = /download/aion2-dps-meter-zip { return 302 https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip; }
+```
+
+```text
+# Netlify / Cloudflare Pages — файл _redirects
+/download/aion2-dps-meter      https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe  302
+/download/aion2-dps-meter-zip  https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip  302
+```
+
+```apache
+# Apache — .htaccess
+Redirect 302 /download/aion2-dps-meter https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe
+Redirect 302 /download/aion2-dps-meter-zip https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip
+```
+
+Переадресация должна быть временной (302 / `permanent: false`), чтобы браузеры не запоминали её навсегда.
+
+**Если файл должен лежать на самом сайте** (например, сайт не может делать переадресацию): положить
+`AION2DpsMeter-Setup.exe` в статические файлы и отдавать его с заголовками `Content-Type: application/octet-stream` и
+`Content-Disposition: attachment; filename="AION2DpsMeter-Setup.exe"`. Минус — при каждой новой версии файл нужно
+заменять (взять из нового релиза на GitHub). Встроенное обновление в программе в любом случае берёт новые версии с
+GitHub, сайт для него не нужен.
+
+Пока релиза 0.2.0 нет, постоянных имён ещё нет: до него кнопка ведёт на
+`https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest`.
+
+**Что увидит игрок при скачивании.** Программа пока не подписана сертификатом, поэтому браузер может спросить
+«Файл скачивают редко — сохранить?», а Windows при запуске покажет SmartScreen («Подробнее» → «Выполнить в любом
+случае»). Это не зависит от того, с какого сайта скачан файл; на странице об этом сказано в шаге установки.
 
 **Номер версии на странице** можно показывать автоматически — из GitHub API, без ключа:
 `GET https://api.github.com/repos/cyberbadger6969/aion2-dps-meter/releases/latest` → `tag_name` (например `v0.1.0`),
