@@ -19,6 +19,8 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         Controls.DragAnywhere.Attach(this);
         Load();
+        // The row size slider previews on the overlay; closing without saving puts the saved size back.
+        Closed += (_, _) => AppHost.Current.PreviewRowSize(_meter.Settings.RowSize);
     }
 
     private void Load()
@@ -32,6 +34,7 @@ public partial class SettingsWindow : Window
         foreach (var n in new[] { 5, 8, 10, 12, 15, 20 }) MaxRows.Items.Add(n);
         MaxRows.SelectedItem = MaxRows.Items.Cast<int>().OrderBy(n => Math.Abs(n - s.MaxRows)).First();
         OpacityValue.Value = s.BackgroundOpacity;
+        RowSizeValue.Value = s.RowSize;
         Mode.SelectedIndex = s.TargetMode == TargetMode.BossOnly ? 0 : 1;
         Idle.Text = s.IdleTimeoutSec.ToString();
         BossIdle.Text = s.BossIdleTimeoutSec.ToString();
@@ -85,6 +88,7 @@ public partial class SettingsWindow : Window
         s.ShowOnStart = ShowOnStart.IsChecked == true;
         s.MaxRows = MaxRows.SelectedItem is int rows ? rows : 10;
         s.BackgroundOpacity = Math.Round(OpacityValue.Value, 2);
+        s.RowSize = (int)Math.Round(RowSizeValue.Value);
         s.TargetMode = Mode.SelectedIndex == 1 ? TargetMode.All : TargetMode.BossOnly;
         if (int.TryParse(Idle.Text, out var idle)) s.IdleTimeoutSec = Math.Clamp(idle, 3, 120);
         if (int.TryParse(BossIdle.Text, out var bossIdle)) s.BossIdleTimeoutSec = Math.Clamp(bossIdle, 5, 300);
@@ -114,6 +118,15 @@ public partial class SettingsWindow : Window
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>The overlay follows the slider at once, so the size can be judged on the real rows.</summary>
+    private void RowSize_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (RowSizeText is null) return; // the slider sets its first value before the rest of the window exists
+        var percent = (int)Math.Round(e.NewValue);
+        RowSizeText.Text = $"{percent}%";
+        AppHost.Current.PreviewRowSize(percent);
+    }
 
     /// <summary>Asks GitHub right away; a newer version also opens the update window.</summary>
     private async void CheckNow_Click(object sender, RoutedEventArgs e)

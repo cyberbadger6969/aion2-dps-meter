@@ -14,16 +14,17 @@ namespace AionMeter.App.Services;
 /// </summary>
 public static class SampleRenderer
 {
-    /// <param name="Window">overlay (default), overlay-update, breakdown, history, timers, update or update-portable.</param>
+    /// <param name="Window">overlay (default), overlay-update, breakdown, history, timers, settings, update or update-portable.</param>
     /// <param name="Width">Overlay width (default 560): narrow sizes show how the footer copes.</param>
     /// <param name="Tab">Breakdown tab: dps (default), accuracy, rotation or defense.</param>
     /// <param name="Backdrop">Behind the translucent overlay: game (a stand-in colour), dark (a navy gradient) or none (transparent).</param>
+    /// <param name="RowSize">Overlay row size in percent (Settings → Overlay → Row size).</param>
     public sealed record Options(string Window = "overlay", int? Width = null, int? Height = null, string? Tab = null,
-        string Backdrop = "game", double Scale = 1.5);
+        string Backdrop = "game", double Scale = 1.5, int RowSize = 100);
 
     public static void Render(string path, string language, Options o)
     {
-        using var meter = CreateMeter(language);
+        using var meter = CreateMeter(language, o.RowSize);
         var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 20_500; // a fight that is still going
         new SampleFight(start, 20).FeedUntil(meter.Tracker, start + 20_000);
         if (o.Window == "history")
@@ -54,6 +55,10 @@ public static class SampleRenderer
                 host = timers;
                 refresh = timers.ReloadNow;
                 break;
+            case "settings":
+                host = new SettingsWindow(meter) { Width = o.Width ?? 640, Height = o.Height ?? 900 };
+                refresh = () => { };
+                break;
             case "update" or "update-portable":
                 var release = SampleRelease(meter.Updates.Current);
                 meter.Updates.Preview(release);
@@ -76,7 +81,7 @@ public static class SampleRenderer
     /// </summary>
     public static void Animate(string folder, string language, Options o, double seconds, int fps)
     {
-        using var meter = CreateMeter(language);
+        using var meter = CreateMeter(language, o.RowSize);
         WaitForPortraits(meter);
         var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 600_000;
         var fight = new SampleFight(start, seconds);
@@ -100,9 +105,12 @@ public static class SampleRenderer
         }
     }
 
-    private static MeterService CreateMeter(string language)
+    private static MeterService CreateMeter(string language, int rowSize = 100)
     {
-        var settings = new AppSettings { Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language };
+        var settings = new AppSettings
+        {
+            Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language, RowSize = rowSize,
+        };
         UiText.Use(settings.Language);
         var meter = new MeterService(settings, _ => new QuietSource());
         meter.StartCapture(); // the footer reads "Capturing", as it does in the game

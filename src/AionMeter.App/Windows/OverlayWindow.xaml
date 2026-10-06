@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="clr-namespace:AionMeter.App.Controls"
         xmlns:vm="clr-namespace:AionMeter.App.ViewModels"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         x:Name="Root"
         Title="AION2 DPS Meter" Width="470" Height="540" MinWidth="340" MinHeight="220"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
@@ -16,16 +17,28 @@
             <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.25" Duration="0:0:0.8" />
         </Storyboard>
 
-        <!-- Value columns share fixed widths so the header labels sit exactly over the numbers -->
+        <!-- Row size (Settings → Overlay → Row size, Ctrl + wheel over the rows): OverlayWindow.ApplyRowSize replaces
+             these. Value columns share fixed widths so the header labels sit exactly over the numbers. -->
+        <GridLength x:Key="ColRankWidth">30</GridLength>
+        <GridLength x:Key="ColGlyphWidth">32</GridLength>
         <GridLength x:Key="ColDpsWidth">104</GridLength>
         <GridLength x:Key="ColDamageWidth">74</GridLength>
         <GridLength x:Key="ColShareWidth">68</GridLength>
+        <sys:Double x:Key="RowHeight">42</sys:Double>
+        <Thickness x:Key="RowMargin">0,0,0,6</Thickness>
+        <sys:Double x:Key="RowGlossHeight">19</sys:Double>
+        <sys:Double x:Key="RowNameFont">16.5</sys:Double>
+        <sys:Double x:Key="RowNumberFont">16</sys:Double>
+        <sys:Double x:Key="RowGlyphSize">30</sys:Double>
+        <sys:Double x:Key="RowRankSize">24</sys:Double>
+        <sys:Double x:Key="RowRankFont">13</sys:Double>
+        <sys:Double x:Key="ColHeaderFont">11</sys:Double>
 
         <!-- Dense dark halo under every text so it stays readable over any game scene -->
         <DropShadowEffect x:Key="TextShadow" BlurRadius="5" ShadowDepth="1.5" Direction="300" Opacity="1" Color="Black" />
 
         <Style x:Key="ColHeader" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontSize" Value="{DynamicResource ColHeaderFont}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="#C9D0DC" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -35,7 +48,7 @@
         <!-- DPS, total damage and share: one size, white -->
         <Style x:Key="RowNumber" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource NumberFont}" />
-            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontSize" Value="{DynamicResource RowNumberFont}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -152,8 +165,8 @@
         <!-- One player: a full-height class-coloured bar (AionFlex style) with place medal, emblem, name,
              DPS in a light class tint, total damage and share -->
         <DataTemplate x:Key="RowTemplate" DataType="{x:Type vm:RowViewModel}">
-            <Grid Height="42" Margin="0,0,0,6" Cursor="Hand" ToolTip="{Binding Tooltip}" Background="Transparent"
-                  MouseLeftButtonUp="Row_Click" MouseRightButtonUp="Row_RightClick">
+            <Grid Height="{DynamicResource RowHeight}" Margin="{DynamicResource RowMargin}" Cursor="Hand" ToolTip="{Binding Tooltip}"
+                  Background="Transparent" MouseLeftButtonUp="Row_Click" MouseRightButtonUp="Row_RightClick">
                 <!-- track -->
                 <Border CornerRadius="7">
                     <Border.Background>
@@ -170,7 +183,7 @@
                     </Border.RenderTransform>
                 </Border>
                 <!-- gloss on the upper half -->
-                <Border CornerRadius="7,7,0,0" Height="19" VerticalAlignment="Top" IsHitTestVisible="False">
+                <Border CornerRadius="7,7,0,0" Height="{DynamicResource RowGlossHeight}" VerticalAlignment="Top" IsHitTestVisible="False">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                             <GradientStop Color="#22FFFFFF" Offset="0" />
@@ -189,26 +202,27 @@
 
                 <Grid Margin="8,0,14,0" Effect="{StaticResource TextShadow}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="{DynamicResource ColRankWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColGlyphWidth}" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="{StaticResource ColDpsWidth}" />
-                        <ColumnDefinition Width="{StaticResource ColDamageWidth}" />
-                        <ColumnDefinition Width="{StaticResource ColShareWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColDpsWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColDamageWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColShareWidth}" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Place: medal for the top three, ringed number for the rest -->
-                    <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Grid Width="{DynamicResource RowRankSize}" Height="{DynamicResource RowRankSize}" HorizontalAlignment="Left"
+                          VerticalAlignment="Center">
                         <Ellipse Fill="{Binding RankBackground}" Stroke="{Binding RankBorder}" StrokeThickness="1.2" />
-                        <TextBlock Text="{Binding RankText}" FontFamily="{StaticResource NumberFont}" FontSize="13" FontWeight="Bold"
-                                   Foreground="{Binding RankForeground}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Margin="0,0,0,1" />
+                        <TextBlock Text="{Binding RankText}" FontFamily="{StaticResource NumberFont}" FontSize="{DynamicResource RowRankFont}"
+                                   FontWeight="Bold" Foreground="{Binding RankForeground}" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" Margin="0,0,0,1" />
                     </Grid>
 
-                    <c:ClassGlyph Grid.Column="1" Class="{Binding Class}" OnBar="True" Width="30" Height="30"
-                                  HorizontalAlignment="Left" />
+                    <c:ClassGlyph Grid.Column="1" Class="{Binding Class}" OnBar="True" Width="{DynamicResource RowGlyphSize}"
+                                  Height="{DynamicResource RowGlyphSize}" HorizontalAlignment="Left" />
 
-                    <TextBlock x:Name="NameText" Grid.Column="2" Text="{Binding Name}" FontSize="16.5" FontWeight="Bold"
+                    <TextBlock x:Name="NameText" Grid.Column="2" Text="{Binding Name}" FontSize="{DynamicResource RowNameFont}" FontWeight="Bold"
                                Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,8,1" />
 
                     <TextBlock Grid.Column="3" Text="{Binding Dps}" Style="{StaticResource RowNumber}" />
@@ -413,15 +427,15 @@
                 <Grid Margin="8,0,14,5" Visibility="{Binding HasData, Converter={StaticResource VisibleIf}}"
                       Effect="{StaticResource TextShadow}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="{DynamicResource ColRankWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColGlyphWidth}" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="{StaticResource ColDpsWidth}" />
-                        <ColumnDefinition Width="{StaticResource ColDamageWidth}" />
-                        <ColumnDefinition Width="{StaticResource ColShareWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColDpsWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColDamageWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColShareWidth}" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="#" Style="{StaticResource ColHeader}" Width="24" TextAlignment="Center" HorizontalAlignment="Left"
-                               ToolTip="{Binding T.TipPlace}" />
+                    <TextBlock Text="#" Style="{StaticResource ColHeader}" Width="{DynamicResource RowRankSize}" TextAlignment="Center"
+                               HorizontalAlignment="Left" ToolTip="{Binding T.TipPlace}" />
                     <TextBlock Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding T.ColPlayer}" Style="{StaticResource ColHeader}" />
                     <TextBlock Grid.Column="3" Text="{Binding T.ColDps}" Style="{StaticResource ColHeader}" TextAlignment="Right"
                                ToolTip="{Binding T.TipDps}" />
@@ -432,7 +446,7 @@
                 </Grid>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
-                              Padding="10,4,7,0" Margin="-10,-4,-7,0">
+                              Padding="10,4,7,0" Margin="-10,-4,-7,0" PreviewMouseWheel="Rows_PreviewMouseWheel">
                     <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False" />
                 </ScrollViewer>
                 <TextBlock Grid.RowSpan="2" Text="{Binding T.EmptyParty}" FontSize="12"

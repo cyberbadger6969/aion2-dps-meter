@@ -47,6 +47,7 @@ public partial class OverlayWindow : Window
         OpacitySlider.Value = _settings.BackgroundOpacity;
         FrameBackground.Opacity = _settings.BackgroundOpacity;
         ApplyLock();
+        ApplyRowSize(_settings.RowSize);
         UpdateModeLabel();
         ApplyHotkeyTips();
         _meter.Updates.Changed += ShowUpdateBanner;
@@ -174,7 +175,45 @@ public partial class OverlayWindow : Window
     {
         OpacitySlider.Value = _settings.BackgroundOpacity;
         FrameBackground.Opacity = _settings.BackgroundOpacity;
+        ApplyRowSize(_settings.RowSize);
         UpdateModeLabel();
+    }
+
+    /// <summary>
+    /// Row size in percent of the original. The height follows it exactly; text, emblems and the number columns shrink
+    /// more gently (square root), so the smallest rows stay readable and the names get the room the numbers give up.
+    /// </summary>
+    public void ApplyRowSize(int percent)
+    {
+        var k = Math.Clamp(percent, AppSettings.MinRowSize, AppSettings.MaxRowSize) / 100.0;
+        var f = Math.Sqrt(k);
+        var height = Math.Round(42 * k);
+        Resources["RowHeight"] = height;
+        Resources["RowMargin"] = new Thickness(0, 0, 0, Math.Max(2, Math.Round(6 * k)));
+        Resources["RowGlossHeight"] = Math.Round(19 * k);
+        Resources["RowNameFont"] = Math.Round(16.5 * f, 1);
+        Resources["RowNumberFont"] = Math.Round(16 * f, 1);
+        Resources["RowGlyphSize"] = Math.Min(Math.Round(30 * f), height - 2);
+        Resources["RowRankSize"] = Math.Min(Math.Round(24 * f), height - 3);
+        Resources["RowRankFont"] = Math.Round(13 * f, 1);
+        Resources["ColHeaderFont"] = Math.Max(9, Math.Round(11 * f, 1));
+        Resources["ColRankWidth"] = new GridLength(Math.Round(30 * f));
+        Resources["ColGlyphWidth"] = new GridLength(Math.Round(32 * f));
+        Resources["ColDpsWidth"] = new GridLength(Math.Round(104 * f));
+        Resources["ColDamageWidth"] = new GridLength(Math.Round(74 * f));
+        Resources["ColShareWidth"] = new GridLength(Math.Round(68 * f));
+    }
+
+    /// <summary>Ctrl + mouse wheel over the rows: row size in 5 % steps, kept right away.</summary>
+    private void Rows_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (!NativeMethods.IsCtrlDown()) return;
+        e.Handled = true;
+        var size = Math.Clamp(_settings.RowSize + Math.Sign(e.Delta) * 5, AppSettings.MinRowSize, AppSettings.MaxRowSize);
+        if (size == _settings.RowSize) return;
+        _settings.RowSize = size;
+        ApplyRowSize(size);
+        _settings.Save();
     }
 
     public void SetClickThrough(bool on)

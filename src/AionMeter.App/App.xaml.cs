@@ -54,7 +54,7 @@ public partial class App : Application
         if (ArgValue(e.Args, "--render-sample") is { } samplePath)
         {
             // --render-sample <out.png | folder with --animate> [--lang ru] [--window …] [--width N] [--height N] [--tab …]
-            // [--backdrop game|dark|none] [--scale 1.5] [--animate <seconds> [--fps 10]]
+            // [--backdrop game|dark|none] [--scale 1.5] [--row-size 50..100] [--animate <seconds> [--fps 10]]
             var options = new SampleRenderer.Options(
                 ArgValue(e.Args, "--window") ?? "overlay",
                 int.TryParse(ArgValue(e.Args, "--width"), out var width) ? width : null,
@@ -62,7 +62,8 @@ public partial class App : Application
                 ArgValue(e.Args, "--tab"),
                 ArgValue(e.Args, "--backdrop") ?? "game",
                 double.TryParse(ArgValue(e.Args, "--scale"), System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var scale) ? scale : 1.5);
+                    System.Globalization.CultureInfo.InvariantCulture, out var scale) ? scale : 1.5,
+                int.TryParse(ArgValue(e.Args, "--row-size"), out var rowSize) ? rowSize : 100);
             var language = ArgValue(e.Args, "--lang") ?? "en";
             if (double.TryParse(ArgValue(e.Args, "--animate"), System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var seconds))
@@ -546,6 +547,9 @@ public partial class App : Application
         _overlay.ApplyAppearance();
         _overlay.Refresh();
     }
+
+    /// <summary>The Settings window's row size slider, shown on the overlay before it is saved.</summary>
+    public void PreviewRowSize(int percent) => _overlay?.ApplyRowSize(percent);
 
     private void PickReplay()
     {

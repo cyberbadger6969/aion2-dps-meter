@@ -50,6 +50,9 @@ public sealed class AppSettings
     /// <summary>True: the leader's bar is full and the rest are sized against it. False: bars show share of party damage.</summary>
     public bool BarsRelativeToTop { get; set; } = true;
     public int MaxRows { get; set; } = 10;
+    public const int MinRowSize = 50, MaxRowSize = 100;
+    /// <summary>Overlay row size in percent of the original (Settings → Overlay, or Ctrl + wheel over the rows).</summary>
+    public int RowSize { get; set; } = 100;
     public bool ShowBossPanel { get; set; } = true;
     public int IdleTimeoutSec { get; set; } = 10;
     public int BossIdleTimeoutSec { get; set; } = 30;

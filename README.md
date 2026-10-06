@@ -114,6 +114,7 @@ supported) · Npcap · about 200 MB of disk space.
 | fights button in the header | pick a fight: live, this session's, or saved ones by day |
 | clock button / gold *Boss timers* pill | boss respawn timers |
 | mouse wheel over the fight title | scroll through fights (down = older, up = newer, top = live) |
+| <kbd>Ctrl</kbd> + mouse wheel over the rows | row size, 50–100 % (also *Settings → Overlay → Row size*) |
 | gold **A** in the notification area | history, timers, settings, language, updates, exit |
 
 Hotkeys can be changed in Settings. The toolbar appears when the mouse is over the overlay.

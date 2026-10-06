@@ -280,6 +280,8 @@ public sealed class UiText
     public string ShowBossPanel { get; init; } = "Show boss HP bar";
     public string RowsShown { get; init; } = "Rows shown";
     public string BackgroundOpacity { get; init; } = "Background opacity";
+    public string RowSize { get; init; } = "Row size";
+    public string RowSizeHint { get; init; } = "Also right on the overlay: Ctrl + mouse wheel over the rows.";
     public string SecMeter { get; init; } = "METER";
     public string Measure { get; init; } = "Measure";
     public string MeasureBoss { get; init; } = "Boss only (falls back to all)";
@@ -580,6 +582,8 @@ public sealed class UiText
         ShowBossPanel = "Показывать полосу HP босса",
         RowsShown = "Строк в списке",
         BackgroundOpacity = "Плотность фона",
+        RowSize = "Размер строк",
+        RowSizeHint = "Или прямо на оверлее: Ctrl + колесо мыши над строками.",
         SecMeter = "МЕТР",
         Measure = "Считать",
         MeasureBoss = "Только босса (иначе всё)",

@@ -101,6 +101,15 @@
                                 <TextBlock Text="{Binding BackgroundOpacity, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
                                 <Slider x:Name="OpacityValue" Style="{StaticResource GoldSlider}" Width="180" Minimum="0.15" Maximum="1" />
                             </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding RowSize, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <Slider x:Name="RowSizeValue" Style="{StaticResource GoldSlider}" Width="180" Minimum="50" Maximum="100"
+                                        SmallChange="5" LargeChange="10" TickFrequency="5" IsSnapToTickEnabled="True"
+                                        ValueChanged="RowSize_Changed" />
+                                <TextBlock x:Name="RowSizeText" VerticalAlignment="Center" Margin="10,0,0,0" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Hint}" Margin="190,2,0,0"
+                                       Text="{Binding RowSizeHint, Source={x:Static s:UiText.Current}}" />
                         </StackPanel>
                     </Border>
 
