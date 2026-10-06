@@ -2,8 +2,10 @@
 
 [English](README.md) · **Русский**
 
-**[Скачать последнюю версию](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest)** — установщик
-`AION2DpsMeter-Setup-v<версия>.exe` или zip без установки.
+**[⬇ Скачать установщик](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe)** ·
+[zip без установки](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip) ·
+[все файлы последнего релиза](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest) — ссылки всегда ведут на
+самую новую версию.
 
 <p align="center"><img src="docs/images/overlay-fight.gif" width="380" alt="Оверлей во время боя с боссом"></p>
 
@@ -20,8 +22,8 @@
 (без прав администратора) в `%LocalAppData%\Programs\AION2 DPS Meter`, создаёт ярлыки на рабочем столе и в «Пуске»,
 удаляется через «Параметры → Приложения». Если нет [Npcap](https://npcap.com/#download) (бесплатный драйвер захвата),
 установщик покажет страницу с кнопкой загрузки — Npcap ставится с настройками по умолчанию, они подходят и для ExitLag.
-Обновление — запустить установщик новой версии: он сам закроет запущенный метр. На предупреждение SmartScreen:
-«Подробнее» → «Выполнить в любом случае».
+Обновления метр предлагает сам (с версии 0.2.0); можно и вручную запустить установщик новой версии — он сам закроет
+запущенный метр. На предупреждение SmartScreen: «Подробнее» → «Выполнить в любом случае».
 
 **Без установки** — `AION2DpsMeter-v<версия>-win-x64.zip`: поставить Npcap, распаковать архив в любую папку и запустить
 `AION2DpsMeter.exe`. .NET ставить не нужно ни в одном из вариантов — он внутри.

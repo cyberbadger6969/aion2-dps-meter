@@ -84,9 +84,6 @@ Redirect 302 /download/aion2-dps-meter-zip https://github.com/cyberbadger6969/ai
 заменять (взять из нового релиза на GitHub). Встроенное обновление в программе в любом случае берёт новые версии с
 GitHub, сайт для него не нужен.
 
-Пока релиза 0.2.0 нет, постоянных имён ещё нет: до него кнопка ведёт на
-`https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest`.
-
 **Что увидит игрок при скачивании.** Программа пока не подписана сертификатом, поэтому браузер может спросить
 «Файл скачивают редко — сохранить?», а Windows при запуске покажет SmartScreen («Подробнее» → «Выполнить в любом
 случае»). Это не зависит от того, с какого сайта скачан файл; на странице об этом сказано в шаге установки.
@@ -151,7 +148,7 @@ GitHub, сайт для него не нужен.
 - **Subtitle:** A free live DPS meter for AION 2 Global (EU / NA). Party DPS, boss HP, a full skill breakdown and field
   boss timers — right on top of the game.
 - **Primary button:** Download for Windows
-- **Under the button:** v0.1.0 · Windows 10/11, 64-bit · free (fill the version from the GitHub API if possible)
+- **Under the button:** v0.2.0 · Windows 10/11, 64-bit · free (fill the version from the GitHub API if possible)
 - **Secondary button:** GitHub
 - **Badges:** Free · Open source (GPL-3.0) · Works with ExitLag
 - **Video caption:** A boss fight in the overlay: places change as the damage comes in.
@@ -245,7 +242,7 @@ Third-party tools may be against the game's terms of service — use at your own
 - **Подзаголовок:** Бесплатный DPS-метр для AION 2 Global (EU / NA). Урон группы, HP босса, подробный разбор умений и
   таймеры полевых боссов — прямо поверх игры.
 - **Главная кнопка:** Скачать для Windows
-- **Под кнопкой:** v0.1.0 · Windows 10/11, 64-бит · бесплатно (номер версии — из GitHub API, если получится)
+- **Под кнопкой:** v0.2.0 · Windows 10/11, 64-бит · бесплатно (номер версии — из GitHub API, если получится)
 - **Вторая кнопка:** GitHub
 - **Значки:** Бесплатно · Открытый код (GPL-3.0) · Работает с ExitLag
 - **Подпись к видео:** Бой с боссом в оверлее: места меняются по ходу боя.
@@ -352,7 +349,7 @@ AION 2; портреты боссов — с MetaBot.GG. AION 2, игровые 
   "applicationCategory": "GameApplication",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "downloadUrl": "https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest",
-  "softwareVersion": "0.1.0",
+  "softwareVersion": "0.2.0",
   "license": "https://www.gnu.org/licenses/gpl-3.0.html"
 }
 ```
@@ -361,7 +358,6 @@ AION 2; портреты боссов — с MetaBot.GG. AION 2, игровые 
 
 - Это отдельная программа с открытым кодом. Не называть её официальным продуктом NCSOFT.
 - Не обещать, что за неё не банят; блок «Безопасность» и строка в подвале должны остаться.
-- Пункты, помеченные «с версии 0.2.0», показывать, когда на GitHub выйдет релиз 0.2.0. Если страница публикуется
-  раньше — убрать их или пометить «скоро».
+- Версия 0.2.0 уже вышла: пометки «с версии 0.2.0» можно показывать как «новое» или убрать.
 - При выходе новых версий страницу менять не нужно: кнопка ведёт на последний релиз. Новые скриншоты собираются
   скриптом `tools/make-site-kit.ps1` в репозитории программы.

@@ -25,7 +25,9 @@
 
 ## Download
 
-Get it from the **[latest release](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest)**:
+**[⬇ Download the installer](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe)** · [portable zip](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip) · [all files of the latest release](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest)
+
+These links always give the newest version:
 
 - **`AION2DpsMeter-Setup-v<version>.exe`** — the installer (recommended). Installs for your Windows user without
   administrator rights, adds Start menu and desktop shortcuts, uninstalls from *Settings → Apps*.
@@ -51,7 +53,7 @@ driver — see [Installation](#installation).
   respawn counting down, per server, with a tray alert before a boss you watch returns.
 - **Share in chat** — right-click a player to copy a one-line result for the game chat.
 - **English and Russian** — interface and skill / NPC names in either language, switchable at any time.
-- **Updates itself** *(coming in 0.2.0)* — a new version is announced in the meter and installed in one click.
+- **Updates itself** — a new version is announced in the meter and installed in one click.
 - **Passive** — reads only your own game's network traffic; never touches game memory or sends anything to the game.
 
 ## Screenshots
@@ -67,7 +69,7 @@ driver — see [Installation](#installation).
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/overlay.png" alt="The overlay"><br><sub><b>Overlay</b> — nine players, every class</sub></td>
-    <td width="50%"><img src="docs/images/update-window.png" alt="Update window"><br><img src="docs/images/update-banner.png" alt="Update banner on the overlay"><br><sub><b>Updates</b> (0.2.0) — the overlay announces a new version, one click installs it</sub></td>
+    <td width="50%"><img src="docs/images/update-window.png" alt="Update window"><br><img src="docs/images/update-banner.png" alt="Update banner on the overlay"><br><sub><b>Updates</b> — the overlay announces a new version, one click installs it</sub></td>
   </tr>
 </table>
 
@@ -87,8 +89,8 @@ driver — see [Installation](#installation).
 **Portable zip:** install Npcap, unzip the archive into any folder (not inside the zip itself), run
 `AION2DpsMeter.exe`. Update by unzipping a newer version over it.
 
-**Updating:** run the newer installer (it closes the running meter by itself) — from 0.2.0 the meter offers updates on
-its own. **Uninstalling:** *Settings → Apps → AION2 DPS Meter*; it asks whether to delete your settings and history too.
+**Updating:** the meter offers new versions by itself (from 0.2.0); running a newer installer by hand works too — it
+closes the running meter by itself. **Uninstalling:** *Settings → Apps → AION2 DPS Meter*; it asks whether to delete your settings and history too.
 
 Settings, fight history and timers live in `%AppData%\AionMeter` and survive updates. `INSTALL.txt` in the download has
 the same instructions in English and Russian.
@@ -143,7 +145,7 @@ itself when you are near a boss kill. Every server has its own bosses and times,
 the server of the character you play (known from the login packet and the name cache). The window header shows it
 ("Marchutan EU ▾") and can switch to another server you played on; alerts and the overlay pill follow the current one.
 
-### Updates *(0.2.0)*
+### Updates
 
 The meter checks GitHub for a new version shortly after start and every 6 hours (*Settings → Updates*, or *Check for
 updates* in the tray menu). A new version brings a tray notification, a green banner above the overlay footer and an
@@ -201,8 +203,8 @@ In `%AppData%\AionMeter`. Uninstall from *Settings → Apps*; it asks whether to
 ## Privacy
 
 The meter reads the game's traffic on your PC and keeps everything there. Its own network requests are: skill icons
-from the official AION 2 CDN and boss portraits from MetaBot.GG (both can be turned off) and, from 0.2.0, the update
-check to `api.github.com`. No telemetry, no accounts. Packet recordings (*Settings → Capture → Record packets*, off by
+from the official AION 2 CDN and boss portraits from MetaBot.GG (both can be turned off) and the update
+check to `api.github.com` (*Settings → Updates*). No telemetry, no accounts. Packet recordings (*Settings → Capture → Record packets*, off by
 default) contain your game traffic including character names — do not publish them.
 
 ## Building from source
