@@ -18,6 +18,9 @@ public sealed class UiText
     public string Code { get; init; } = "en";
     public string LanguageName { get; init; } = "English";
 
+    /// <summary>Dates in the interface language ("06 Oct"), not in the Windows one.</summary>
+    public System.Globalization.CultureInfo Culture => System.Globalization.CultureInfo.GetCultureInfo(Code == "ru" ? "ru-RU" : "en-US");
+
     public IReadOnlyDictionary<Core.Events.GameClass, string> ClassNames { get; init; } = new Dictionary<Core.Events.GameClass, string>
     {
         [Core.Events.GameClass.Gladiator] = "Gladiator",

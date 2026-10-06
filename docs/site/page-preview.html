@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AION2 DPS Meter — free DPS meter for AION 2 (EU / NA)</title>
+<meta name="description" content="Free, open-source live DPS overlay for AION 2 Global: party DPS, boss HP, skill breakdown, accuracy, rotation, fight history and field boss respawn timers. Windows 10/11.">
+<meta property="og:title" content="AION2 DPS Meter — free DPS meter for AION 2">
+<meta property="og:description" content="Live DPS overlay for AION 2 Global (EU / NA): party DPS, boss HP, skill breakdown and field boss timers.">
+<meta property="og:image" content="images/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="images/icon-256.png">
+<!-- Preview of the download page. Every text exists in English and Russian (lang="en" / lang="ru");
+     the EN/RU switch in the header shows one of them. Media paths are relative to this file. -->
+<style>
+  :root {
+    --bg0: #0B0F17; --bg1: #111726; --bg2: #19203A; --line: #2A3350;
+    --gold: #C9A45C; --gold-bright: #ECCB82; --gold-dim: #6E5A33;
+    --text: #F1E9D8; --dim: #A3ACBF; --mute: #6B7590; --green: #3DD68C;
+    --serif: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg0); color: var(--text); font: 16px/1.6 var(--sans); }
+  html[data-lang="en"] [lang="ru"], html[data-lang="ru"] [lang="en"] { display: none !important; }
+  a { color: var(--gold-bright); }
+  img, video { max-width: 100%; display: block; }
+  .wrap { width: min(1160px, 100% - 32px); margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; line-height: 1.15; margin: 0; }
+  h2 { font-size: clamp(28px, 4vw, 40px); color: var(--gold-bright); }
+  h3 { font-size: 21px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 12.5px; font-weight: 600; color: var(--gold); }
+  .muted { color: var(--dim); }
+  section { padding: 84px 0; }
+  section + section { border-top: 1px solid rgba(255,255,255,.05); }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 10; background: rgba(11,15,23,.86); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(201,164,92,.18); }
+  .bar { display: flex; align-items: center; gap: 24px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 20px; color: var(--gold-bright); text-decoration: none; }
+  .brand img { width: 34px; height: 34px; }
+  nav { display: flex; gap: 22px; margin-left: auto; }
+  nav a { color: var(--dim); text-decoration: none; font-size: 15px; }
+  nav a:hover { color: var(--text); }
+  .lang { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .lang button { background: none; border: 0; color: var(--dim); font: 600 13px var(--sans); padding: 6px 12px; cursor: pointer; }
+  .lang button[aria-pressed="true"] { background: var(--gold); color: #1A140A; }
+
+  /* buttons */
+  .btn { display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; padding: 14px 26px; font: 700 16px var(--sans); text-decoration: none; transition: transform .15s, box-shadow .15s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn svg { width: 20px; height: 20px; }
+  .btn-gold { color: #1A140A; background: linear-gradient(#F3D58F, #C99A45); border: 1px solid #FFE3A6; box-shadow: 0 0 22px rgba(233,169,60,.45); }
+  .btn-ghost { color: var(--text); border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+  .btn-sm { padding: 8px 16px; font-size: 14px; }
+
+  /* hero */
+  .hero { padding: 72px 0 84px; background: radial-gradient(900px 520px at 78% 30%, rgba(201,164,92,.16), transparent 60%), linear-gradient(160deg, #1B2540 0%, var(--bg0) 62%); }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(42px, 6.4vw, 72px); color: var(--gold-bright); text-shadow: 0 2px 30px rgba(0,0,0,.4); }
+  .hero .lead { font-size: clamp(18px, 2.2vw, 21px); color: var(--text); margin: 20px 0 30px; max-width: 34em; }
+  .cta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .version { margin-top: 12px; font-size: 14px; color: var(--mute); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .badge { border: 1px solid rgba(201,164,92,.35); color: var(--gold-bright); background: rgba(201,164,92,.08); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+  .stage { justify-self: center; text-align: center; }
+  .stage video, .stage img { width: 375px; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 60px rgba(201,164,92,.18); }
+  .stage figcaption { margin-top: 14px; font-size: 14px; color: var(--mute); }
+
+  /* features */
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 40px; }
+  .card { background: linear-gradient(180deg, rgba(25,32,58,.75), rgba(17,23,38,.75)); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .card svg { width: 30px; height: 30px; color: var(--gold); }
+  .card h3 { margin: 14px 0 8px; font-size: 19px; }
+  .card p { margin: 0; color: var(--dim); font-size: 15px; }
+  .soon { display: inline-block; margin-left: 6px; font: 600 11px var(--sans); color: var(--green); border: 1px solid rgba(61,214,140,.45); border-radius: 999px; padding: 1px 8px; vertical-align: middle; }
+
+  /* showcase */
+  .show { display: grid; grid-template-columns: .85fr 1.15fr; gap: 48px; align-items: center; }
+  .show + .show { margin-top: 84px; }
+  .show.reverse .text { order: 2; }
+  .show .text p { color: var(--dim); font-size: 17px; }
+  .shot { border-radius: 12px; border: 1px solid var(--gold-dim); box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+  .stack { display: grid; gap: 18px; }
+  .show.tall { align-items: start; }
+  .show.tall .text { position: sticky; top: 96px; }
+
+  /* safety */
+  .note { display: flex; gap: 20px; align-items: flex-start; border: 1px solid rgba(201,164,92,.35); background: rgba(201,164,92,.06); border-radius: var(--radius); padding: 26px 28px; }
+  .note svg { flex: none; width: 34px; height: 34px; color: var(--gold); }
+  .note p { margin: 6px 0 0; color: var(--dim); }
+
+  /* install */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; counter-reset: step; }
+  .step { position: relative; padding-top: 56px; }
+  .step::before { counter-increment: step; content: counter(step); position: absolute; top: 18px; left: 22px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #1A140A; font-weight: 700; }
+  .extra { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  td { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.06); color: var(--dim); }
+  td:first-child { color: var(--text); white-space: nowrap; padding-right: 18px; }
+  kbd { font: 600 13px var(--sans); background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; color: var(--gold-bright); }
+  ul.req { margin: 10px 0 0; padding-left: 20px; color: var(--dim); }
+
+  /* faq */
+  details { border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.02); padding: 0 20px; }
+  details + details { margin-top: 12px; }
+  summary { cursor: pointer; list-style: none; padding: 16px 0; font-weight: 600; font-size: 17px; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--gold); font-size: 22px; line-height: 1; }
+  details[open] summary::after { content: "–"; }
+  details p { margin: 0 0 18px; color: var(--dim); }
+
+  footer { padding: 48px 0 64px; color: var(--mute); font-size: 14px; border-top: 1px solid rgba(255,255,255,.05); }
+  footer .links { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 16px; }
+  footer .links a { color: var(--dim); }
+
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; }
+
+  @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 900px) {
+    .hero .wrap, .show, .steps, .extra { grid-template-columns: 1fr; }
+    .show.reverse .text { order: 0; }
+    .show.tall .text { position: static; }
+    nav { display: none; }
+    .lang { margin-left: auto; }
+  }
+  @media (max-width: 600px) {
+    section { padding: 60px 0; }
+    .grid { grid-template-columns: 1fr; }
+    .stage video, .stage img { width: 300px; }
+    .bar .btn { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#top"><img src="images/icon-256.png" alt="">AION2 DPS Meter</a>
+    <nav>
+      <a href="#features"><span lang="en">Features</span><span lang="ru">Возможности</span></a>
+      <a href="#install"><span lang="en">Install</span><span lang="ru">Установка</span></a>
+      <a href="#faq"><span lang="en">FAQ</span><span lang="ru">Вопросы</span></a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-set-lang="ru" aria-pressed="false">RU</button>
+    </div>
+    <a class="btn btn-gold btn-sm" href="https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest">
+      <span lang="en">Download</span><span lang="ru">Скачать</span>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <div class="eyebrow">AION 2 · Global EU / NA</div>
+        <h1>AION2 DPS Meter</h1>
+        <p class="lead">
+          <span lang="en">A free live DPS meter for AION 2 Global (EU / NA). Party DPS, boss HP, a full skill breakdown and field boss timers — right on top of the game.</span>
+          <span lang="ru">Бесплатный DPS-метр для AION 2 Global (EU / NA). Урон группы, HP босса, подробный разбор умений и таймеры полевых боссов — прямо поверх игры.</span>
+        </p>
+        <div class="cta">
+          <a class="btn btn-gold" href="https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>
+            <span lang="en">Download for Windows</span><span lang="ru">Скачать для Windows</span>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/cyberbadger6969/aion2-dps-meter">GitHub</a>
+        </div>
+        <div class="version">
+          <span class="ver">v0.1.0</span> ·
+          <span lang="en">Windows 10/11, 64-bit · free</span><span lang="ru">Windows 10/11, 64-бит · бесплатно</span>
+        </div>
+        <div class="badges">
+          <span class="badge"><span lang="en">Free</span><span lang="ru">Бесплатно</span></span>
+          <span class="badge"><span lang="en">Open source (GPL-3.0)</span><span lang="ru">Открытый код (GPL-3.0)</span></span>
+          <span class="badge"><span lang="en">Works with ExitLag</span><span lang="ru">Работает с ExitLag</span></span>
+        </div>
+      </div>
+      <figure class="stage">
+        <video id="fight" autoplay muted loop playsinline preload="metadata" width="375" height="570"
+               poster="video/overlay-fight-en-poster.png" aria-label="AION2 DPS Meter overlay during a boss fight"
+               data-en="video/overlay-fight-en" data-ru="video/overlay-fight-ru">
+          <source src="video/overlay-fight-en.mp4" type="video/mp4">
+        </video>
+        <figcaption>
+          <span lang="en">A boss fight in the overlay: places change as the damage comes in.</span>
+          <span lang="ru">Бой с боссом в оверлее: места меняются по ходу боя.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="eyebrow"><span lang="en">Features</span><span lang="ru">Возможности</span></div>
+      <h2><span lang="en">Everything about your fight, live</span><span lang="ru">Всё о бое — в реальном времени</span></h2>
+      <div class="grid">
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M11 20V5M17 20v-6M3 20h18"/></svg>
+          <h3><span lang="en">Live overlay</span><span lang="ru">Оверлей в реальном времени</span></h3>
+          <p><span lang="en">Party DPS, damage and share for every player, the boss's HP and the biggest hit, updated five times a second. Class colours and emblems, your own row highlighted, your place in the group.</span><span lang="ru">DPS, урон и доля каждого игрока, HP босса и самый сильный удар, пять обновлений в секунду. Цвета и эмблемы классов, ваша строка выделена, ваше место в группе.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          <h3><span lang="en">Shows up when you fight</span><span lang="ru">Появляется в бою</span></h3>
+          <p><span lang="en">The overlay appears when a boss is fought nearby or you hit anything, and hides again after the fight. Lock it in place, make it click-through, set the opacity.</span><span lang="ru">Оверлей показывается, когда рядом бьют босса или вы кого-то ударили, и прячется после боя. Его можно закрепить, сделать прозрачным для кликов, настроить прозрачность.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+          <h3><span lang="en">Full breakdown</span><span lang="ru">Полный разбор</span></h3>
+          <p><span lang="en">Click a player: DPS timeline, every skill with hits, average, max and crit rate, accuracy and the whole rotation, cast by cast.</span><span lang="ru">Нажмите на игрока: график DPS, каждое умение с числом ударов, средним и максимальным уроном и процентом критов, точность и вся ротация по порядку.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>
+          <h3><span lang="en">Fight history</span><span lang="ru">История боёв</span></h3>
+          <p><span lang="en">Boss fights are saved automatically. Scroll back through earlier fights right in the overlay or open the history window.</span><span lang="ru">Бои с боссами сохраняются сами. Листайте прошлые бои прямо в оверлее или в окне истории.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+          <h3><span lang="en">Field boss timers</span><span lang="ru">Таймеры полевых боссов</span></h3>
+          <p><span lang="en">Respawn timers come straight from the game: open the field boss list on the map once and the meter keeps counting, separately for each server, with a tray alert before a boss you watch comes back.</span><span lang="ru">Таймеры берутся прямо из игры: откройте один раз список полевых боссов на карте, и метр продолжит отсчёт — отдельно для каждого сервера, с уведомлением перед возрождением отмеченного босса.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.4A8 8 0 1 1 21 12z"/></svg>
+          <h3><span lang="en">Share in chat</span><span lang="ru">Результат в чат</span></h3>
+          <p><span lang="en">Right-click a player to copy a one-line result for the game chat.</span><span lang="ru">Правый клик по игроку копирует результат одной строкой для игрового чата.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+          <h3><span lang="en">English and Russian</span><span lang="ru">Английский и русский</span></h3>
+          <p><span lang="en">The interface and skill names in English or Russian; switch at any time.</span><span lang="ru">Интерфейс и названия умений на английском или русском, переключение в любой момент.</span></p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>
+          <h3><span lang="en">Updates itself</span><span lang="ru">Обновляется сам</span><span class="soon">0.2.0</span></h3>
+          <p><span lang="en">A new version is announced in the meter and installed in one click.</span><span lang="ru">Метр сообщает о новой версии и ставит её в один клик.</span></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="show">
+        <div class="text">
+          <div class="eyebrow"><span lang="en">Breakdown</span><span lang="ru">Разбор боя</span></div>
+          <h2><span lang="en">Every skill, every hit</span><span lang="ru">Каждое умение, каждый удар</span></h2>
+          <p><span lang="en">Click any player in the overlay to see their fight: a DPS timeline against the rest of the party and a table of every skill — hits, damage, DPS, average and biggest hit, crit rate and share.</span><span lang="ru">Нажмите на любого игрока в оверлее, чтобы увидеть его бой: график DPS на фоне остальной группы и таблицу всех умений — удары, урон, DPS, средний и самый сильный удар, процент критов и доля.</span></p>
+        </div>
+        <div>
+          <img class="shot" lang="en" src="images/breakdown-dps-en.png" width="900" height="680" loading="lazy" alt="Fight breakdown: DPS timeline and per-skill damage table">
+          <img class="shot" lang="ru" src="images/breakdown-dps-ru.png" width="900" height="680" loading="lazy" alt="Разбор боя: график DPS и таблица урона по умениям">
+        </div>
+      </div>
+
+      <div class="show reverse tall">
+        <div class="text">
+          <div class="eyebrow"><span lang="en">Accuracy &amp; rotation</span><span lang="ru">Точность и ротация</span></div>
+          <h2><span lang="en">See where the damage came from</span><span lang="ru">Видно, откуда взялся урон</span></h2>
+          <p><span lang="en">How often each skill crits, lands from behind or in front, or hits perfectly — and every cast in order, with critical hits ringed in gold.</span><span lang="ru">Как часто каждое умение критует, попадает в спину или в лоб, наносит идеальный удар — и все применения по порядку, криты в золотой рамке.</span></p>
+        </div>
+        <div class="stack">
+          <img class="shot" lang="en" src="images/breakdown-accuracy-en.png" width="900" height="680" loading="lazy" alt="Accuracy tab: crit, back, front, perfect and smite rates per skill">
+          <img class="shot" lang="ru" src="images/breakdown-accuracy-ru.png" width="900" height="680" loading="lazy" alt="Вкладка «Точность»: криты, удары в спину и в лоб, идеальные удары по умениям">
+          <img class="shot" lang="en" src="images/breakdown-rotation-en.png" width="900" height="680" loading="lazy" alt="Rotation tab: every cast in order, crits ringed in gold">
+          <img class="shot" lang="ru" src="images/breakdown-rotation-ru.png" width="900" height="680" loading="lazy" alt="Вкладка «Ротация»: все применения умений по порядку, криты в золотой рамке">
+        </div>
+      </div>
+
+      <div class="show">
+        <div class="text">
+          <div class="eyebrow"><span lang="en">Boss timers</span><span lang="ru">Таймеры боссов</span></div>
+          <h2><span lang="en">Field boss timers from the game</span><span lang="ru">Таймеры полевых боссов из игры</span></h2>
+          <p><span lang="en">Open the field boss list on the in-game map (Map → Exploration → Field monsters) and the meter takes the timers from it: who is up, who comes back when, counted down to the second. Each server keeps its own timers; ring the bell on a boss to get a tray alert before it respawns.</span><span lang="ru">Откройте на карте в игре список полевых боссов (Карта → Исследование → Полевые монстры), и метр возьмёт таймеры оттуда: кто жив, кто когда вернётся, с отсчётом до секунды. У каждого сервера свои таймеры; включите колокольчик у босса, чтобы получить уведомление перед его возрождением.</span></p>
+        </div>
+        <div>
+          <img class="shot" lang="en" src="images/boss-timers-en.png" width="780" height="640" loading="lazy" alt="Field boss respawn timers read from the in-game map">
+          <img class="shot" lang="ru" src="images/boss-timers-ru.png" width="780" height="640" loading="lazy" alt="Таймеры возрождения полевых боссов, взятые с карты в игре">
+        </div>
+      </div>
+
+      <div class="show reverse tall">
+        <div class="text">
+          <div class="eyebrow"><span lang="en">Updates</span><span lang="ru">Обновления</span> <span class="soon">0.2.0</span></div>
+          <h2><span lang="en">Always up to date</span><span lang="ru">Всегда свежая версия</span></h2>
+          <p><span lang="en">The meter checks GitHub for new versions. When one is out, the overlay says so; one click downloads the installer, checks it and updates the meter — settings, history and timers stay.</span><span lang="ru">Метр проверяет новые версии на GitHub. Когда выходит новая, оверлей об этом сообщает; один клик — и установщик скачан, проверен, метр обновлён. Настройки, история и таймеры сохраняются.</span></p>
+        </div>
+        <div class="stack">
+          <img class="shot" lang="en" src="images/update-banner-en.png" width="500" height="100" loading="lazy" alt="The overlay announces a new version">
+          <img class="shot" lang="ru" src="images/update-banner-ru.png" width="500" height="100" loading="lazy" alt="Оверлей сообщает о новой версии">
+          <img class="shot" lang="en" src="images/update-window-en.png" width="580" height="560" loading="lazy" alt="Update window: what's new and one-click update">
+          <img class="shot" lang="ru" src="images/update-window-ru.png" width="580" height="560" loading="lazy" alt="Окно обновления: что нового и обновление в один клик">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>
+        <div>
+          <h3><span lang="en">Passive and open source</span><span lang="ru">Только слушает и открыт</span></h3>
+          <p><span lang="en">The meter only listens to your own game's network traffic through Npcap. It never reads game memory, injects anything or sends anything to the game, and the whole source code is on GitHub. Third-party tools may still be against the game's terms of service — use it at your own risk.</span><span lang="ru">Метр слушает лишь сетевой трафик вашей игры через Npcap. Он не читает память игры, ничего в неё не внедряет и ничего не отправляет, а весь исходный код лежит на GitHub. Тем не менее сторонние программы могут нарушать правила игры — используйте на свой риск.</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="eyebrow"><span lang="en">Install</span><span lang="ru">Установка</span></div>
+      <h2><span lang="en">Up and running in three steps</span><span lang="ru">Три шага до первого боя</span></h2>
+      <div class="steps">
+        <div class="card step">
+          <h3><span lang="en">Install Npcap</span><span lang="ru">Установите Npcap</span></h3>
+          <p><span lang="en">The free capture driver Wireshark uses. Keep the default options: they work with ExitLag and other ping boosters. The meter's installer checks for Npcap and opens the <a href="https://npcap.com/#download">download page</a> if it is missing.</span><span lang="ru">Бесплатный драйвер захвата трафика (его же использует Wireshark). Настройки оставьте по умолчанию: с ними работают ExitLag и другие ускорители пинга. Установщик метра сам проверит Npcap и откроет <a href="https://npcap.com/#download">страницу загрузки</a>, если его нет.</span></p>
+        </div>
+        <div class="card step">
+          <h3><span lang="en">Run the installer</span><span lang="ru">Запустите установщик</span></h3>
+          <p><span lang="en">Download <code>AION2DpsMeter-Setup.exe</code> and run it. No administrator rights needed. If Windows says “Windows protected your PC”, click <em>More info</em> → <em>Run anyway</em>: the app is not code-signed yet.</span><span lang="ru">Скачайте <code>AION2DpsMeter-Setup.exe</code> и запустите. Права администратора не нужны. Если Windows покажет «Система Windows защитила ваш компьютер», нажмите <em>Подробнее</em> → <em>Выполнить в любом случае</em>: программа пока не подписана сертификатом.</span></p>
+        </div>
+        <div class="card step">
+          <h3><span lang="en">Play</span><span lang="ru">Играйте</span></h3>
+          <p><span lang="en">Start the meter before you enter a dungeon (the game sends player names on loading screens). The overlay appears as soon as the fight starts.</span><span lang="ru">Запускайте метр до входа в подземелье (ники игроков игра присылает на экранах загрузки). Оверлей появится, как только начнётся бой.</span></p>
+        </div>
+      </div>
+      <div class="extra">
+        <div class="card">
+          <h3><span lang="en">Requirements</span><span lang="ru">Требования</span></h3>
+          <ul class="req">
+            <li><span lang="en">Windows 10 or 11, 64-bit</span><span lang="ru">Windows 10 или 11, 64-бит</span></li>
+            <li><span lang="en">AION 2 on Global servers (EU or NA)</span><span lang="ru">AION 2 на серверах Global (EU или NA)</span></li>
+            <li><span lang="en">Npcap (free)</span><span lang="ru">Npcap (бесплатно)</span></li>
+            <li><span lang="en">About 200 MB of disk space</span><span lang="ru">Около 200 МБ на диске</span></li>
+          </ul>
+          <p class="muted" style="margin:14px 0 0"><span lang="en"><strong>No installer?</strong> Download the <code>.zip</code>, unzip it anywhere and run <code>AION2DpsMeter.exe</code>.</span><span lang="ru"><strong>Без установщика?</strong> Скачайте <code>.zip</code>, распакуйте в любую папку и запустите <code>AION2DpsMeter.exe</code>.</span></p>
+        </div>
+        <div class="card">
+          <h3><span lang="en">Hotkeys</span><span lang="ru">Горячие клавиши</span></h3>
+          <table>
+            <tr><td><kbd>Ctrl+Shift+D</kbd></td><td><span lang="en">Show / hide the overlay</span><span lang="ru">Показать / скрыть оверлей</span></td></tr>
+            <tr><td><kbd>Ctrl+Shift+R</kbd></td><td><span lang="en">Reset the meter</span><span lang="ru">Сбросить метр</span></td></tr>
+            <tr><td><kbd>Ctrl+Shift+L</kbd></td><td><span lang="en">Click-through mode</span><span lang="ru">Клики сквозь оверлей</span></td></tr>
+            <tr><td><kbd>Ctrl+Shift+T</kbd></td><td><span lang="en">Boss timers</span><span lang="ru">Таймеры боссов</span></td></tr>
+          </table>
+          <p class="muted" style="margin:10px 0 0;font-size:14px"><span lang="en">Change them in Settings.</span><span lang="ru">Меняются в настройках.</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="eyebrow">FAQ</div>
+      <h2 style="margin-bottom:28px"><span lang="en">Questions</span><span lang="ru">Вопросы и ответы</span></h2>
+      <details>
+        <summary><span lang="en">Can I get banned for this?</span><span lang="ru">Можно ли за это получить бан?</span></summary>
+        <p><span lang="en">The meter does not touch the game: no memory reading, no injection, nothing is sent to the game. Still, any third-party tool may be against the game's terms of service — use it at your own risk.</span><span lang="ru">Метр не трогает игру: не читает память, ничего не внедряет и ничего не отправляет в игру. Тем не менее любые сторонние программы могут нарушать правила игры — используйте на свой риск.</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">Some players show as “#12345” instead of a name.</span><span lang="ru">Некоторые игроки показаны как «#12345» вместо ника.</span></summary>
+        <p><span lang="en">The game sends names on loading screens. Start the meter before entering a dungeon; players who were already around get their names after the next loading screen.</span><span lang="ru">Ники игра присылает на экранах загрузки. Запускайте метр до входа в подземелье; у тех, кто уже был рядом, ники появятся после следующей загрузки.</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">Does it work with ExitLag or a VPN?</span><span lang="ru">Работает ли с ExitLag или VPN?</span></summary>
+        <p><span lang="en">Yes with ExitLag and other ping boosters. If a VPN hides the game connection, choose the network adapter in Settings → Capture.</span><span lang="ru">С ExitLag и другими ускорителями пинга — да. Если VPN прячет соединение игры, выберите сетевой адаптер в Настройках → Захват.</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">The boss timers are empty.</span><span lang="ru">Таймеры боссов пустые.</span></summary>
+        <p><span lang="en">Open the field boss list on the in-game map (Map → Exploration → Field monsters) once: the meter reads the timers from it and keeps counting.</span><span lang="ru">Откройте один раз список полевых боссов на карте в игре (Карта → Исследование → Полевые монстры): метр возьмёт таймеры оттуда и продолжит отсчёт.</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">My antivirus or SmartScreen complains.</span><span lang="ru">Ругается антивирус или SmartScreen.</span></summary>
+        <p><span lang="en">The app is new, not code-signed, and it captures network traffic, which some antiviruses dislike. It is open source: you can read or build the code yourself.</span><span lang="ru">Программа новая, не подписана сертификатом и перехватывает сетевой трафик, что не нравится некоторым антивирусам. Код открыт: его можно прочитать или собрать самому.</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">My crit rate on a crowded field boss is almost zero.</span><span lang="ru">На полевом боссе почти нет критов.</span></summary>
+        <p><span lang="en">On busy field bosses the game reports very few critical hits for some classes; the meter shows exactly what the server sends. On other targets the numbers look as usual.</span><span lang="ru">На многолюдных полевых боссах игра у некоторых классов почти не сообщает о критах; метр показывает ровно то, что присылает сервер. На других целях цифры обычные.</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">Korean or Taiwanese servers?</span><span lang="ru">Корейские или тайваньские серверы?</span></summary>
+        <p><span lang="en">Not supported: the meter reads the protocol of the Global client (EU / NA).</span><span lang="ru">Не поддерживаются: метр читает протокол глобального клиента (EU / NA).</span></p>
+      </details>
+      <details>
+        <summary><span lang="en">Where are my settings and fights? How do I uninstall?</span><span lang="ru">Где хранятся настройки и бои? Как удалить?</span></summary>
+        <p><span lang="en">Everything lives in <code>%AppData%\AionMeter</code>. Uninstall from Windows Settings → Apps: it asks whether to delete settings and history as well.</span><span lang="ru">Всё лежит в <code>%AppData%\AionMeter</code>. Удаление — Параметры Windows → Приложения; при удалении метр спросит, стереть ли настройки и историю.</span></p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="https://github.com/cyberbadger6969/aion2-dps-meter">GitHub</a>
+      <a href="https://github.com/cyberbadger6969/aion2-dps-meter/releases"><span lang="en">Releases</span><span lang="ru">Релизы</span></a>
+      <a href="https://github.com/cyberbadger6969/aion2-dps-meter/issues"><span lang="en">Report a bug</span><span lang="ru">Сообщить об ошибке</span></a>
+      <a href="https://github.com/cyberbadger6969/aion2-dps-meter/blob/main/LICENSE"><span lang="en">License (GPL-3.0)</span><span lang="ru">Лицензия (GPL-3.0)</span></a>
+    </div>
+    <p lang="en">AION2 DPS Meter is free and open source under GPL-3.0. Game data tables come from the GPL-3.0 projects A2Tools-DPS-Meter (taengu) and AIon2-Dps-Meter (Kuroukihime); skill icons from the official AION 2 CDN; boss portraits from MetaBot.GG. AION 2 and its game data and art are © NCSOFT. This project is not affiliated with NCSOFT. Third-party tools may be against the game's terms of service — use at your own risk.</p>
+    <p lang="ru">AION2 DPS Meter — бесплатная программа с открытым кодом под лицензией GPL-3.0. Таблицы игровых данных взяты из проектов A2Tools-DPS-Meter (taengu) и AIon2-Dps-Meter (Kuroukihime) под GPL-3.0; иконки умений — с официального CDN AION 2; портреты боссов — с MetaBot.GG. AION 2, игровые данные и арт © NCSOFT. Проект не связан с NCSOFT. Сторонние программы могут нарушать правила игры — используйте на свой риск.</p>
+  </div>
+</footer>
+
+<script>
+  // Language: the visitor's choice, else the browser's; media follow the language.
+  const video = document.getElementById('fight');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function setLang(lang) {
+    document.documentElement.dataset.lang = lang;
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-set-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)));
+    const base = video.dataset[lang];
+    if (!video.currentSrc.includes(base)) {
+      video.poster = base + '-poster.png';
+      video.querySelector('source').src = base + '.mp4';
+      video.load();
+      if (!reduceMotion) video.play().catch(() => {});
+    }
+    try { localStorage.setItem('aion2dps-lang', lang); } catch (e) {}
+  }
+  document.querySelectorAll('[data-set-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.setLang)));
+  let saved = null;
+  try { saved = localStorage.getItem('aion2dps-lang'); } catch (e) {}
+  setLang(saved === 'en' || saved === 'ru' ? saved : (navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en');
+  if (reduceMotion) { video.removeAttribute('autoplay'); video.pause(); }
+
+  // The newest version from GitHub (optional: the page works without it).
+  fetch('https://api.github.com/repos/cyberbadger6969/aion2-dps-meter/releases/latest')
+    .then(r => r.ok ? r.json() : null)
+    .then(release => {
+      if (!release || !release.tag_name) return;
+      document.querySelectorAll('.ver').forEach(el => el.textContent = release.tag_name);
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>

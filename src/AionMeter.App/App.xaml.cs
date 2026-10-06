@@ -50,8 +50,22 @@ public partial class App : Application
         base.OnStartup(e);
         if (ArgValue(e.Args, "--render-sample") is { } samplePath)
         {
-            SampleRenderer.Render(samplePath, ArgValue(e.Args, "--lang") ?? "en", ArgValue(e.Args, "--window") ?? "overlay",
-                int.TryParse(ArgValue(e.Args, "--width"), out var width) ? width : null);
+            // --render-sample <out.png | folder with --animate> [--lang ru] [--window …] [--width N] [--height N] [--tab …]
+            // [--backdrop game|dark|none] [--scale 1.5] [--animate <seconds> [--fps 10]]
+            var options = new SampleRenderer.Options(
+                ArgValue(e.Args, "--window") ?? "overlay",
+                int.TryParse(ArgValue(e.Args, "--width"), out var width) ? width : null,
+                int.TryParse(ArgValue(e.Args, "--height"), out var height) ? height : null,
+                ArgValue(e.Args, "--tab"),
+                ArgValue(e.Args, "--backdrop") ?? "game",
+                double.TryParse(ArgValue(e.Args, "--scale"), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var scale) ? scale : 1.5);
+            var language = ArgValue(e.Args, "--lang") ?? "en";
+            if (double.TryParse(ArgValue(e.Args, "--animate"), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var seconds))
+                SampleRenderer.Animate(samplePath, language, options, seconds, int.TryParse(ArgValue(e.Args, "--fps"), out var fps) ? fps : 10);
+            else
+                SampleRenderer.Render(samplePath, language, options);
             Shutdown();
             return;
         }

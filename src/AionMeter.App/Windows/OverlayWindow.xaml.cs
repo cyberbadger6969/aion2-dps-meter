@@ -26,6 +26,9 @@ public partial class OverlayWindow : Window
 
     private sealed record SavedFight(HistoryEntry Entry, FightRecord Record, RecordFightView View, string Title);
 
+    /// <summary>The render tool's fight clock for animation frames (Unix ms); null = real time.</summary>
+    internal static Func<long>? ClockOverride { get; set; }
+
     public OverlayWindow(MeterService meter)
     {
         _meter = meter;
@@ -95,7 +98,7 @@ public partial class OverlayWindow : Window
         }
         else
         {
-            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var now = ClockOverride?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var snap = _meter.Tracker.Snapshot(_segment, now);
             if (snap is null && _segment is not null)
             {
@@ -418,7 +421,7 @@ public partial class OverlayWindow : Window
         var day = t.LocalDateTime.Date;
         if (day == DateTime.Today) return UiText.Current.SavedToday;
         if (day == DateTime.Today.AddDays(-1)) return UiText.Current.SavedYesterday;
-        return string.Format(UiText.Current.SavedOn, day.ToString("dd MMM yyyy").ToUpperInvariant());
+        return string.Format(UiText.Current.SavedOn, day.ToString("dd MMM yyyy", UiText.Current.Culture).ToUpperInvariant());
     }
 
     /// <summary>Two-line menu row: boss portrait, result mark, title, time · length, and your DPS with your place badge.</summary>

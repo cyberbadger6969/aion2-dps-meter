@@ -8,33 +8,37 @@ using AionMeter.Core.Events;
 namespace AionMeter.App.Services;
 
 /// <summary>
-/// Developer tool (<c>--render-sample out.png</c>): draws the overlay with a fixed party of every class into a PNG,
-/// without showing a window, capturing traffic or touching settings and history — safe while the game is running.
+/// Developer tool (<c>--render-sample out.png</c>): draws the overlay or a window with a scripted fight of every class
+/// into a PNG, without showing a window, capturing traffic or touching settings and history — safe while the game is
+/// running. <c>--animate &lt;seconds&gt;</c> writes the overlay frame by frame instead (into the folder given), for videos.
 /// </summary>
 public static class SampleRenderer
 {
-    /// <param name="window">overlay (default), overlay-update, breakdown, history, timers, update or update-portable.</param>
-    /// <param name="width">Overlay width (default 560): narrow sizes show how the footer copes.</param>
-    public static void Render(string path, string language, string window = "overlay", int? width = null)
+    /// <param name="Window">overlay (default), overlay-update, breakdown, history, timers, update or update-portable.</param>
+    /// <param name="Width">Overlay width (default 560): narrow sizes show how the footer copes.</param>
+    /// <param name="Tab">Breakdown tab: dps (default), accuracy, rotation or defense.</param>
+    /// <param name="Backdrop">Behind the translucent overlay: game (a stand-in colour), dark (a navy gradient) or none (transparent).</param>
+    public sealed record Options(string Window = "overlay", int? Width = null, int? Height = null, string? Tab = null,
+        string Backdrop = "game", double Scale = 1.5);
+
+    public static void Render(string path, string language, Options o)
     {
-        var settings = new AppSettings { Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language };
-        UiText.Use(settings.Language);
-        using var meter = new MeterService(settings, captureFactory: null);
-        Feed(meter);
-        // Let boss portraits download (first run only; then they come from the cache).
-        meter.Portraits.Get(SampleBossCode);
-        if (window == "history")
+        using var meter = CreateMeter(language);
+        var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 20_500; // a fight that is still going
+        new SampleFight(start, 20).FeedUntil(meter.Tracker, start + 20_000);
+        if (o.Window == "history")
             foreach (var entry in meter.History.List().Take(20)) meter.PortraitOf(entry);
-        for (var i = 0; i < 80 && meter.Portraits.Busy; i++) Thread.Sleep(100);
+        WaitForPortraits(meter);
 
         Window host;
         Action refresh;
-        switch (window)
+        switch (o.Window)
         {
             case "breakdown":
                 var segment = meter.Tracker.Segments()[0].Id;
                 var breakdown = new BreakdownWindow(new ViewModels.LiveFightView(meter.Tracker, segment), 2, meter.Data, meter.Icons, meter.Portraits)
-                    { Width = 900, Height = 680 };
+                    { Width = o.Width ?? 900, Height = o.Height ?? 680 };
+                if (o.Tab is { } tab) breakdown.ShowTab(tab);
                 host = breakdown;
                 refresh = breakdown.ReloadNow;
                 break;
@@ -45,40 +49,101 @@ public static class SampleRenderer
                 break;
             case "timers":
                 FeedTimers(meter);
-                for (var i = 0; i < 80 && meter.Portraits.Busy; i++) Thread.Sleep(100);
-                var timers = new BossTimersWindow(meter) { Width = 780, Height = 640 };
+                WaitForPortraits(meter);
+                var timers = new BossTimersWindow(meter) { Width = o.Width ?? 780, Height = o.Height ?? 640 };
                 host = timers;
                 refresh = timers.ReloadNow;
                 break;
             case "update" or "update-portable":
                 var release = SampleRelease();
                 meter.Updates.Preview(release);
-                host = new UpdateWindow(meter.Updates, release, installed: window == "update") { Width = 580, Height = 560 };
+                host = new UpdateWindow(meter.Updates, release, installed: o.Window == "update") { Width = 580, Height = 560 };
                 refresh = () => { };
                 break;
             default:
-                if (window == "overlay-update") meter.Updates.Preview(SampleRelease()); // with the footer's update button
-                var overlay = new OverlayWindow(meter) { Width = width ?? 560, Height = 820 };
+                if (o.Window == "overlay-update") meter.Updates.Preview(SampleRelease()); // with the footer's update banner
+                var overlay = new OverlayWindow(meter) { Width = o.Width ?? 560, Height = o.Height ?? 820 };
                 host = overlay;
                 refresh = overlay.Refresh;
                 break;
         }
+        Capture(host, refresh, path, o);
+    }
+
+    /// <summary>
+    /// The overlay through a scripted boss fight, <paramref name="fps"/> frames a second on the fight's own clock
+    /// (frame_000.png …): from "waiting for combat" through the Elementalist taking the lead.
+    /// </summary>
+    public static void Animate(string folder, string language, Options o, double seconds, int fps)
+    {
+        using var meter = CreateMeter(language);
+        WaitForPortraits(meter);
+        var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 600_000;
+        var fight = new SampleFight(start, seconds);
+        var clock = start;
+        OverlayWindow.ClockOverride = () => clock;
+        try
+        {
+            var overlay = new OverlayWindow(meter) { Width = o.Width ?? 500, Height = o.Height ?? 760 };
+            Directory.CreateDirectory(folder);
+            var frames = (int)Math.Round(seconds * fps);
+            for (var f = 0; f <= frames; f++)
+            {
+                clock = start + (long)(f * 1000.0 / fps);
+                fight.FeedUntil(meter.Tracker, clock);
+                Capture(overlay, overlay.Refresh, Path.Combine(folder, $"frame_{f:000}.png"), o);
+            }
+        }
+        finally
+        {
+            OverlayWindow.ClockOverride = null;
+        }
+    }
+
+    private static MeterService CreateMeter(string language)
+    {
+        var settings = new AppSettings { Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language };
+        UiText.Use(settings.Language);
+        var meter = new MeterService(settings, _ => new QuietSource());
+        meter.StartCapture(); // the footer reads "Capturing", as it does in the game
+        meter.Portraits.Get(SampleBossCode); // first run only; then it comes from the cache
+        return meter;
+    }
+
+    /// <summary>A capture that reports what a working one does and produces nothing: the script feeds the fight.</summary>
+    private sealed class QuietSource : Core.Capture.IEventSource
+    {
+        public event Action<GameEvent>? EventDecoded { add { } remove { } }
+        public event Action<Core.Capture.CaptureStatus>? StatusChanged { add { } remove { } }
+        public Core.Capture.CaptureStatus Status { get; } = new(Core.Capture.CaptureState.Capturing, "Capturing · 127.0.0.1");
+        public void Start() { }
+        public void Stop() { }
+        public void Dispose() { }
+    }
+
+    private static void WaitForPortraits(MeterService meter)
+    {
+        for (var i = 0; i < 80 && meter.Portraits.Busy; i++) Thread.Sleep(100);
+    }
+
+    private static void Capture(Window host, Action refresh, string path, Options o)
+    {
         refresh();
         if (host.Content is not FrameworkElement root) return;
-
-        const double scale = 1.5;
         root.Measure(new Size(host.Width, host.Height));
         root.Arrange(new Rect(0, 0, host.Width, host.Height));
         root.UpdateLayout();
         refresh();
         root.UpdateLayout();
 
-        var bmp = new RenderTargetBitmap((int)(host.Width * scale), (int)(host.Height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
-        var bg = new DrawingVisual();
-        using (var dc = bg.RenderOpen())
-            dc.DrawRectangle(host is OverlayWindow ? new SolidColorBrush(Color.FromRgb(0x2B, 0x3A, 0x2E)) : host.Background,
-                null, new Rect(0, 0, host.Width, host.Height));
-        bmp.Render(bg); // stand-in for the game behind the translucent card / the window background
+        var bmp = new RenderTargetBitmap((int)(host.Width * o.Scale), (int)(host.Height * o.Scale), 96 * o.Scale, 96 * o.Scale, PixelFormats.Pbgra32);
+        if (Backdrop(host, o.Backdrop) is { } backdrop)
+        {
+            var bg = new DrawingVisual();
+            using (var dc = bg.RenderOpen())
+                dc.DrawRectangle(backdrop, null, new Rect(0, 0, host.Width, host.Height));
+            bmp.Render(bg);
+        }
         bmp.Render(root);
 
         var encoder = new PngBitmapEncoder();
@@ -87,9 +152,98 @@ public static class SampleRenderer
         encoder.Save(file);
     }
 
+    /// <summary>What shows through the translucent overlay card; other windows draw their own background.</summary>
+    private static Brush? Backdrop(Window host, string backdrop)
+    {
+        if (host is not OverlayWindow) return host.Background;
+        return backdrop switch
+        {
+            "none" => null,
+            "dark" => new LinearGradientBrush(
+                new GradientStopCollection { new(Color.FromRgb(0x24, 0x31, 0x52), 0), new(Color.FromRgb(0x11, 0x17, 0x29), 0.55), new(Color.FromRgb(0x07, 0x09, 0x10), 1) },
+                new Point(0, 0), new Point(1, 1)),
+            _ => new SolidColorBrush(Color.FromRgb(0x2B, 0x3A, 0x2E)), // a stand-in for the game
+        };
+    }
+
     private const int SampleBossCode = 2701250; // Balhash, a field boss
 
-    /// <summary>A made-up next version for the update window and the overlay's update button.</summary>
+    /// <summary>
+    /// A scripted boss fight: every class with its own skills, crits, back attacks and perfect hits. The Elementalist
+    /// ("you") starts slow and takes the lead after a burst; the Brawler joins late. The same random seed every time,
+    /// so screenshots and animation frames repeat exactly.
+    /// </summary>
+    private sealed class SampleFight
+    {
+        private const uint Boss = 900_001;
+        private const long BossHp = 90_000_000;
+
+        private sealed record Member(uint Id, string Name, GameClass Class, int[] Skills, Func<double, double> Dps, double JoinAt = 0);
+
+        private static readonly Member[] Party =
+        [
+            new(1, "Borgrim", GameClass.Gladiator, [11010000, 11020000, 11030000, 11040000], t => t < 6 ? 500_000 : 420_000),
+            new(2, "Sylvaen", GameClass.Elementalist, [16010000, 16020000, 16030000, 16040000, 16140000], t => t < 4 ? 280_000 : t < 9 ? 1_000_000 : 560_000),
+            new(3, "Talwyn", GameClass.Ranger, [14010000, 14020000, 14030000, 14040000, 14050000], _ => 340_000),
+            new(4, "Aegisa", GameClass.Templar, [12010000, 12020000, 12030000], _ => 280_000),
+            new(5, "Nyxara", GameClass.Assassin, [13010000, 13020000, 13120000], t => t is > 7 and < 11 ? 640_000 : 230_000),
+            new(6, "Morwen", GameClass.Sorcerer, [15010000, 15020000, 15030000], _ => 250_000),
+            new(7, "Celesta", GameClass.Cleric, [17010000, 17020000, 17030000, 17040000], _ => 150_000),
+            new(8, "Hymnar", GameClass.Chanter, [18010000, 18020000, 18030000, 18040000], _ => 130_000),
+            new(9, "Grohm", GameClass.Brawler, [19010000, 19020000, 19030000], _ => 190_000, JoinAt: 2.5),
+        ];
+
+        private readonly List<GameEvent> _events = new();
+        private int _next;
+
+        public SampleFight(long start, double seconds)
+        {
+            var rnd = new Random(2305);
+            _events.Add(new SelfIdentifiedEvent(start, 2, "Sylvaen", 2305, GameClass.Elementalist));
+            foreach (var m in Party.Where(m => m.Id != 2)) _events.Add(new PlayerSeenEvent(start, m.Id, m.Name, 2305, m.Class));
+            _events.Add(new NpcSeenEvent(start, Boss, SampleBossCode, BossHp));
+
+            var hits = new List<DamageEvent>();
+            foreach (var m in Party)
+            {
+                for (var t = m.JoinAt + 0.2 + rnd.NextDouble() * 0.4; t < seconds; t += 0.45 + rnd.NextDouble() * 0.5)
+                {
+                    var amount = m.Dps(t) * 0.7 * (0.75 + rnd.NextDouble() * 0.5); // one hit every ~0.7 s on average
+                    var flags = HitFlags.None;
+                    if (rnd.NextDouble() < 0.24)
+                    {
+                        flags |= HitFlags.Critical;
+                        amount *= 1.9;
+                    }
+                    if (rnd.NextDouble() < 0.18) flags |= HitFlags.Back;
+                    else if (rnd.NextDouble() < 0.1) flags |= HitFlags.Perfect;
+                    hits.Add(new DamageEvent(start + (long)(t * 1000), m.Id, Boss, m.Skills[rnd.Next(m.Skills.Length)], (long)amount, flags));
+                }
+            }
+            hits.Sort((a, b) => a.TimeMs.CompareTo(b.TimeMs));
+
+            // The boss's HP follows the damage dealt, updated every half second like the game does.
+            long dealt = 0;
+            var i = 0;
+            for (var at = 500L; at <= seconds * 1000 + 500; at += 500)
+            {
+                while (i < hits.Count && hits[i].TimeMs <= start + at)
+                {
+                    dealt += hits[i].Damage;
+                    _events.Add(hits[i++]);
+                }
+                _events.Add(new NpcHpEvent(start + at, Boss, Math.Max(1, BossHp - dealt), BossHp));
+            }
+        }
+
+        /// <summary>Feeds every event up to <paramref name="untilMs"/> that has not been fed yet.</summary>
+        public void FeedUntil(Core.Combat.CombatTracker tracker, long untilMs)
+        {
+            while (_next < _events.Count && _events[_next].TimeMs <= untilMs) tracker.Process(_events[_next++]);
+        }
+    }
+
+    /// <summary>A made-up next version for the update window and the overlay's update banner.</summary>
     private static Core.Updates.ReleaseInfo SampleRelease() => new(
         new Version(0, 2, 0), "v0.2.0", Core.Updates.UpdateFeed.ReleasesPage,
         """
@@ -135,32 +289,5 @@ public static class SampleRenderer
         meter.Timers.SetRespawn(2305, 2701250, 120);
         meter.Timers.SetWatch(2305, 2400800, true);
         foreach (var t in meter.Timers.All().Where(t => t.NpcCode > 0)) meter.Portraits.Get(t.NpcCode);
-    }
-
-    private static void Feed(MeterService meter)
-    {
-        var t = meter.Tracker;
-        const uint boss = 900_001;
-        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 20_000;
-        (uint Id, string Name, GameClass Class, long Damage, int Skill)[] party =
-        [
-            (1, "Borgrim", GameClass.Gladiator, 9_890_000, 11020000),
-            (2, "Sylvaen", GameClass.Elementalist, 8_310_000, 16040000),
-            (3, "Talwyn", GameClass.Ranger, 5_590_000, 14050000),
-            (4, "Aegisa", GameClass.Templar, 5_100_000, 12030000),
-            (5, "Nyxara", GameClass.Assassin, 4_800_000, 13120000),
-            (6, "Morwen", GameClass.Sorcerer, 4_300_000, 15020000),
-            (7, "Celesta", GameClass.Cleric, 3_100_000, 17040000),
-            (8, "Hymnar", GameClass.Chanter, 2_400_000, 18040000),
-            (9, "Grohm", GameClass.Brawler, 1_900_000, 19020000),
-        ];
-        t.Process(new SelfIdentifiedEvent(now, 2, "Sylvaen", 2305, GameClass.Elementalist));
-        foreach (var p in party.Where(p => p.Id != 2)) t.Process(new PlayerSeenEvent(now, p.Id, p.Name, 2305, p.Class));
-        t.Process(new NpcSeenEvent(now, boss, SampleBossCode, 120_000_000));
-        for (var i = 0; i < 10; i++)
-            foreach (var p in party)
-                t.Process(new DamageEvent(now + i * 2_000 + p.Id * 10, p.Id, boss, p.Skill, p.Damage / 10,
-                    i % 3 == 0 ? HitFlags.Critical : HitFlags.None));
-        t.Process(new NpcHpEvent(now + 19_000, boss, 70_000_000, 120_000_000));
     }
 }

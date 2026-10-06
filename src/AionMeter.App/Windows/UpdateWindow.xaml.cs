@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -42,9 +41,8 @@ public partial class UpdateWindow : Window
 
     public ReleaseInfo Release { get; }
 
-    private static string FormatDate(DateTimeOffset at) => UiText.Current.Code == "ru"
-        ? at.LocalDateTime.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))
-        : at.LocalDateTime.ToString("MMMM d, yyyy", CultureInfo.GetCultureInfo("en-US"));
+    private static string FormatDate(DateTimeOffset at) =>
+        at.LocalDateTime.ToString(UiText.Current.Code == "ru" ? "d MMMM yyyy" : "MMMM d, yyyy", UiText.Current.Culture);
 
     private async void Update_Click(object sender, RoutedEventArgs e)
     {

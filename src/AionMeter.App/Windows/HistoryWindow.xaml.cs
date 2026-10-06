@@ -133,8 +133,8 @@ public partial class HistoryWindow : Window
         if (ago.TotalMinutes < 1) return T.JustNow;
         if (ago.TotalHours < 1) return string.Format(T.MinutesAgo, (int)ago.TotalMinutes);
         if (ago.TotalDays < 1) return string.Format(T.HoursAgo, (int)ago.TotalHours);
-        if (ago.TotalDays < 7) return t.ToString("ddd HH:mm");
-        return t.ToString("dd MMM");
+        if (ago.TotalDays < 7) return t.ToString("ddd HH:mm", T.Culture);
+        return t.ToString("dd MMM", T.Culture);
     }
 
     private void Fights_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -147,7 +147,7 @@ public partial class HistoryWindow : Window
         var s = _record.Summary;
         DetailTitle.Text = item.Title;
         DetailPortrait.Source = item.Portrait;
-        DetailMeta.Text = $"{s.StartedAt:dd MMM yyyy HH:mm} · {Format.ClockPrecise(s.CombatMs)} · " +
+        DetailMeta.Text = $"{s.StartedAt.ToString("dd MMM yyyy HH:mm", T.Culture)} · {Format.ClockPrecise(s.CombatMs)} · " +
                           $"{Format.Compact(s.TotalDamage)} {T.DamageWord} · {Format.Compact(s.PartyDps)}/s {T.Party} · {ReasonText(s.Reason)}";
         var vm = new OverlayViewModel();
         vm.Apply(s, 50, relativeToTop: true);
@@ -173,7 +173,7 @@ public partial class HistoryWindow : Window
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
         if (Fights.SelectedItem is not FightItem item) return;
-        var answer = MessageBox.Show(this, string.Format(T.DeleteConfirm, item.Title, item.Entry.StartedAt.ToString("dd MMM HH:mm")), AppInfo.Name,
+        var answer = MessageBox.Show(this, string.Format(T.DeleteConfirm, item.Title, item.Entry.StartedAt.ToString("dd MMM HH:mm", T.Culture)), AppInfo.Name,
             MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (answer != MessageBoxResult.Yes) return;
         Store.Delete(item.Entry.Path);

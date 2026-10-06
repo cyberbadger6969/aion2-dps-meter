@@ -12,3 +12,6 @@ dist/
 
 # Local tool settings
 .claude/
+
+# Download page kit, rebuilt by tools/make-site-kit.ps1
+site-kit/
