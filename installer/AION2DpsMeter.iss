@@ -88,6 +88,7 @@ Filename: "{app}\{#AppExe}"; Parameters: "--updated"; Flags: nowait; Check: Rela
 var
   NpcapPage: TWizardPage;
   NpcapStatus: TNewStaticText;
+  FilesInstalled: Boolean;
 
 // Same test as the meter itself (LiveCapture.IsNpcapInstalled). Setup is 64-bit, so {sys} is the real System32.
 function NpcapInstalled: Boolean;
@@ -185,6 +186,27 @@ end;
 function RelaunchAfterUpdate: Boolean;
 begin
   Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    FilesInstalled := True;
+end;
+
+// The meter closed itself for this in-app update. If the update did not go through, start the copy that is still
+// there, so the player is not left without a meter.
+procedure DeinitializeSetup;
+var
+  ExitCode: Integer;
+begin
+  if RelaunchAfterUpdate and not FilesInstalled then
+  try
+    if FileExists(ExpandConstant('{app}\{#AppExe}')) then
+      Exec(ExpandConstant('{app}\{#AppExe}'), '', '', SW_SHOWNORMAL, ewNoWait, ExitCode);
+  except
+    // {app} is unknown when Setup stopped before choosing a folder: nothing to start then.
+  end;
 end;
 
 // Uninstall: the meter keeps its files open, so close the copy that runs from this folder (a portable copy

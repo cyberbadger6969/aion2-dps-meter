@@ -340,7 +340,11 @@ public sealed class UiText
     public string TrayCheckUpdates { get; init; } = "Check for updates";
     public string SecUpdates { get; init; } = "UPDATES";
     public string CheckUpdatesAuto { get; init; } = "Check GitHub for new versions";
-    public string UpdatesHint { get; init; } = "Shortly after start and every 6 hours. The meter only asks GitHub which version is the newest; nothing about you or your fights is sent.";
+    public string UpdatesHint { get; init; } = "Shortly after start and every 2 hours. The meter only asks GitHub which version is the newest; nothing about you or your fights is sent.";
+    public string AutoInstallUpdates { get; init; } = "Install updates by itself";
+    public string AutoInstallHint { get; init; } = "A new version is downloaded in the background and installed when you are not playing (or after 10 minutes without a fight): the meter restarts by itself, without any window. Installed copies only.";
+    public string UpdateBannerReady { get; init; } = "Update {0} is ready — it installs itself when you are not playing";
+    public string UpdateReadyBalloon { get; init; } = "Version {0} is downloaded and installs itself when you are not playing. Click here to install it now.";
     public string VersionInstalled { get; init; } = "Version {0} · installed";
     public string VersionPortable { get; init; } = "Version {0} · portable (zip)";
     public string CheckNow { get; init; } = "Check now";
@@ -629,7 +633,11 @@ public sealed class UiText
         TrayCheckUpdates = "Проверить обновления",
         SecUpdates = "ОБНОВЛЕНИЯ",
         CheckUpdatesAuto = "Проверять новые версии на GitHub",
-        UpdatesHint = "Вскоре после запуска и раз в 6 часов. Метр только спрашивает у GitHub номер новой версии — ничего о вас и ваших боях не отправляется.",
+        UpdatesHint = "Вскоре после запуска и раз в 2 часа. Метр только спрашивает у GitHub номер новой версии — ничего о вас и ваших боях не отправляется.",
+        AutoInstallUpdates = "Устанавливать обновления самому",
+        AutoInstallHint = "Новая версия скачивается в фоне и ставится, когда вы не в игре (или после 10 минут без боя): метр перезапустится сам, без всяких окон. Только для установленной версии.",
+        UpdateBannerReady = "Обновление {0} готово — установится само, когда вы не в игре",
+        UpdateReadyBalloon = "Версия {0} скачана и установится сама, когда вы не в игре. Нажмите сюда, чтобы установить сейчас.",
         VersionInstalled = "Версия {0} · установлена",
         VersionPortable = "Версия {0} · без установки (zip)",
         CheckNow = "Проверить сейчас",

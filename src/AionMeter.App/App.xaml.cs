@@ -200,6 +200,7 @@ public partial class App : Application
             _tray?.Update(_overlay.IsVisible, _meter.Settings.ClickThrough, _meter.DemoRunning ? "demo" : _meter.CaptureStatus.Message);
             CheckBossAlerts();
             CheckGameStart();
+            CheckPendingUpdate();
         }
     }
 
@@ -411,13 +412,61 @@ public partial class App : Application
     /// <summary>A check finished or a version was skipped: the tray item follows; a new version is announced once.</summary>
     private void OnUpdatesChanged()
     {
-        var available = _meter.Updates.Available;
+        var updates = _meter.Updates;
+        var available = updates.Available;
         _tray?.SetUpdate(available?.Version.ToString(3));
         if (available is null || available.Version == _announcedUpdate) return;
+        var t = UiText.Current;
+        if (updates.AutoInstall && !updates.DownloadFailed)
+        {
+            // It installs itself: one notice once it is downloaded, nothing to click.
+            if (updates.Downloaded?.Version != available.Version) return; // still downloading
+            _announcedUpdate = available.Version;
+            if (!_checkingByHand)
+                _tray?.ShowBalloon(t.UpdateTitle, string.Format(t.UpdateReadyBalloon, available.Version.ToString(3)), InstallUpdateNow);
+            return;
+        }
         _announcedUpdate = available.Version;
         if (_checkingByHand) return; // the one who asked gets the update window instead
-        var t = UiText.Current;
         _tray?.ShowBalloon(t.UpdateTitle, string.Format(t.UpdateBalloon, available.Version.ToString(3)), () => ShowUpdate());
+    }
+
+    private readonly long _startedAt = Environment.TickCount64;
+    private bool _installing;
+
+    /// <summary>
+    /// A downloaded update goes in at a quiet moment: when the game is not running, at once (but not in the meter's first
+    /// minute); while it runs, after ten minutes without a fight. The installer has no window; the meter closes and the
+    /// new version starts by itself.
+    /// </summary>
+    private void CheckPendingUpdate()
+    {
+        var updates = _meter.Updates;
+        if (_installing || !updates.AutoInstall || updates.Downloaded is not { } ready || updates.Available?.Version != ready.Version ||
+            _meter.Tracker.LiveFight() is not null) return; // turned off, skipped, or a fight is on
+        var quiet = Environment.TickCount64 - Math.Max(_lastEngagedTick, _startedAt);
+        if (quiet < 60_000) return;
+        if (quiet < 10 * 60_000 && GameProcessLocator.FindGameProcessIds().Length > 0) return;
+        InstallUpdateNow();
+    }
+
+    /// <summary>Installs the downloaded update right away (also the overlay banner's and the update window's choice).</summary>
+    public void InstallUpdateNow()
+    {
+        if (_installing || _meter.Updates.Downloaded is not { } update) return;
+        _installing = true;
+        try
+        {
+            Log.Info($"Installing update {update.Tag}");
+            _meter.Updates.InstallDownloaded();
+            Shutdown(); // the installer replaces our files and starts the new version
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException
+                                       or System.ComponentModel.Win32Exception)
+        {
+            _installing = false;
+            Log.Error("Update could not start", ex);
+        }
     }
 
     /// <summary>The update window for <paramref name="release"/>, by default the available update.</summary>

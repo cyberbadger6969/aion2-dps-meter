@@ -82,10 +82,72 @@ public class UpdateTests
         }
     }
 
+    [Fact]
+    public async Task An_installer_already_downloaded_is_not_fetched_again()
+    {
+        var body = new byte[100_000];
+        new Random(3).NextBytes(body);
+        var asset = new ReleaseAsset("Setup.exe", body.Length, "https://e/Setup.exe", Convert.ToHexStringLower(SHA256.HashData(body)));
+        var dir = Path.Combine(Path.GetTempPath(), "aionmeter-update-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var server = new FixedResponse(body);
+            using var feed = new UpdateFeed("test", server);
+            await feed.DownloadAsync(asset, dir, null); // the background download
+            await feed.DownloadAsync(asset, dir, null); // the player clicks Update later
+            Assert.Equal(1, server.Requests);
+
+            File.WriteAllBytes(Path.Combine(dir, "Setup.exe"), new byte[body.Length]); // damaged on disk: fetched again
+            await feed.DownloadAsync(asset, dir, null);
+            Assert.Equal(2, server.Requests);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // The shape of the real 0.2.x release notes: download links, then a Russian and an English part.
+    private const string Notes = """
+        **Download:** [Setup](https://e/setup.exe) · [zip](https://e/app.zip)
+
+        ## Что нового в 0.2.2
+
+        - **Видно, что метр работает.** Оверлей появляется
+          при запуске.
+
+        **Обновление:** метр сам предложит.
+
+        ## What's new in 0.2.2
+
+        - **You can see the meter is running.** The overlay comes up on start.
+        """;
+
+    [Fact]
+    public void Release_notes_show_the_interface_language_only()
+    {
+        var ru = ReleaseNotes.Lines(Notes, "ru");
+        Assert.Equal(("Что нового в 0.2.2", true), ru[0]);
+        Assert.Contains(ru, l => l.Text == "• Видно, что метр работает. Оверлей появляется при запуске.");
+        Assert.DoesNotContain(ru, l => l.Text.Contains("Download") || l.Text.Contains("What's new"));
+
+        var en = ReleaseNotes.Lines(Notes, "en");
+        Assert.Equal([("What's new in 0.2.2", true), ("• You can see the meter is running. The overlay comes up on start.", false)], en);
+    }
+
+    [Fact]
+    public void Single_language_notes_are_shown_whole() =>
+        Assert.Equal(("Fixes", true), ReleaseNotes.Lines("## Fixes\n\n- One", "ru")[0]);
+
     private sealed class FixedResponse(byte[] body) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(body) });
+        public int Requests { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            Requests++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(body) });
+        }
     }
 
     private sealed class SyncProgress(Action<double> report) : IProgress<double>

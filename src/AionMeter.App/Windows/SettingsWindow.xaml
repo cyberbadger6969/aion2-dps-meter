@@ -196,6 +196,9 @@
                             <CheckBox x:Name="CheckUpdates" Style="{StaticResource DarkCheck}"
                                       Content="{Binding CheckUpdatesAuto, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding UpdatesHint, Source={x:Static s:UiText.Current}}" />
+                            <CheckBox x:Name="AutoInstallUpdates" Style="{StaticResource DarkCheck}" Margin="0,4,0,0"
+                                      Content="{Binding AutoInstallUpdates, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding AutoInstallHint, Source={x:Static s:UiText.Current}}" />
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <TextBlock x:Name="VersionText" VerticalAlignment="Center" Foreground="{StaticResource TextDim}" Margin="0,0,14,0" />
                                 <Button x:Name="CheckNowButton" Style="{StaticResource GhostButton}" Click="CheckNow_Click"

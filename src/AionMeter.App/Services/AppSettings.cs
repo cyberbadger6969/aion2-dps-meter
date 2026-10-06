@@ -63,6 +63,8 @@ public sealed class AppSettings
     // Updates
     /// <summary>Ask GitHub for a newer version shortly after start and every few hours.</summary>
     public bool CheckUpdates { get; set; } = true;
+    /// <summary>Installed copies download a new version by themselves and install it at a quiet moment.</summary>
+    public bool AutoInstallUpdates { get; set; } = true;
     /// <summary>A version the user chose to skip ("0.2.0"): not announced again, a newer one is.</summary>
     public string? SkippedUpdate { get; set; }
 

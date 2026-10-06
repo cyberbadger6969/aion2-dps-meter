@@ -18,12 +18,14 @@ public enum UpdateCheckResult
 /// <summary>
 /// New versions of the meter. Asks GitHub shortly after start and every few hours (Settings → Updates) and raises
 /// <see cref="Changed"/> for the tray, the overlay and the update window. A copy installed by the installer updates
-/// itself: the new installer runs silently, closes this copy and starts the new one. A portable copy gets the download page.
+/// itself: it downloads the new installer in the background (<see cref="Downloaded"/>), and the app runs it at a quiet
+/// moment without any window; the installer replaces this copy and starts the new one. A portable copy gets the
+/// download page.
 /// </summary>
 public sealed class Updater : IDisposable
 {
     private static readonly TimeSpan FirstCheckDelay = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(6);
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(2);
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{AE1B2590-0A93-4500-9CB1-0F543771957A}_is1"; // AppId in installer/AION2DpsMeter.iss
 
     private readonly AppSettings _settings;
@@ -52,6 +54,18 @@ public sealed class Updater : IDisposable
 
     /// <summary>True when this copy runs from the folder the installer put it in (it can update itself).</summary>
     public static bool IsInstalled { get; } = DetectInstalled();
+
+    /// <summary>This copy fetches and installs new versions by itself (installed copies, unless turned off).</summary>
+    public bool AutoInstall => IsInstalled && _settings.AutoInstallUpdates;
+
+    /// <summary>The update whose installer is downloaded and checked, waiting for a quiet moment to be installed.</summary>
+    public ReleaseInfo? Downloaded { get; private set; }
+
+    /// <summary>The background download of <see cref="Available"/> failed: fall back to asking the player.</summary>
+    public bool DownloadFailed { get; private set; }
+
+    private string? _downloadedPath;
+    private bool _downloading;
 
     /// <summary>Raised on the UI thread after every check and when a version is skipped.</summary>
     public event Action? Changed;
@@ -91,6 +105,7 @@ public sealed class Updater : IDisposable
             Latest = await _feed.GetLatestAsync();
             LastError = null;
             Log.Info($"Update check: newest release {Latest?.Tag ?? "none"}, this copy {Current.ToString(3)}.");
+            if (Available is { Installer: not null } update && AutoInstall) _ = PrepareAsync(update);
             return Latest is { } r && r.Version > Current ? UpdateCheckResult.Available : UpdateCheckResult.UpToDate;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException)
@@ -114,21 +129,55 @@ public sealed class Updater : IDisposable
     }
 
     /// <summary>Downloads the release's installer to the temp folder, checked against GitHub's size and SHA-256.</summary>
-    public Task<string> DownloadInstallerAsync(ReleaseInfo release, IProgress<double> progress, CancellationToken ct) =>
+    public Task<string> DownloadInstallerAsync(ReleaseInfo release, IProgress<double>? progress, CancellationToken ct) =>
         release.Installer is { } installer
             ? _feed.DownloadAsync(installer, DownloadFolder, progress, ct)
             : throw new InvalidOperationException($"Release {release.Tag} has no installer");
 
+    /// <summary>Fetches the update in the background, so it can go in at the next quiet moment.</summary>
+    private async Task PrepareAsync(ReleaseInfo release)
+    {
+        if (_downloading || Downloaded?.Version == release.Version) return;
+        _downloading = true;
+        DownloadFailed = false;
+        try
+        {
+            _downloadedPath = await DownloadInstallerAsync(release, null, CancellationToken.None);
+            Downloaded = release;
+            Log.Info($"Update {release.Tag} downloaded: {_downloadedPath}");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or InvalidOperationException
+                                       or OperationCanceledException)
+        {
+            DownloadFailed = true;
+            Log.Info($"Update {release.Tag} not downloaded: {ex.Message}");
+        }
+        finally
+        {
+            _downloading = false;
+            Changed?.Invoke();
+        }
+    }
+
+    /// <summary>Runs the downloaded installer without any window; the caller exits right after.</summary>
+    public void InstallDownloaded()
+    {
+        if (_downloadedPath is null) throw new InvalidOperationException("No update downloaded");
+        LaunchInstaller(_downloadedPath, quiet: true);
+    }
+
     /// <summary>
-    /// Starts the downloaded installer silently. It closes this copy if it is still running (Restart Manager),
-    /// installs over it and starts the new version (<c>/RELAUNCH=1</c>, see the [Run] section of the installer).
-    /// The caller exits right after.
+    /// Starts the downloaded installer: <paramref name="quiet"/> with no window at all (automatic updates), otherwise
+    /// with a small progress window (the player clicked Update). It closes this copy if it is still running (Restart
+    /// Manager), installs over it and starts the new version (<c>/RELAUNCH=1</c>, see the [Run] section of the
+    /// installer). The caller exits right after.
     /// </summary>
-    public static void LaunchInstaller(string path)
+    public static void LaunchInstaller(string path, bool quiet = false)
     {
         if (FileVersionInfo.GetVersionInfo(path).ProductName != AppInfo.Name)
             throw new InvalidDataException($"{Path.GetFileName(path)} is not the {AppInfo.Name} installer");
-        Process.Start(new ProcessStartInfo(path, "/SILENT /SUPPRESSMSGBOXES /NORESTART /RELAUNCH=1") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo(path, (quiet ? "/VERYSILENT" : "/SILENT") + " /SUPPRESSMSGBOXES /NORESTART /RELAUNCH=1")
+            { UseShellExecute = true });
     }
 
     public static void OpenReleasePage(ReleaseInfo? release)

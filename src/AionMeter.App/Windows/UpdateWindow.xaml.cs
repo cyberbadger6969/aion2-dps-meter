@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.IO;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -105,52 +104,10 @@ public partial class UpdateWindow : Window
     {
         Notes.Inlines.Clear();
         var gold = (Brush)FindResource("Gold");
-        foreach (var (text, heading) in NoteLines(markdown))
+        foreach (var (text, heading) in ReleaseNotes.Lines(markdown, UiText.Current.Code))
         {
             if (Notes.Inlines.Count > 0) Notes.Inlines.Add(new LineBreak());
             Notes.Inlines.Add(heading ? new Run(text) { FontWeight = FontWeights.SemiBold, Foreground = gold } : new Run(text));
         }
     }
-
-    /// <summary>
-    /// Release notes are Markdown: keep the words, drop the markup. Wrapped lines join their paragraph or list item,
-    /// headings are flagged, runs of blank lines become one.
-    /// </summary>
-    internal static List<(string Text, bool Heading)> NoteLines(string markdown)
-    {
-        var lines = new List<(string Text, bool Heading)>();
-        var open = false; // the last line is a paragraph or list item that a wrapped line continues
-        foreach (var raw in markdown.Replace("\r\n", "\n").Split('\n'))
-        {
-            var line = raw.Trim();
-            if (line.Length == 0)
-            {
-                if (lines.Count > 0 && lines[^1].Text.Length > 0 && !lines[^1].Heading) lines.Add(("", false));
-                open = false;
-                continue;
-            }
-            var heading = Regex.Match(line, @"^#{1,6}\s+(.*)$");
-            var item = Regex.IsMatch(line, @"^([-*+]|\d+[.)])\s+");
-            line = Clean(heading.Success ? heading.Groups[1].Value : line);
-            if (heading.Success)
-            {
-                lines.Add((line, true));
-                open = false;
-            }
-            else if (open && !item)
-            {
-                lines[^1] = (lines[^1].Text + " " + line, false);
-            }
-            else
-            {
-                lines.Add((Regex.Replace(line, @"^[-*+]\s+", "• "), false));
-                open = true;
-            }
-        }
-        while (lines.Count > 0 && lines[^1].Text.Length == 0) lines.RemoveAt(lines.Count - 1);
-        return lines;
-    }
-
-    private static string Clean(string s) =>
-        Regex.Replace(s, @"!?\[([^\]]*)\]\([^)]*\)", "$1").Replace("**", "").Replace("__", "").Replace("`", "");
 }

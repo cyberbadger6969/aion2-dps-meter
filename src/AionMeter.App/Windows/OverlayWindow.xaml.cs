@@ -147,7 +147,11 @@ public partial class OverlayWindow : Window
         var available = _meter.Updates.Available;
         var show = available is not null && available.Version != _bannerClosedFor;
         UpdateBanner.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        if (show) UpdateBannerText.Text = string.Format(UiText.Current.UpdateBanner, available!.Version.ToString(3));
+        if (show)
+        {
+            var ready = _meter.Updates.Downloaded?.Version == available!.Version; // downloaded: it installs itself soon
+            UpdateBannerText.Text = string.Format(ready ? UiText.Current.UpdateBannerReady : UiText.Current.UpdateBanner, available.Version.ToString(3));
+        }
     }
 
     private void Update_Click(object sender, RoutedEventArgs e)

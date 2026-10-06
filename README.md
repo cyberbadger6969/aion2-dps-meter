@@ -53,7 +53,7 @@ driver — see [Installation](#installation).
   respawn counting down, per server, with a tray alert before a boss you watch returns.
 - **Share in chat** — right-click a player to copy a one-line result for the game chat.
 - **English and Russian** — interface and skill / NPC names in either language, switchable at any time.
-- **Updates itself** — a new version is announced in the meter and installed in one click.
+- **Updates itself** — new versions download in the background and install themselves when you are not playing.
 - **Passive** — reads only your own game's network traffic; never touches game memory or sends anything to the game.
 
 ## Screenshots
@@ -149,14 +149,19 @@ the server of the character you play (known from the login packet and the name c
 
 ### Updates
 
-The meter checks GitHub for a new version shortly after start and every 6 hours (*Settings → Updates*, or *Check for
-updates* in the tray menu). A new version brings a tray notification, a green banner above the overlay footer and an
-*Update to …* tray item; the update window shows what's new with *Update*, *Later* and *Skip this version*.
+The meter checks GitHub for a new version shortly after start and every 2 hours (*Settings → Updates*, or *Check for
+updates* in the tray menu).
 
-An installed copy updates itself: the meter downloads the installer from the release, checks its size and SHA-256
-against what GitHub reports, runs it silently (`/SILENT /RELAUNCH=1`) and exits; the installer puts the new version in
-place and starts it (with `--updated`, the meter then says "Updated to …"). A portable copy opens the download page
-instead. The only thing sent is the request to `api.github.com` itself (user agent `AION2DpsMeter/<version>`).
+An installed copy **updates itself**: it downloads the new installer in the background, checks its size and SHA-256
+against what GitHub reports, and installs it at a quiet moment — right away when the game is not running, or after 10
+minutes without a fight while it runs. The installer runs with no window at all (`/VERYSILENT /RELAUNCH=1`), the meter
+restarts by itself and says "Updated to …". Until then the overlay banner and a tray notification say the update is
+ready; click either to install it at once. If the installer fails, the old version starts again. Turn this off in
+*Settings → Updates* ("Install updates by itself") to be asked instead: then a new version brings the banner, a tray
+notification and an *Update to …* tray item, and the update window offers *Update*, *Later* and *Skip this version*
+(the update window shows what's new in the interface language).
+
+A portable copy (zip) cannot replace itself: it announces new versions and opens the download page. The only thing sent is the request to `api.github.com` itself (user agent `AION2DpsMeter/<version>`).
 
 ### Who counts as a player
 

@@ -116,6 +116,14 @@ public sealed class UpdateFeed : IDisposable
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(DownloadTimeout);
 
+        // Already fetched (in the background, or on an earlier run) and still intact: no second download.
+        if (asset.Sha256 is { } known && File.Exists(path) && new FileInfo(path).Length == asset.Size &&
+            await Sha256Async(path, timeout.Token).ConfigureAwait(false) == known)
+        {
+            progress?.Report(1);
+            return path;
+        }
+
         try
         {
             using var response = await _http.GetAsync(asset.Url, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
@@ -156,6 +164,12 @@ public sealed class UpdateFeed : IDisposable
             }
             throw;
         }
+    }
+
+    private static async Task<string> Sha256Async(string path, CancellationToken ct)
+    {
+        await using var file = File.OpenRead(path);
+        return Convert.ToHexStringLower(await SHA256.HashDataAsync(file, ct).ConfigureAwait(false));
     }
 
     private static bool Bool(JsonElement e, string name) =>

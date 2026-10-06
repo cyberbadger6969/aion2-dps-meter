@@ -11,8 +11,8 @@ AION2 DPS Meter — установка / installation
 2. Установщик проверит Npcap — бесплатный драйвер захвата трафика, без которого метр не видит игру. Если его нет,
    нажмите «Открыть npcap.com», установите Npcap с настройками по умолчанию и вернитесь в установщик.
 3. Готово: ярлык «AION2 DPS Meter» на рабочем столе и в меню «Пуск». Права администратора не нужны.
-   Обновление — метр сам сообщит о новой версии (уведомление в трее и зелёная полоса на оверлее) и обновится
-   по кнопке «Обновить». Можно и вручную: запустить установщик новой версии.
+   Обновление — метр обновляется сам: скачивает новую версию и ставит её, когда вы не в игре (или после
+   10 минут без боя), затем перезапускается. Можно и вручную: запустить установщик новой версии.
    Удаление — Параметры → Приложения → AION2 DPS Meter.
 
 Без установки (архив .zip)
@@ -54,8 +54,8 @@ Installer (easiest)
 2. Setup checks for Npcap, the free capture driver the meter needs to see the game. If it is missing, click
    "Open npcap.com", install Npcap with its default options and return to Setup.
 3. Done: an "AION2 DPS Meter" shortcut on the desktop and in the Start menu. No administrator rights needed.
-   Update: the meter tells you about a new version (a tray notification and a green banner on the overlay)
-   and updates itself with the "Update" button. Running the newer installer by hand works too.
+   Update: the meter updates itself: it downloads a new version and installs it when you are not playing
+   (or after 10 minutes without a fight), then restarts. Running the newer installer by hand works too.
    Uninstall: Settings → Apps → AION2 DPS Meter.
 
 Without installation (.zip)

@@ -55,13 +55,13 @@ public static class SampleRenderer
                 refresh = timers.ReloadNow;
                 break;
             case "update" or "update-portable":
-                var release = SampleRelease();
+                var release = SampleRelease(meter.Updates.Current);
                 meter.Updates.Preview(release);
                 host = new UpdateWindow(meter.Updates, release, installed: o.Window == "update") { Width = 580, Height = 560 };
                 refresh = () => { };
                 break;
             default:
-                if (o.Window == "overlay-update") meter.Updates.Preview(SampleRelease()); // with the footer's update banner
+                if (o.Window == "overlay-update") meter.Updates.Preview(SampleRelease(meter.Updates.Current)); // with the footer's update banner
                 var overlay = new OverlayWindow(meter) { Width = o.Width ?? 560, Height = o.Height ?? 820 };
                 host = overlay;
                 refresh = overlay.Refresh;
@@ -243,9 +243,11 @@ public static class SampleRenderer
         }
     }
 
-    /// <summary>A made-up next version for the update window and the overlay's update banner.</summary>
-    private static Core.Updates.ReleaseInfo SampleRelease() => new(
-        new Version(0, 2, 0), "v0.2.0", Core.Updates.UpdateFeed.ReleasesPage,
+    /// <summary>A made-up next version (one minor up) for the update window and the overlay's update banner.</summary>
+    private static Core.Updates.ReleaseInfo SampleRelease(Version current) => ReleaseOf(new Version(current.Major, current.Minor + 1, 0));
+
+    private static Core.Updates.ReleaseInfo ReleaseOf(Version next) => new(
+        next, "v" + next.ToString(3), Core.Updates.UpdateFeed.ReleasesPage,
         """
         ## Что нового
 
@@ -258,8 +260,8 @@ public static class SampleRenderer
         - **Update check**: the meter tells you about a new version and updates itself in one click.
         """,
         DateTimeOffset.UtcNow.AddDays(-1),
-        new Core.Updates.ReleaseAsset("AION2DpsMeter-Setup-v0.2.0.exe", 52_000_000, "https://example.invalid/setup.exe", null),
-        new Core.Updates.ReleaseAsset("AION2DpsMeter-v0.2.0-win-x64.zip", 65_000_000, "https://example.invalid/app.zip", null));
+        new Core.Updates.ReleaseAsset($"AION2DpsMeter-Setup-v{next.ToString(3)}.exe", 52_000_000, "https://example.invalid/setup.exe", null),
+        new Core.Updates.ReleaseAsset($"AION2DpsMeter-v{next.ToString(3)}-win-x64.zip", 65_000_000, "https://example.invalid/app.zip", null));
 
     // Altgard's field boss list from a real capture (00:30:07 on 2026-10-06, UTC+3) — the in-game map's timers.
     private const string AltgardList =
