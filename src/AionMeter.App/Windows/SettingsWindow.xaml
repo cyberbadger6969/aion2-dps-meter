@@ -1,0 +1,223 @@
+<Window x:Class="AionMeter.App.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:s="clr-namespace:AionMeter.App.Services"
+        Title="{Binding SettingsTitle, Source={x:Static s:UiText.Current}}" Width="600" Height="700" MinHeight="420"
+        WindowStyle="None" WindowStartupLocation="CenterScreen" ResizeMode="CanResize" Background="{StaticResource Bg0}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        FontFamily="{StaticResource UiFont}" Foreground="{StaticResource Text}" FontSize="12.5">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="52" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" />
+    </WindowChrome.WindowChrome>
+    <Window.Resources>
+        <Style x:Key="Section" TargetType="Border">
+            <Setter Property="Background" Value="#0DFFFFFF" />
+            <Setter Property="BorderBrush" Value="#1AFFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMute}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="24,0,0,6" />
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Width" Value="190" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="MinWidth" Value="180" />
+            <Setter Property="Height" Value="26" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource Bg2}" />
+            <Setter Property="Foreground" Value="{StaticResource Text}" />
+            <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+            <Setter Property="CaretBrush" Value="{StaticResource Gold}" />
+            <Setter Property="Padding" Value="6,3" />
+            <Setter Property="Width" Value="140" />
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="{StaticResource GoldDim}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="52" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid Margin="20,0,8,0">
+                <TextBlock Text="{Binding SettingsTitle, Source={x:Static s:UiText.Current}}" FontFamily="{StaticResource TitleFont}"
+                           FontSize="19" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Button Style="{StaticResource IconButton}" Content="&#xE711;" Click="Cancel_Click" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True" />
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20,0,20,0">
+                <StackPanel>
+                    <!-- Language -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="LANGUAGE / ЯЗЫК" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Language / Язык" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="LanguageBox" MinWidth="160">
+                                    <ComboBoxItem Content="English" Tag="en" />
+                                    <ComboBoxItem Content="Русский" Tag="ru" />
+                                </ComboBox>
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0"
+                                       Text="{Binding LanguageHint, Source={x:Static s:UiText.Current}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Overlay -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecOverlay, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="BarsRelative" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding BarsRelative, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding BarsRelativeHint, Source={x:Static s:UiText.Current}}" />
+                            <CheckBox x:Name="ShowBoss" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding ShowBossPanel, Source={x:Static s:UiText.Current}}" />
+                            <CheckBox x:Name="AutoShow" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
+                                      Content="{Binding AutoShow, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding AutoShowHint, Source={x:Static s:UiText.Current}}" />
+                            <StackPanel Orientation="Horizontal" Margin="24,0,0,4">
+                                <TextBlock Text="{Binding AutoHide, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" Width="250" />
+                                <TextBox x:Name="AutoHideSeconds" Width="70" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding RowsShown, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="MaxRows" MinWidth="80" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding BackgroundOpacity, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <Slider x:Name="OpacityValue" Style="{StaticResource GoldSlider}" Width="180" Minimum="0.15" Maximum="1" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Meter -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecMeter, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Measure, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="Mode">
+                                    <ComboBoxItem Content="{Binding MeasureBoss, Source={x:Static s:UiText.Current}}" />
+                                    <ComboBoxItem Content="{Binding MeasureAll, Source={x:Static s:UiText.Current}}" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding IdleEnd, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="Idle" Width="60" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding IdleBoss, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="BossIdle" Width="60" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- History -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecHistory, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="SaveHistory" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding SaveAuto, Source={x:Static s:UiText.Current}}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding WhichFights, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="HistoryModeBox" MinWidth="250">
+                                    <ComboBoxItem Content="{Binding HistBosses, Source={x:Static s:UiText.Current}}" />
+                                    <ComboBoxItem Content="{Binding HistBossesLong, Source={x:Static s:UiText.Current}}" />
+                                    <ComboBoxItem Content="{Binding HistAll, Source={x:Static s:UiText.Current}}" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding LongerThan, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="HistoryMin" Width="60" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0" Text="{Binding HistoryHint, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock x:Name="HistoryInfo" Style="{StaticResource Hint}" Margin="0,2,0,0" Foreground="{StaticResource TextDim}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Capture -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecCapture, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding NetworkAdapter, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="Device" MinWidth="300" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,6" Text="{Binding AdapterHint, Source={x:Static s:UiText.Current}}" />
+                            <CheckBox x:Name="Record" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding RecordPackets, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding RecordHint, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock x:Name="CaptureState" Style="{StaticResource Hint}" Margin="0,6,0,0" Foreground="{StaticResource TextDim}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Hotkeys -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecHotkeys, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding HkToggle, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="HkToggle" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding HkReset, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="HkReset" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding HkClick, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="HkClick" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding HkTimers, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="HkTimers" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0" Text="{Binding HotkeysHint, Source={x:Static s:UiText.Current}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Data -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecData, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="Icons" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding DownloadIcons, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding IconsHint, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock x:Name="DataInfo" TextWrapping="Wrap" Foreground="{StaticResource TextDim}" Margin="0,6,0,0" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Style="{StaticResource GhostButton}" Content="{Binding OpenDataFolder, Source={x:Static s:UiText.Current}}"
+                                        Click="OpenData_Click" Margin="0,0,8,0" />
+                                <Button Style="{StaticResource GhostButton}" Content="{Binding OpenAppFolder, Source={x:Static s:UiText.Current}}"
+                                        Click="OpenAppData_Click" Margin="0,0,8,0" />
+                                <Button Style="{StaticResource GhostButton}" Content="{Binding Logs, Source={x:Static s:UiText.Current}}"
+                                        Click="OpenLogs_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Style="{StaticResource Hint}" Margin="4,0,4,16" Text="{Binding Disclaimer, Source={x:Static s:UiText.Current}}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="20,12">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource GhostButton}" Content="{Binding Cancel, Source={x:Static s:UiText.Current}}"
+                            Click="Cancel_Click" Margin="0,0,8,0" />
+                    <Button Style="{StaticResource PrimaryButton}" Content="{Binding Save, Source={x:Static s:UiText.Current}}"
+                            Click="Save_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

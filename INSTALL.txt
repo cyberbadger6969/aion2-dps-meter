@@ -1,0 +1,84 @@
+AION2 DPS Meter — установка / installation
+==========================================
+
+РУССКИЙ
+
+Нужно: Windows 10 или 11 (64-бит), AION 2 (Global: EU / NA).
+
+Установщик (проще всего)
+1. Запустите AION2DpsMeter-Setup-v<версия>.exe. Если Windows покажет «Система Windows защитила ваш компьютер»,
+   нажмите «Подробнее» → «Выполнить в любом случае» (программа не подписана платным сертификатом).
+2. Установщик проверит Npcap — бесплатный драйвер захвата трафика, без которого метр не видит игру. Если его нет,
+   нажмите «Открыть npcap.com», установите Npcap с настройками по умолчанию и вернитесь в установщик.
+3. Готово: ярлык «AION2 DPS Meter» на рабочем столе и в меню «Пуск». Права администратора не нужны.
+   Обновление — запустите установщик новой версии (запущенный метр он закроет сам).
+   Удаление — Параметры → Приложения → AION2 DPS Meter.
+
+Без установки (архив .zip)
+1. Установите Npcap: https://npcap.com/#download (настройки по умолчанию).
+2. Распакуйте архив в любую папку, например C:\Games\AION2DpsMeter (не запускайте прямо из архива),
+   и запустите AION2DpsMeter.exe.
+   Обновление — распакуйте новую версию поверх. Удаление — удалите папку.
+
+Как пользоваться
+Играйте — оверлей появится сам, когда начнётся бой. Ники игроков игра присылает при загрузке локации,
+поэтому метр лучше запускать до входа в подземелье.
+
+Значок «A» в трее (возле часов) — меню: оверлей, история боёв, таймеры боссов, настройки, язык.
+Язык интерфейса: кнопка EN/RU на оверлее (по умолчанию английский) или Настройки.
+
+Горячие клавиши (меняются в настройках):
+  Ctrl+Shift+D — показать / скрыть оверлей      Ctrl+Shift+R — сбросить метр
+  Ctrl+Shift+L — клики сквозь оверлей          Ctrl+Shift+T — таймеры боссов
+
+Таймеры боссов: откройте в игре карту → Исследование → полевые монстры — таймеры придут прямо с сервера
+и дальше считаются в окне таймеров (золотая кнопка внизу оверлея).
+
+Настройки, история и таймеры хранятся в %AppData%\AionMeter и не пропадают при обновлении. При удалении
+через «Приложения» установщик спросит, удалить ли и их.
+
+Метр только слушает сетевой трафик вашей игры. Он не читает память игры, ничего в неё не внедряет и не
+отправляет. Тем не менее сторонние программы могут нарушать правила игры — используйте на свой риск.
+Лицензия GPL-3.0 (файл LICENSE). Исходный код распространяется вместе с программой (архив «-source»).
+Новые версии и исходный код: https://github.com/cyberbadger6969/aion2-dps-meter
+
+
+ENGLISH
+
+Needs: Windows 10 or 11 (64-bit), AION 2 (Global: EU / NA).
+
+Installer (easiest)
+1. Run AION2DpsMeter-Setup-v<version>.exe. If Windows says "Windows protected your PC", click "More info" →
+   "Run anyway" (the program is not signed with a paid certificate).
+2. Setup checks for Npcap, the free capture driver the meter needs to see the game. If it is missing, click
+   "Open npcap.com", install Npcap with its default options and return to Setup.
+3. Done: an "AION2 DPS Meter" shortcut on the desktop and in the Start menu. No administrator rights needed.
+   Update: run the newer installer (it closes the running meter itself).
+   Uninstall: Settings → Apps → AION2 DPS Meter.
+
+Without installation (.zip)
+1. Install Npcap: https://npcap.com/#download (default options).
+2. Unzip the archive into any folder, e.g. C:\Games\AION2DpsMeter (do not run it from inside the zip), and
+   start AION2DpsMeter.exe.
+   Update: unzip the new version over the old one. Uninstall: delete the folder.
+
+Using it
+Play: the overlay comes up by itself when a fight starts. The game sends player names on a loading screen,
+so start the meter before entering a dungeon.
+
+The gold "A" in the notification area opens the menu: overlay, fight history, boss timers, settings, language.
+
+Hotkeys (change them in Settings):
+  Ctrl+Shift+D — show / hide the overlay        Ctrl+Shift+R — reset the meter
+  Ctrl+Shift+L — click-through                  Ctrl+Shift+T — boss timers
+
+Boss timers: open the in-game map → Exploration → field monsters and the timers come in from the server;
+the timer window (gold button at the bottom of the overlay) keeps counting.
+
+Settings, history and timers live in %AppData%\AionMeter and survive updates. Uninstalling from Apps asks
+whether to delete them too.
+
+The meter only listens to your own game's network traffic. It never reads game memory, injects anything or
+sends anything to the game. Third-party tools may still be against the game's terms — use at your own risk.
+Licence GPL-3.0 (LICENSE file). The source code is handed out with the program (the "-source" archive).
+New versions and source code: https://github.com/cyberbadger6969/aion2-dps-meter

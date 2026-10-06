@@ -1,0 +1,564 @@
+using System.Globalization;
+using AionMeter.Core;
+using AionMeter.Core.Capture;
+using AionMeter.Core.Combat;
+using AionMeter.Core.Events;
+using AionMeter.Core.Game;
+using AionMeter.Core.Protocol;
+
+// AionMeter developer tool: inspect devices / connections, capture live, replay and dump recorded captures.
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+var dataDir = Path.Combine(AppContext.BaseDirectory, "data");
+var langAt = Array.IndexOf(args, "--lang");
+var data = GameData.Load(dataDir, langAt >= 0 && langAt + 1 < args.Length ? args[langAt + 1] : "en");
+
+return args.FirstOrDefault() switch
+{
+    "devices" => Devices(),
+    "conns" => Connections(),
+    "live" => Live(args.Skip(1).ToArray()),
+    "replay" when args.Length > 1 => Replay(args[1]),
+    "dump" when args.Length > 1 => Dump(args[1], args.Length > 2 ? args[2] : null),
+    "find" when args.Length > 2 => Find(args[1], args[2]),
+    "crits" when args.Length > 1 => Crits(args[1]),
+    "entities" when args.Length > 1 => Entities(args[1]),
+    "casts" when args.Length > 1 => Casts(args[1]),
+    "bosslist" when args.Length > 1 => BossList(args[1]),
+    "times" when args.Length > 1 => Times(args[1]),
+    "fieldbosses" when args.Length > 1 => FieldBosses(args[1]),
+    "hex" when args.Length > 2 => HexDump(args[1], Convert.ToUInt16(args[2], 16), args.Length > 3 ? int.Parse(args[3]) : 5),
+    _ => Usage(),
+};
+
+int Usage()
+{
+    Console.WriteLine("""
+        aionmeter-cli devices                       list Npcap adapters
+        aionmeter-cli conns                         show the AION 2 process and its TCP connections
+        aionmeter-cli live [seconds] [--record]     capture live, print what was decoded
+        aionmeter-cli replay <file.pcap>            run a capture through the meter, print fights
+        aionmeter-cli dump <file.pcap> [opcode]     print decoded packets (opcode as hex, e.g. 0438)
+        aionmeter-cli replay <file.pcap> --boss --brief   player counts per fight only
+        aionmeter-cli crits <file.pcap>             damage-type / modifier statistics per class (crit check)
+        aionmeter-cli entities <file.pcap>          damage dealers that are not announced players, by spawn kind
+        aionmeter-cli casts <file.pcap>             tie ownerless skill effects to the casts that made them
+        """);
+    return 1;
+}
+
+int Devices()
+{
+    foreach (var (name, desc) in LiveCapture.ListDevices()) Console.WriteLine($"{desc,-60} {name}");
+    return 0;
+}
+
+int Connections()
+{
+    var pids = GameProcessLocator.FindGameProcessIds();
+    Console.WriteLine($"AION 2 processes: {string.Join(", ", pids)}");
+    foreach (var c in GameProcessLocator.FindConnections(pids))
+        Console.WriteLine($"  {c.LocalIp}:{c.LocalPort} -> {c.RemoteIp}:{c.RemotePort}");
+    return 0;
+}
+
+int Live(string[] a)
+{
+    var seconds = a.Length > 0 && int.TryParse(a[0], out var s) ? s : 20;
+    var record = a.Contains("--record");
+    var stats = new EventStats(data);
+    var tracker = new CombatTracker(data, new MeterOptions { TargetMode = TargetMode.All });
+    using var capture = new LiveCapture(data, new LiveCaptureOptions
+    {
+        RecordDirectory = record ? Path.Combine(Environment.CurrentDirectory, "captures") : null,
+    });
+    capture.EventDecoded += e =>
+    {
+        lock (stats)
+        {
+            stats.Add(e);
+            tracker.Process(e);
+        }
+    };
+    capture.Start();
+    var until = DateTime.UtcNow.AddSeconds(seconds);
+    while (DateTime.UtcNow < until)
+    {
+        Thread.Sleep(2_000);
+        var p = capture.Pipeline;
+        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {capture.Status.Message} · segments {p.Segments} · game flows {p.GameFlows} · game bytes {p.GameBytes} · events {stats.Total}");
+    }
+    capture.Stop();
+    if (capture.RecordingPath is { } rec) Console.WriteLine($"Recorded to {rec}");
+    lock (stats) stats.Print(capture.Pipeline);
+    PrintFights(tracker);
+    return 0;
+}
+
+int Replay(string path)
+{
+    var stats = new EventStats(data);
+    var tracker = new CombatTracker(data, new MeterOptions { TargetMode = args.Contains("--boss") ? TargetMode.BossOnly : TargetMode.All });
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    replay.EventDecoded += e =>
+    {
+        stats.Add(e);
+        tracker.Process(e);
+    };
+    var n = replay.RunToEnd();
+    tracker.Tick(long.MaxValue / 2);
+    Console.WriteLine($"{n} packets");
+    stats.Print(replay.Pipeline);
+    PrintFights(tracker);
+    return 0;
+}
+
+int Dump(string path, string? opcodeHex)
+{
+    ushort? filter = opcodeHex is null ? null : Convert.ToUInt16(opcodeHex, 16);
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        if (filter is { } f && f != op) return;
+        if (filter is null && op == Opcodes.Heartbeat) return;
+        Console.WriteLine($"{DateTimeOffset.FromUnixTimeMilliseconds(t).ToLocalTime():HH:mm:ss.fff} {Opcodes.Name(op),-12} [{body.Length,5}] {Wire.Hex(body, 96)}");
+    };
+    replay.EventDecoded += e => Console.WriteLine($"    -> {e}");
+    replay.RunToEnd();
+    return 0;
+}
+
+// Every decoded packet (bundles unpacked) that contains the UTF-8 text, with its opcode and the bytes around it.
+int Find(string path, string text)
+{
+    var needle = System.Text.Encoding.UTF8.GetBytes(text);
+    var utf16 = System.Text.Encoding.Unicode.GetBytes(text);
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var hits = 0;
+    var embedded = 0;
+    var perOpcode = new Dictionary<ushort, int>();
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        if (body.IndexOf(utf16) >= 0) Console.WriteLine($"   UTF-16 match in {Opcodes.Name(op)}");
+        // LZ4 bundles carried inside other packets (not opened by the framing).
+        for (var i = 1; i + 8 < body.Length; i++)
+        {
+            if (body[i] != 0xFF || body[i + 1] != 0xFF) continue;
+            var raw = (int)Wire.U32(body, i + 2);
+            if (raw is <= 0 or > 1 << 22) continue;
+            var buf = new byte[raw];
+            var n = K4os.Compression.LZ4.LZ4Codec.Decode(body[(i + 6)..], buf);
+            if (n > 0 && buf.AsSpan(0, n).IndexOf(needle) >= 0)
+            {
+                embedded++;
+                Console.WriteLine($"   embedded bundle in {Opcodes.Name(op)} at {i}: {Wire.Hex(buf.AsSpan(0, n)[Math.Max(0, buf.AsSpan(0, n).IndexOf(needle) - 30)..], 70)}");
+            }
+        }
+        var at = body.IndexOf(needle);
+        if (at < 0) return;
+        perOpcode[op] = perOpcode.GetValueOrDefault(op) + 1;
+        if (hits++ >= 25) return;
+        var from = Math.Max(0, at - 40);
+        Console.WriteLine($"{DateTimeOffset.FromUnixTimeMilliseconds(t).ToLocalTime():HH:mm:ss.fff} {Opcodes.Name(op),-12} len={body.Length,5} at={at,4}");
+        Console.WriteLine($"   head: {Wire.Hex(body[..Math.Min(body.Length, 24)], 24)}");
+        Console.WriteLine($"   near: {Wire.Hex(body[from..Math.Min(body.Length, at + needle.Length + 24)], 120)}");
+    };
+    replay.RunToEnd();
+    Console.WriteLine($"\n{hits} packets contain \"{text}\", {embedded} embedded bundles");
+    foreach (var (op, n) in perOpcode.OrderByDescending(x => x.Value)) Console.WriteLine($"   {Opcodes.Name(op),-12} {n}");
+    return 0;
+}
+
+// Damage-type field per class: which values occur, how often, and how hard those hits are relative to the class's
+// type-0 hits of the same skill (a crit multiplies damage, so its ratio stands out).
+int Crits(string path)
+{
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var byClass = new Dictionary<string, Dictionary<string, (int N, double Ratio, int RatioN)>>();
+    var plainAvg = new Dictionary<long, (double Sum, int N)>();
+    static long BaseKey(DamageEvent d) => ((long)d.SourceId << 32) | (uint)d.SkillCode;
+    var all = new List<(string Cls, string Key, DamageEvent D)>();
+    replay.Pipeline.Parser.DamageTap = (d, layout, type, mods, dir) =>
+    {
+        var cls = GameData.ClassFromSkill(d.SkillCode);
+        var label = cls != GameClass.Unknown ? cls.ToString() : d.SkillCode < 1_000_000 ? "summon/6-digit" : "npc/other";
+        var key = $"L{layout} type={type} mods={mods:X2}";
+        all.Add((label, key, d));
+        if (type == 2 && mods == 0 && d.HitCount == 1)
+        {
+            var a = plainAvg.GetValueOrDefault(BaseKey(d));
+            plainAvg[BaseKey(d)] = (a.Sum + d.Damage, a.N + 1);
+        }
+    };
+    replay.RunToEnd();
+    foreach (var (cls, key, d) in all)
+    {
+        if (!byClass.TryGetValue(cls, out var keys)) byClass[cls] = keys = new();
+        var e = keys.GetValueOrDefault(key);
+        e.N++;
+        if (d.HitCount == 1 && plainAvg.TryGetValue(BaseKey(d), out var p) && p.N >= 3)
+        {
+            e.Ratio += d.Damage / (p.Sum / p.N);
+            e.RatioN++;
+        }
+        keys[key] = e;
+    }
+    Console.WriteLine("crit rate by class × target (targets with ≥ 40 player hits):");
+    var targets = all.Where(x => x.Cls is not ("npc/other" or "summon/6-digit")).GroupBy(x => x.D.TargetId).Where(g => g.Count() >= 40);
+    foreach (var t in targets.OrderByDescending(g => g.Count()).Take(8))
+    {
+        var parts = t.GroupBy(x => x.Cls).OrderBy(g => g.Key)
+            .Select(g => $"{g.Key[..4]} {g.Count(x => x.Key.Contains("type=3"))}/{g.Count()}");
+        Console.WriteLine($"   target {t.Key,6} ({t.Count(),5} hits): {string.Join(" · ", parts)}");
+    }
+    foreach (var (cls, keys) in byClass.OrderBy(k => k.Key))
+    {
+        var total = keys.Values.Sum(v => v.N);
+        Console.WriteLine($"\n{cls}  ({total} records)");
+        foreach (var (key, v) in keys.OrderByDescending(k => k.Value.N).Take(14))
+            Console.WriteLine($"   {key,-26} {v.N,6}  {100.0 * v.N / total,5:0.0}%   dmg vs plain same skill: {(v.RatioN > 0 ? (v.Ratio / v.RatioN).ToString("0.00") + "x" : "-")}");
+    }
+    return 0;
+}
+
+// Damage dealers that are not announced players: how each one spawned (41 36 kind byte, inline name, owner links).
+int Entities(string path)
+{
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var spawns = new Dictionary<uint, (byte Kind, string Hex)>();
+    var players = new HashSet<uint>();
+    var summons = new Dictionary<uint, string>();
+    var dealt = new Dictionary<uint, (HashSet<int> Skills, int Hits, long Damage)>();
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        if (op != Opcodes.Spawn) return;
+        var o = 0;
+        if (!Wire.TryVarint(body, ref o, out var raw) || o >= body.Length) return;
+        var id = raw > 1_000_000 ? (raw & 0x3FFF) | 0x4000 : raw;
+        spawns[id] = (body[o], Wire.Hex(body, 72));
+    };
+    replay.EventDecoded += e =>
+    {
+        switch (e)
+        {
+            case SelfIdentifiedEvent s: players.Add(s.ActorId); break;
+            case PlayerSeenEvent p: players.Add(p.ActorId); break;
+            case SummonSeenEvent s: summons[s.ActorId] = s.OwnerId != 0 ? $"owner {s.OwnerId}" : $"owner name {s.OwnerName}"; break;
+            case DamageEvent d when GameData.ClassFromSkill(d.SkillCode) != GameClass.Unknown || d.SkillCode < 1_000_000:
+                var x = dealt.GetValueOrDefault(d.SourceId, (Skills: new HashSet<int>(), Hits: 0, Damage: 0L));
+                x.Skills.Add(d.SkillCode);
+                dealt[d.SourceId] = (x.Skills, x.Hits + 1, x.Damage + d.Damage);
+                break;
+        }
+    };
+    replay.RunToEnd();
+    var targets = new Dictionary<uint, long>();
+    var replay2 = new PcapReplaySource(data, path, realtime: false);
+    replay2.EventDecoded += e =>
+    {
+        if (e is DamageEvent d && GameData.ClassFromSkill(d.SkillCode) != GameClass.Unknown)
+            targets[d.TargetId] = targets.GetValueOrDefault(d.TargetId) + d.Damage;
+    };
+    replay2.RunToEnd();
+    Console.WriteLine("spawn kinds — as damage dealers (class skills) / as targets of class-skill damage:");
+    foreach (var g in spawns.GroupBy(s => s.Value.Kind).OrderBy(g => g.Key))
+        Console.WriteLine($"   {g.Key:X2}: spawned {g.Count(),5}, dealt damage {g.Count(s => dealt.ContainsKey(s.Key)),4}, took damage {g.Count(s => targets.ContainsKey(s.Key)),4} ({Format.Compact(g.Sum(s => targets.GetValueOrDefault(s.Key)))})");
+    var unknown = dealt.Where(kv => !players.Contains(kv.Key)).OrderByDescending(kv => kv.Value.Damage).ToList();
+    Console.WriteLine($"class-skill damage dealers: {dealt.Count}, announced players {dealt.Keys.Count(players.Contains)}, others {unknown.Count}");
+    var sixDigit = dealt.Where(kv => players.Contains(kv.Key) && kv.Value.Skills.Any(s => s < 1_000_000)).ToList();
+    Console.WriteLine($"announced players using 6-digit skills: {sixDigit.Count} " +
+                      string.Join(", ", sixDigit.SelectMany(kv => kv.Value.Skills.Where(s => s < 1_000_000)).Distinct().Take(8).Select(s => $"{s} {data.SkillName(s)}")));
+    var byKind = unknown.GroupBy(kv => spawns.TryGetValue(kv.Key, out var s) ? $"{s.Kind:X2}" : "no spawn")
+        .Select(g => $"{g.Key}: {g.Count()} actors, {g.Count(kv => summons.ContainsKey(kv.Key))} with owner");
+    Console.WriteLine("by spawn kind: " + string.Join(" | ", byKind));
+    var suspicious = unknown.Where(kv => !summons.ContainsKey(kv.Key) && (spawns.ContainsKey(kv.Key) || kv.Value.Skills.Count <= 2)).ToList();
+    Console.WriteLine($"not linked to an owner and spawned or ≤ 2 skills: {suspicious.Count}");
+    foreach (var g in suspicious.GroupBy(kv => string.Join(",", kv.Value.Skills.Order().Take(3).Select(s => data.SkillName(s)))).OrderByDescending(g => g.Count()).Take(15))
+        Console.WriteLine($"   {g.Count(),4}× [{g.Key}]  spawned: {g.Count(kv => spawns.ContainsKey(kv.Key))}");
+    foreach (var (id, v) in suspicious.Take(25))
+    {
+        var skills = string.Join(",", v.Skills.Take(4).Select(s => data.SkillName(s)));
+        var sp = spawns.TryGetValue(id, out var s) ? s.Hex : "-";
+        Console.WriteLine($"{id,6} {v.Hits,4} hits {Format.Compact(v.Damage),7} [{skills}] {(summons.TryGetValue(id, out var own) ? own : "")}\n        spawn: {sp}");
+    }
+    return 0;
+}
+
+// For each spawned effect entity without an owner: the player casts (02 38) of the same skill family just before it
+// appeared — how many candidates there are and how far back.
+int Casts(string path)
+{
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var casts = new List<(long T, uint Actor, int Skill, uint Target)>();
+    var spawns = new Dictionary<uint, (long T, byte Kind, int Code)>();
+    var owned = new HashSet<uint>();
+    var firstSkill = new Dictionary<uint, int>();
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        var o = 0;
+        if (op == Opcodes.Of(0x02, 0x38))
+        {
+            if (!Wire.TryVarint(body, ref o, out var actor) || !Wire.TryVarint(body, ref o, out _) || !Wire.TryU32(body, ref o, out var skill)) return;
+            if (!Wire.TryVarint(body, ref o, out _) || !Wire.TryVarint(body, ref o, out _) || !Wire.TryVarint(body, ref o, out var target)) return;
+            casts.Add((t, actor, (int)skill, target));
+        }
+        else if (op == Opcodes.Spawn)
+        {
+            if (!Wire.TryVarint(body, ref o, out var raw) || o + 12 > body.Length) return;
+            var id = raw > 1_000_000 ? (raw & 0x3FFF) | 0x4000 : raw;
+            spawns[id] = (t, body[o], (int)Wire.U24(body, o + 3));
+        }
+    };
+    replay.EventDecoded += e =>
+    {
+        if (e is SummonSeenEvent s) owned.Add(s.ActorId);
+        if (e is DamageEvent d && GameData.ClassFromSkill(d.SkillCode) != GameClass.Unknown) firstSkill.TryAdd(d.SourceId, d.SkillCode);
+    };
+    replay.RunToEnd();
+    Console.WriteLine($"casts {casts.Count}, spawns {spawns.Count}");
+    var sample = casts.Where(c => c.Actor != c.Target).Take(5);
+    foreach (var c in sample) Console.WriteLine($"   cast {c.Actor} skill {c.Skill} ({data.SkillName(c.Skill)}) -> {c.Target}");
+    int unique = 0, ambiguous = 0, none = 0;
+    // An effect entity announces its own ticks (actor = target = itself) with the caster's skill variant + 1..9.
+    var selfCode = casts.Where(c => c.Actor == c.Target).GroupBy(c => c.Actor).ToDictionary(g => g.Key, g => g.First().Skill);
+    foreach (var (id, sp) in spawns.OrderBy(s => s.Value.T))
+    {
+        if (owned.Contains(id) || !firstSkill.TryGetValue(id, out var skill)) continue;
+        if (!selfCode.TryGetValue(id, out var tick)) continue;
+        var variant = tick / 10;
+        var cands = casts.Where(c => c.Actor != id && c.Actor != c.Target && c.Skill / 10 == variant && c.T <= sp.T + 300 && c.T >= sp.T - 3_000)
+            .GroupBy(c => c.Actor).Select(g => (Actor: g.Key, Delta: sp.T - g.Max(c => c.T), Code: g.Last().Skill)).OrderBy(c => c.Delta).ToList();
+        if (cands.Count == 0) none++; else if (cands.Count == 1) unique++; else ambiguous++;
+        if (unique + ambiguous + none <= 30)
+            Console.WriteLine($"{id,6} kind {sp.Kind:X2} code {sp.Code} skill {skill} ({data.SkillName(skill)}): " +
+                              string.Join(" | ", cands.Take(4).Select(c => $"{c.Actor} Δ{c.Delta}ms {c.Code}")));
+    }
+    Console.WriteLine($"owner by cast: unique {unique}, ambiguous {ambiguous}, none {none}");
+    return 0;
+}
+
+// Packets that mention several world bosses at once (the in-game map's field boss list): NPC codes as u32 / u24 /
+// varint at any offset. Prints the opcode, which codes sit where, and the bytes around the first few.
+int BossList(string path)
+{
+    var minBosses = args.Length > 2 && int.TryParse(args[2], out var mb) ? mb : 3;
+    var bosses = data.Npcs.Values.Where(n => n.IsBoss && !n.IsDummy).Select(n => n.Code).ToHashSet();
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var shown = 0;
+    var perOpcode = new Dictionary<ushort, int>();
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        var hits = new List<(int At, int Code, string As)>();
+        for (var i = 0; i + 3 <= body.Length; i++)
+        {
+            var u24 = (int)Wire.U24(body, i);
+            if (bosses.Contains(u24)) hits.Add((i, u24, i + 4 <= body.Length && body[i + 3] == 0 ? "u32" : "u24"));
+            else if (Wire.TryVarint(body, i, out var v, out var len) && len >= 3 && bosses.Contains((int)v)) hits.Add((i, (int)v, "varint"));
+        }
+        if (hits.Select(h => h.Code).Distinct().Count() < minBosses || op is Opcodes.Spawn or Opcodes.Damage or Opcodes.Dot) return;
+        perOpcode[op] = perOpcode.GetValueOrDefault(op) + 1;
+        if (shown++ >= 6) return;
+        Console.WriteLine($"\n{DateTimeOffset.FromUnixTimeMilliseconds(t).ToLocalTime():HH:mm:ss.fff} {Opcodes.Name(op)} len={body.Length} bosses={hits.Select(h => h.Code).Distinct().Count()}");
+        Console.WriteLine($"   head: {Wire.Hex(body[..Math.Min(body.Length, 32)], 32)}");
+        foreach (var h in hits.Take(14))
+        {
+            var from = Math.Max(0, h.At - 6);
+            Console.WriteLine($"   @{h.At,5} {h.As,-6} {h.Code} {data.NpcName(h.Code),-34} {Wire.Hex(body[from..Math.Min(body.Length, h.At + 26)], 32)}");
+        }
+    };
+    replay.RunToEnd();
+    Console.WriteLine($"\npackets with ≥ 3 boss codes: {shown}");
+    foreach (var (op, n) in perOpcode.OrderByDescending(x => x.Value)) Console.WriteLine($"   {Opcodes.Name(op),-12} {n}");
+    return 0;
+}
+
+// Packets carrying several timestamps in the future (unix seconds as u32/varint, unix ms as u64/varint): respawn lists.
+int Times(string path)
+{
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var perOpcode = new Dictionary<ushort, int>();
+    var shown = 0;
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        var nowSec = t / 1000;
+        var hits = new List<(int At, string Kind, long Value)>();
+        for (var i = 0; i + 4 <= body.Length; i++)
+        {
+            long u32 = Wire.U32(body, i);
+            if (u32 > nowSec - 600 && u32 < nowSec + 12 * 3600) hits.Add((i, "s32", u32));
+            if (i + 8 <= body.Length)
+            {
+                var u64 = (long)BitConverter.ToUInt64(body.Slice(i, 8));
+                if (u64 > t - 600_000 && u64 < t + 12 * 3_600_000L) hits.Add((i, "ms64", u64));
+            }
+            if (Wire.TryVarint(body, i, out var v, out var len) && len >= 4)
+            {
+                if (v > nowSec - 600 && v < nowSec + 12 * 3600) hits.Add((i, "sVar", v));
+            }
+        }
+        if (hits.Count < 3) return;
+        perOpcode[op] = perOpcode.GetValueOrDefault(op) + 1;
+        if (shown++ >= 8) return;
+        Console.WriteLine($"\n{DateTimeOffset.FromUnixTimeMilliseconds(t).ToLocalTime():HH:mm:ss.fff} {Opcodes.Name(op)} len={body.Length} future stamps={hits.Count}");
+        Console.WriteLine($"   head: {Wire.Hex(body[..Math.Min(body.Length, 40)], 40)}");
+        foreach (var h in hits.Take(16))
+        {
+            var at = h.Kind == "ms64" ? DateTimeOffset.FromUnixTimeMilliseconds(h.Value) : DateTimeOffset.FromUnixTimeSeconds(h.Value);
+            var from = Math.Max(0, h.At - 10);
+            Console.WriteLine($"   @{h.At,5} {h.Kind,-5} {at.ToLocalTime():HH:mm:ss} (in {(at.ToUnixTimeMilliseconds() - t) / 1000,6} s)  {Wire.Hex(body[from..Math.Min(body.Length, h.At + 14)], 26)}");
+        }
+    };
+    replay.RunToEnd();
+    Console.WriteLine($"\npackets with ≥ 3 future timestamps: {shown}");
+    foreach (var (op, n) in perOpcode.OrderByDescending(x => x.Value)) Console.WriteLine($"   {Opcodes.Name(op),-12} {n}");
+    return 0;
+}
+
+// The map's field boss list (01 91) decoded at each change, next to the world bosses that spawned / died in view
+// (with their spawn position) — to tie list slots to NPC codes.
+int FieldBosses(string path)
+{
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    string? last = null;
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        var at = DateTimeOffset.FromUnixTimeMilliseconds(t).ToLocalTime();
+        if (op == 0x0191)
+        {
+            var key = Convert.ToHexString(body);
+            if (key == last) return;
+            last = key;
+            var map = Wire.U32(body, 2);
+            int count = body[6];
+            Console.WriteLine($"\n{at:HH:mm:ss} LIST map {map}, {count} slots, len {body.Length}");
+            var o = 7;
+            for (var n = 0; n < count && o < body.Length; n++)
+            {
+                var alive = body[o++];
+                if (!Wire.TryVarint(body, ref o, out var slot)) break;
+                string pos = "";
+                if (alive == 1)
+                {
+                    pos = $"pos {BitConverter.ToSingle(body.Slice(o, 4)):0} {BitConverter.ToSingle(body.Slice(o + 4, 4)):0} {BitConverter.ToSingle(body.Slice(o + 8, 4)):0}";
+                    o += 12;
+                }
+                var extra = "";
+                long ts = BitConverter.ToInt64(body.Slice(o, 8));
+                if (Math.Abs(ts - t) > 40L * 86_400_000)
+                {
+                    extra = $" extra {body[o]:x2}";
+                    o++;
+                    ts = BitConverter.ToInt64(body.Slice(o, 8));
+                }
+                o += 8;
+                var when = DateTimeOffset.FromUnixTimeMilliseconds(ts).ToLocalTime();
+                var rel = (ts - t) / 1000;
+                Console.WriteLine($"   {slot} {(alive == 1 ? "ALIVE" : "dead "),-5} {(alive == 1 ? "since" : "back at")} {when:HH:mm:ss} ({(rel >= 0 ? "in " : "")}{Math.Abs(rel) / 3600}h{Math.Abs(rel) / 60 % 60:00}m{Math.Abs(rel) % 60:00}s{(rel < 0 ? " ago" : "")}){extra} {pos}");
+            }
+            Console.WriteLine($"   tail at {o}: {Wire.Hex(body[Math.Min(o, body.Length)..], 8)}");
+        }
+        else if (op == Opcodes.Spawn)
+        {
+            var o = 0;
+            if (!Wire.TryVarint(body, ref o, out var raw)) return;
+            var end = Math.Min(body.Length - 14, o + 60);
+            for (var i = o + 3; i < end; i++)
+            {
+                if (body[i] != 0 || (body[i + 1] != 0x40 && body[i + 1] != 0) || body[i + 2] != 2) continue;
+                var code = (int)Wire.U24(body, i - 3);
+                if (!data.Npcs.TryGetValue(code, out var def) || !def.IsBoss) return;
+                Console.WriteLine($"{at:HH:mm:ss} spawn  {code} {def.Name,-32} pos {BitConverter.ToSingle(body.Slice(i + 3, 4)):0} {BitConverter.ToSingle(body.Slice(i + 7, 4)):0} {BitConverter.ToSingle(body.Slice(i + 11, 4)):0}");
+                return;
+            }
+        }
+    };
+    var tracker = new CombatTracker(data, new MeterOptions());
+    tracker.BossNoticed += n => Console.WriteLine($"{DateTimeOffset.FromUnixTimeMilliseconds(n.TimeMs).ToLocalTime():HH:mm:ss} {n.Kind,-7} {n.NpcCode} {data.NpcName(n.NpcCode)} (map {n.MapId})");
+    replay.EventDecoded += tracker.Process;
+    replay.RunToEnd();
+    return 0;
+}
+
+// Full bodies of one opcode (first N packets), 32 bytes per line.
+int HexDump(string path, ushort opcode, int max)
+{
+    var replay = new PcapReplaySource(data, path, realtime: false);
+    var n = 0;
+    var seen = new HashSet<string>();
+    replay.Pipeline.Parser.Tap = (t, op, body) =>
+    {
+        if (op != opcode) return;
+        // Repeats of an identical packet are skipped: only distinct contents count towards the limit.
+        if (!seen.Add(Convert.ToHexString(body)) || n++ >= max) return;
+        Console.WriteLine($"\n{DateTimeOffset.FromUnixTimeMilliseconds(t).ToLocalTime():HH:mm:ss.fff} {Opcodes.Name(op)} len={body.Length}");
+        for (var i = 0; i < body.Length; i += 32)
+            Console.WriteLine($"   {i,4}: {Wire.Hex(body[i..Math.Min(body.Length, i + 32)], 32)}");
+    };
+    replay.RunToEnd();
+    Console.WriteLine($"\n{n} packets");
+    return 0;
+}
+
+void PrintFights(CombatTracker tracker)
+{
+    foreach (var seg in tracker.Segments().Reverse())
+    {
+        var snap = tracker.Snapshot(seg.Id, long.MaxValue / 2)!;
+        Console.WriteLine($"\n== {snap.Title} · {Format.ClockPrecise(snap.CombatMs)} · {Format.Compact(snap.TotalDamage)} dmg · {Format.Compact(snap.PartyDps)}/s · {snap.Reason} · {snap.PlayerCount} players");
+        if (args.Contains("--brief"))
+        {
+            var small = snap.Combatants.Count(c => !c.IsUnknownSummons && c.Share < 0.0005);
+            var pets = snap.Combatants.FirstOrDefault(c => c.IsUnknownSummons);
+            Console.WriteLine($"   under 0.05%: {small} · unknown summons: {(pets is null ? "-" : $"{Format.Compact(pets.Damage)} ({Format.Percent(pets.Share)})")}");
+            continue;
+        }
+        foreach (var c in snap.Combatants)
+            Console.WriteLine($"   {c.Name,-16} {c.Class,-13} {Format.Compact(c.Dps),9}/s {Format.Compact(c.Damage),9} {Format.Percent(c.Share),7}  crit {Format.Percent(c.CritRate)}");
+    }
+}
+
+sealed class EventStats(GameData data)
+{
+    private readonly Dictionary<string, int> _byType = new();
+    private readonly List<string> _identities = new();
+    private readonly List<string> _samples = new();
+    public int Total;
+
+    public void Add(GameEvent e)
+    {
+        Total++;
+        var type = e.GetType().Name;
+        _byType[type] = _byType.GetValueOrDefault(type) + 1;
+        switch (e)
+        {
+            case SelfIdentifiedEvent s:
+                _identities.Add($"SELF  {s.Name} id={s.ActorId} server={s.ServerId} class={s.Class} lvl={s.Level}");
+                break;
+            case PlayerSeenEvent p when _identities.Count < 60:
+                _identities.Add($"PLAYER {p.Name} id={p.ActorId} server={p.ServerId} class={p.Class}");
+                break;
+            case ZoneChangedEvent z:
+                _identities.Add($"ZONE  {z.MapId} {z.ZoneName} teleport={z.IsTeleport}");
+                break;
+            case DamageEvent d when _samples.Count < 40:
+                _samples.Add($"{d.SourceId,7} -> {d.TargetId,7}  {data.SkillName(d.SkillCode),-28} {d.Damage,10:#,0} x{d.HitCount} scalar={d.PowerScalar} {d.Flags}");
+                break;
+        }
+    }
+
+    public void Print(PacketPipeline p)
+    {
+        Console.WriteLine("\n-- events");
+        foreach (var (k, v) in _byType.OrderByDescending(x => x.Value)) Console.WriteLine($"   {k,-22} {v}");
+        Console.WriteLine("-- identities / zones");
+        foreach (var s in _identities.Distinct()) Console.WriteLine("   " + s);
+        Console.WriteLine("-- damage samples");
+        foreach (var s in _samples) Console.WriteLine("   " + s);
+        Console.WriteLine($"-- parser: damage records {p.Parser.DamageRecords}, rejected {p.Parser.DamageRejected}, cast markers {p.Parser.CastMarkers}, " +
+                          $"embedded bundles {p.Parser.EmbeddedBundles}, heartbeats {p.Parser.Heartbeats}, gaps {p.Gaps}");
+        Console.WriteLine("-- top opcodes");
+        foreach (var (op, n) in p.Parser.OpcodeCounts.OrderByDescending(x => x.Value).Take(25))
+            Console.WriteLine($"   {Opcodes.Name(op),-14} {n}");
+        Console.WriteLine("-- locked flows");
+        foreach (var f in p.LockedFlows) Console.WriteLine("   " + f);
+    }
+}
