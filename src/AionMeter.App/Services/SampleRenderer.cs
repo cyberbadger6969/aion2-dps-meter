@@ -13,8 +13,9 @@ namespace AionMeter.App.Services;
 /// </summary>
 public static class SampleRenderer
 {
-    /// <param name="window">overlay (default), breakdown or history.</param>
-    public static void Render(string path, string language, string window = "overlay")
+    /// <param name="window">overlay (default), overlay-update, breakdown, history, timers, update or update-portable.</param>
+    /// <param name="width">Overlay width (default 560): narrow sizes show how the footer copes.</param>
+    public static void Render(string path, string language, string window = "overlay", int? width = null)
     {
         var settings = new AppSettings { Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language };
         UiText.Use(settings.Language);
@@ -49,8 +50,15 @@ public static class SampleRenderer
                 host = timers;
                 refresh = timers.ReloadNow;
                 break;
+            case "update" or "update-portable":
+                var release = SampleRelease();
+                meter.Updates.Preview(release);
+                host = new UpdateWindow(meter.Updates, release, installed: window == "update") { Width = 580, Height = 560 };
+                refresh = () => { };
+                break;
             default:
-                var overlay = new OverlayWindow(meter) { Width = 560, Height = 820 };
+                if (window == "overlay-update") meter.Updates.Preview(SampleRelease()); // with the footer's update button
+                var overlay = new OverlayWindow(meter) { Width = width ?? 560, Height = 820 };
                 host = overlay;
                 refresh = overlay.Refresh;
                 break;
@@ -80,6 +88,24 @@ public static class SampleRenderer
     }
 
     private const int SampleBossCode = 2701250; // Balhash, a field boss
+
+    /// <summary>A made-up next version for the update window and the overlay's update button.</summary>
+    private static Core.Updates.ReleaseInfo SampleRelease() => new(
+        new Version(0, 2, 0), "v0.2.0", Core.Updates.UpdateFeed.ReleasesPage,
+        """
+        ## Что нового
+
+        - **Проверка обновлений**: метр сам сообщает о новой версии
+          и обновляется в один клик.
+        - Таймеры боссов отдельно по серверам.
+
+        ## What's new (English)
+
+        - **Update check**: the meter tells you about a new version and updates itself in one click.
+        """,
+        DateTimeOffset.UtcNow.AddDays(-1),
+        new Core.Updates.ReleaseAsset("AION2DpsMeter-Setup-v0.2.0.exe", 52_000_000, "https://example.invalid/setup.exe", null),
+        new Core.Updates.ReleaseAsset("AION2DpsMeter-v0.2.0-win-x64.zip", 65_000_000, "https://example.invalid/app.zip", null));
 
     // Altgard's field boss list from a real capture (00:30:07 on 2026-10-06, UTC+3) — the in-game map's timers.
     private const string AltgardList =

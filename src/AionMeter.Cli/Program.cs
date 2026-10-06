@@ -27,6 +27,7 @@ return args.FirstOrDefault() switch
     "times" when args.Length > 1 => Times(args[1]),
     "fieldbosses" when args.Length > 1 => FieldBosses(args[1]),
     "hex" when args.Length > 2 => HexDump(args[1], Convert.ToUInt16(args[2], 16), args.Length > 3 ? int.Parse(args[3]) : 5),
+    "update-check" => UpdateCheck(args.Skip(1).ToArray()),
     _ => Usage(),
 };
 
@@ -42,8 +43,39 @@ int Usage()
         aionmeter-cli crits <file.pcap>             damage-type / modifier statistics per class (crit check)
         aionmeter-cli entities <file.pcap>          damage dealers that are not announced players, by spawn kind
         aionmeter-cli casts <file.pcap>             tie ownerless skill effects to the casts that made them
+        aionmeter-cli update-check [--pretend 0.0.1] [--download <dir>]
+                                                    what the meter's update check sees on GitHub; download + verify the installer
         """);
     return 1;
+}
+
+int UpdateCheck(string[] a)
+{
+    string? Opt(string name) => Array.IndexOf(a, name) is var i and >= 0 && i + 1 < a.Length ? a[i + 1] : null;
+    var current = AionMeter.Core.Updates.UpdateFeed.ParseVersion(Opt("--pretend")) ?? new Version(0, 0, 0);
+    using var feed = new AionMeter.Core.Updates.UpdateFeed("AION2DpsMeter-cli/dev");
+    var latest = feed.GetLatestAsync().GetAwaiter().GetResult();
+    if (latest is null)
+    {
+        Console.WriteLine("No release published yet.");
+        return 1;
+    }
+    Console.WriteLine($"Latest:    {latest.Tag} = {latest.Version}, published {latest.PublishedAt:u}");
+    Console.WriteLine($"Page:      {latest.PageUrl}");
+    Console.WriteLine($"Installer: {latest.Installer?.Name} {latest.Installer?.Size:N0} B sha256={latest.Installer?.Sha256 ?? "-"}");
+    Console.WriteLine($"Portable:  {latest.Portable?.Name} {latest.Portable?.Size:N0} B");
+    Console.WriteLine(latest.Version > current ? $"Newer than {current}: the meter offers it." : $"Not newer than {current}: nothing offered.");
+    if (Opt("--download") is not { } dir || latest.Installer is not { } installer) return 0;
+
+    var shown = -1;
+    var path = feed.DownloadAsync(installer, dir, new ConsoleProgress(f =>
+    {
+        if ((int)(f * 10) == shown) return;
+        shown = (int)(f * 10);
+        Console.Write($"{shown * 10}% ");
+    })).GetAwaiter().GetResult();
+    Console.WriteLine($"\nDownloaded, size and SHA-256 match GitHub: {path}");
+    return 0;
 }
 
 int Devices()
@@ -561,4 +593,10 @@ sealed class EventStats(GameData data)
         Console.WriteLine("-- locked flows");
         foreach (var f in p.LockedFlows) Console.WriteLine("   " + f);
     }
+}
+
+/// <summary>Reports progress on the calling thread (Progress&lt;T&gt; would post it to the thread pool, out of order).</summary>
+sealed class ConsoleProgress(Action<double> report) : IProgress<double>
+{
+    public void Report(double value) => report(value);
 }

@@ -26,6 +26,7 @@ public sealed class MeterService : IDisposable
         Tracker = new CombatTracker(Data, Options);
         History = new HistoryStore(Path.Combine(AppSettings.AppDataDir, "fights"));
         Timers = new BossTimers(Path.Combine(AppSettings.AppDataDir, "boss-timers.json"), Data, DataDirectory, persistent: !settings.Transient);
+        Updates = new Updater(settings);
         Tracker.EncounterFinished += OnEncounterFinished;
         // A recording's or the demo's bosses must not move the live respawn timers.
         Tracker.BossNoticed += n =>
@@ -65,6 +66,8 @@ public sealed class MeterService : IDisposable
     public CombatTracker Tracker { get; }
     public HistoryStore History { get; }
     public BossTimers Timers { get; }
+    /// <summary>New versions on GitHub; checks only run once the app calls <see cref="Updater.Start"/>.</summary>
+    public Updater Updates { get; }
     public Func<GameData, IEventSource>? CaptureFactory { get; }
 
     public CaptureStatus CaptureStatus =>
@@ -234,6 +237,7 @@ public sealed class MeterService : IDisposable
     public void Dispose()
     {
         if (!Settings.Transient && !_replaying && !DemoRunning) SaveNames();
+        Updates.Dispose();
         _demo?.Dispose();
         _replay?.Dispose();
         _capture?.Dispose();

@@ -18,13 +18,22 @@ public sealed class TrayIcon : IDisposable
     private readonly ToolStripMenuItem _demo;
     private readonly ToolStripMenuItem _replay;
     private readonly ToolStripMenuItem _exit;
+    private readonly ToolStripMenuItem _update;
+    private readonly ToolStripSeparator _updateSeparator;
+    private readonly ToolStripMenuItem _checkUpdates;
     private readonly Icon _image;
     private bool _overlayVisible = true;
+    private string? _updateVersion;
+    private Action? _balloonClick;
 
     public TrayIcon(TrayActions actions)
     {
         _image = CreateIcon();
         var menu = new ContextMenuStrip { ShowImageMargin = false };
+        _update = new ToolStripMenuItem("", null, (_, _) => actions.Update()) { Visible = false };
+        _update.Font = new Font(_update.Font, System.Drawing.FontStyle.Bold);
+        _updateSeparator = new ToolStripSeparator { Visible = false };
+        _checkUpdates = new ToolStripMenuItem("", null, (_, _) => actions.CheckUpdates());
         _toggle = new ToolStripMenuItem("", null, (_, _) => actions.ToggleOverlay());
         _clickThrough = new ToolStripMenuItem("", null, (_, _) => actions.ToggleClickThrough());
         _reset = new ToolStripMenuItem("", null, (_, _) => actions.Reset());
@@ -36,8 +45,9 @@ public sealed class TrayIcon : IDisposable
         _replay = new ToolStripMenuItem("", null, (_, _) => actions.Replay());
         _exit = new ToolStripMenuItem("", null, (_, _) => actions.Exit());
         menu.Items.AddRange([
+            _update, _updateSeparator,
             _toggle, _clickThrough, _reset, new ToolStripSeparator(),
-            _history, _timers, _settings, _language, _demo, _replay, new ToolStripSeparator(),
+            _history, _timers, _settings, _language, _demo, _replay, _checkUpdates, new ToolStripSeparator(),
             _exit,
         ]);
         ApplyTexts();
@@ -53,6 +63,13 @@ public sealed class TrayIcon : IDisposable
         {
             if (e.Button == MouseButtons.Left) actions.ToggleOverlay();
         };
+        _icon.BalloonTipClicked += (_, _) =>
+        {
+            var click = _balloonClick;
+            _balloonClick = null;
+            click?.Invoke();
+        };
+        _icon.BalloonTipClosed += (_, _) => _balloonClick = null;
     }
 
     /// <summary>Menu wording in the current language.</summary>
@@ -69,6 +86,16 @@ public sealed class TrayIcon : IDisposable
         _demo.Text = t.TrayDemo;
         _replay.Text = t.TrayReplay;
         _exit.Text = t.TrayExit;
+        _checkUpdates.Text = t.TrayCheckUpdates;
+        if (_updateVersion is not null) _update.Text = string.Format(t.TrayUpdate, _updateVersion);
+    }
+
+    /// <summary>"Update to 0.2.0…" at the top of the menu while a new version is available; null hides it.</summary>
+    public void SetUpdate(string? version)
+    {
+        _updateVersion = version;
+        _update.Visible = _updateSeparator.Visible = version is not null;
+        if (version is not null) _update.Text = string.Format(UiText.Current.TrayUpdate, version);
     }
 
     public void Update(bool overlayVisible, bool clickThrough, string status)
@@ -80,7 +107,12 @@ public sealed class TrayIcon : IDisposable
         _icon.Text = text.Length > 63 ? text[..63] : text;
     }
 
-    public void ShowBalloon(string title, string text) => _icon.ShowBalloonTip(4000, title, text, ToolTipIcon.Info);
+    /// <param name="onClick">Runs when the notification itself is clicked (not when it times out or is closed).</param>
+    public void ShowBalloon(string title, string text, Action? onClick = null)
+    {
+        _balloonClick = onClick;
+        _icon.ShowBalloonTip(4000, title, text, ToolTipIcon.Info);
+    }
 
     /// <summary>Gold "A" on a dark disc, drawn at runtime so the repo needs no binary assets.</summary>
     private static Icon CreateIcon()
@@ -120,4 +152,6 @@ public sealed record TrayActions(
     Action Demo,
     Action Replay,
     Action ToggleLanguage,
+    Action Update,
+    Action CheckUpdates,
     Action Exit);

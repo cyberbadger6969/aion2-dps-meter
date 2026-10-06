@@ -58,6 +58,12 @@ public sealed class AppSettings
     /// <summary>Fetch skill icons from the official AION 2 game-data CDN (cached locally).</summary>
     public bool DownloadIcons { get; set; } = true;
 
+    // Updates
+    /// <summary>Ask GitHub for a newer version shortly after start and every few hours.</summary>
+    public bool CheckUpdates { get; set; } = true;
+    /// <summary>A version the user chose to skip ("0.2.0"): not announced again, a newer one is.</summary>
+    public string? SkippedUpdate { get; set; }
+
     // Capture / storage
     public bool SaveHistory { get; set; } = true;
     public HistoryMode HistoryMode { get; set; } = HistoryMode.BossesAndLong;

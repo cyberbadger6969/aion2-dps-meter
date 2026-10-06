@@ -313,6 +313,38 @@ public sealed class UiText
     public string Cancel { get; init; } = "Cancel";
     public string Save { get; init; } = "Save";
 
+    // Updates
+    public string UpdateTitle { get; init; } = "Update available";
+    public string UpdateHeadline { get; init; } = "AION2 DPS Meter {0} is out";
+    public string UpdateYouHave { get; init; } = "You have {0}.";
+    public string UpdateReleased { get; init; } = "You have {0}. The new one was released {1}.";
+    public string UpdateWhatsNew { get; init; } = "WHAT'S NEW";
+    public string UpdateInstalledHint { get; init; } = "The meter closes, the installer updates it and starts it again. Settings, fight history and timers stay.";
+    public string UpdatePortableHint { get; init; } = "This copy was unzipped by hand, so it cannot replace itself: download the new zip and unzip it over this folder, or switch to the installer.";
+    public string UpdateNow { get; init; } = "Update";
+    public string UpdateOpenPage { get; init; } = "Open download page";
+    public string UpdateLater { get; init; } = "Later";
+    public string UpdateSkip { get; init; } = "Skip this version";
+    public string UpdateDownloading { get; init; } = "Downloading the installer… {0:0}%";
+    public string UpdateStarting { get; init; } = "Starting the installer…";
+    public string UpdateFailed { get; init; } = "Could not update: {0}. The new version can be downloaded from the release page.";
+    public string UpdateBanner { get; init; } = "Version {0} is out — click to update";
+    public string TipUpdate { get; init; } = "What's new, and update in one click";
+    public string UpdateBalloon { get; init; } = "Version {0} is out. Click here to update.";
+    public string UpdatedBalloon { get; init; } = "Updated to version {0}.";
+    public string TrayUpdate { get; init; } = "Update to {0}…";
+    public string TrayCheckUpdates { get; init; } = "Check for updates";
+    public string SecUpdates { get; init; } = "UPDATES";
+    public string CheckUpdatesAuto { get; init; } = "Check GitHub for new versions";
+    public string UpdatesHint { get; init; } = "Shortly after start and every 6 hours. The meter only asks GitHub which version is the newest; nothing about you or your fights is sent.";
+    public string VersionInstalled { get; init; } = "Version {0} · installed";
+    public string VersionPortable { get; init; } = "Version {0} · portable (zip)";
+    public string CheckNow { get; init; } = "Check now";
+    public string UpdateChecking { get; init; } = "Checking…";
+    public string UpToDate { get; init; } = "You have the newest version.";
+    public string UpdateFound { get; init; } = "Version {0} is out.";
+    public string UpdateCheckFailed { get; init; } = "Could not reach GitHub: {0}";
+
     private static readonly UiText Ru = new()
     {
         Code = "ru",
@@ -570,6 +602,36 @@ public sealed class UiText
         Disclaimer = "AION2 DPS Meter только слушает ваше собственное сетевое соединение. Он не читает память игры, ничего не внедряет и не отправляет в игру ни байта. Тем не менее сторонние программы могут нарушать правила игры — используйте на свой риск.",
         Cancel = "Отмена",
         Save = "Сохранить",
+        UpdateTitle = "Доступно обновление",
+        UpdateHeadline = "Вышла версия AION2 DPS Meter {0}",
+        UpdateYouHave = "У вас {0}.",
+        UpdateReleased = "У вас {0}. Новая выпущена {1}.",
+        UpdateWhatsNew = "ЧТО НОВОГО",
+        UpdateInstalledHint = "Метр закроется, установщик обновит его и запустит снова. Настройки, история боёв и таймеры сохранятся.",
+        UpdatePortableHint = "Эта копия распакована из zip и не может заменить себя сама: скачайте новый архив и распакуйте его поверх этой папки или перейдите на установщик.",
+        UpdateNow = "Обновить",
+        UpdateOpenPage = "Открыть страницу загрузки",
+        UpdateLater = "Позже",
+        UpdateSkip = "Пропустить эту версию",
+        UpdateDownloading = "Скачивание установщика… {0:0}%",
+        UpdateStarting = "Запуск установщика…",
+        UpdateFailed = "Не удалось обновить: {0}. Новую версию можно скачать со страницы релиза.",
+        UpdateBanner = "Вышла версия {0} — нажмите, чтобы обновить",
+        TipUpdate = "Что нового — и обновление в один клик",
+        UpdateBalloon = "Вышла версия {0}. Нажмите сюда, чтобы обновить.",
+        UpdatedBalloon = "Метр обновлён до версии {0}.",
+        TrayUpdate = "Обновить до {0}…",
+        TrayCheckUpdates = "Проверить обновления",
+        SecUpdates = "ОБНОВЛЕНИЯ",
+        CheckUpdatesAuto = "Проверять новые версии на GitHub",
+        UpdatesHint = "Вскоре после запуска и раз в 6 часов. Метр только спрашивает у GitHub номер новой версии — ничего о вас и ваших боях не отправляется.",
+        VersionInstalled = "Версия {0} · установлена",
+        VersionPortable = "Версия {0} · без установки (zip)",
+        CheckNow = "Проверить сейчас",
+        UpdateChecking = "Проверка…",
+        UpToDate = "У вас последняя версия.",
+        UpdateFound = "Вышла версия {0}.",
+        UpdateCheckFailed = "Не удалось связаться с GitHub: {0}",
     };
 
     private static string RuPlural(int n, string one, string few, string many)

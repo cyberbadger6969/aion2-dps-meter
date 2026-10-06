@@ -84,6 +84,8 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+; In-app update: the meter runs this installer with /SILENT /RELAUNCH=1 and exits; start the new version afterwards.
+Filename: "{app}\{#AppExe}"; Parameters: "--updated"; Flags: nowait; Check: RelaunchAfterUpdate
 
 [Code]
 var
@@ -167,11 +169,17 @@ begin
     UpdateNpcapStatus;
 end;
 
+// Silent installs (in-app updates) also pass through here: never stop them on the Npcap page.
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (NpcapPage <> nil) and (CurPageID = NpcapPage.ID) and not NpcapInstalled then
+  if (NpcapPage <> nil) and (CurPageID = NpcapPage.ID) and not NpcapInstalled and not WizardSilent then
     Result := MsgBox(CustomMessage('NpcapContinue'), mbConfirmation, MB_YESNO) = IDYES;
+end;
+
+function RelaunchAfterUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
 end;
 
 // Uninstall: the meter keeps its files open, so close the copy that runs from this folder (a portable copy

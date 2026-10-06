@@ -45,6 +45,8 @@ public partial class OverlayWindow : Window
         FrameBackground.Opacity = _settings.BackgroundOpacity;
         ApplyLock();
         UpdateModeLabel();
+        _meter.Updates.Changed += ShowUpdateBanner;
+        ShowUpdateBanner();
 
         // Drag the card by any part of it (unless locked); a click without movement still opens a breakdown.
         _drag = DragAnywhere.Attach(this, canDrag: () => !_settings.Locked, dropped: SavePlacement);
@@ -130,7 +132,30 @@ public partial class OverlayWindow : Window
     public void OnLanguageChanged()
     {
         _vm.LanguageChanged();
+        ShowUpdateBanner();
         Refresh();
+    }
+
+    private Version? _bannerClosedFor; // the banner's ✕: hidden until a newer version comes out or the next start
+
+    /// <summary>The green "Version 0.2.0 is out" banner above the footer, while an update is available (not skipped or closed).</summary>
+    private void ShowUpdateBanner()
+    {
+        var available = _meter.Updates.Available;
+        var show = available is not null && available.Version != _bannerClosedFor;
+        UpdateBanner.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (show) UpdateBannerText.Text = string.Format(UiText.Current.UpdateBanner, available!.Version.ToString(3));
+    }
+
+    private void Update_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_drag.JustDragged) AppHost.Current.ShowUpdate();
+    }
+
+    private void UpdateBannerClose_Click(object sender, RoutedEventArgs e)
+    {
+        _bannerClosedFor = _meter.Updates.Available?.Version;
+        ShowUpdateBanner();
     }
 
     private void Language_Click(object sender, RoutedEventArgs e) => AppHost.Current.ToggleLanguage();

@@ -187,6 +187,23 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Updates -->
+                    <Border Style="{StaticResource Section}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SecUpdates, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="CheckUpdates" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding CheckUpdatesAuto, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding UpdatesHint, Source={x:Static s:UiText.Current}}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock x:Name="VersionText" VerticalAlignment="Center" Foreground="{StaticResource TextDim}" Margin="0,0,14,0" />
+                                <Button x:Name="CheckNowButton" Style="{StaticResource GhostButton}" Click="CheckNow_Click"
+                                        Content="{Binding CheckNow, Source={x:Static s:UiText.Current}}" />
+                            </StackPanel>
+                            <TextBlock x:Name="UpdateState" Style="{StaticResource Hint}" Margin="0,6,0,0" Foreground="{StaticResource TextDim}"
+                                       Visibility="Collapsed" />
+                        </StackPanel>
+                    </Border>
+
                     <!-- Data -->
                     <Border Style="{StaticResource Section}">
                         <StackPanel>

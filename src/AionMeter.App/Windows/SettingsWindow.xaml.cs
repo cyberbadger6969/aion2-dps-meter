@@ -59,6 +59,8 @@ public partial class SettingsWindow : Window
 
         LanguageBox.SelectedIndex = UiText.Normalize(s.Language) == "ru" ? 1 : 0;
         Icons.IsChecked = s.DownloadIcons;
+        CheckUpdates.IsChecked = s.CheckUpdates;
+        VersionText.Text = string.Format(Updater.IsInstalled ? T.VersionInstalled : T.VersionPortable, _meter.Updates.Current.ToString(3));
 
         CaptureState.Text = T.StatusPrefix + _meter.CaptureStatus.Message;
         var data = _meter.Data;
@@ -93,6 +95,7 @@ public partial class SettingsWindow : Window
 
         var language = (LanguageBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "en";
         s.DownloadIcons = Icons.IsChecked == true;
+        s.CheckUpdates = CheckUpdates.IsChecked == true;
         s.HotkeyToggleOverlay = HkToggle.Text.Trim();
         s.HotkeyReset = HkReset.Text.Trim();
         s.HotkeyClickThrough = HkClick.Text.Trim();
@@ -106,6 +109,22 @@ public partial class SettingsWindow : Window
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>Asks GitHub right away; a newer version also opens the update window.</summary>
+    private async void CheckNow_Click(object sender, RoutedEventArgs e)
+    {
+        CheckNowButton.IsEnabled = false;
+        UpdateState.Visibility = Visibility.Visible;
+        UpdateState.Text = T.UpdateChecking;
+        var result = await AppHost.Current.CheckUpdatesNowAsync();
+        UpdateState.Text = result switch
+        {
+            UpdateCheckResult.Available => string.Format(T.UpdateFound, _meter.Updates.Latest!.Version.ToString(3)),
+            UpdateCheckResult.UpToDate => T.UpToDate,
+            _ => string.Format(T.UpdateCheckFailed, _meter.Updates.LastError),
+        };
+        CheckNowButton.IsEnabled = true;
+    }
 
     private static void Open(string path)
     {

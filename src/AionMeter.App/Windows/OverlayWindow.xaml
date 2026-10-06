@@ -124,6 +124,31 @@
             </Setter>
         </Style>
 
+        <!-- "A new version is out": a slim green banner above the footer, only while an update is available -->
+        <Style x:Key="UpdateBannerButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#D2FAE6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" CornerRadius="8" Padding="10,4,10,4" BorderThickness="1" BorderBrush="#803DD68C" Background="#2A3DD68C">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3DD68C" />
+                                <Setter TargetName="Bd" Property="Background" Value="#403DD68C" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- One player: a full-height class-coloured bar (AionFlex style) with place medal, emblem, name,
              DPS in a light class tint, total damage and share -->
         <DataTemplate x:Key="RowTemplate" DataType="{x:Type vm:RowViewModel}">
@@ -416,30 +441,47 @@
             </Grid>
 
             <!-- Footer -->
-            <Grid Grid.Row="4" Margin="0,8,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Status}">
-                    <Ellipse Width="6" Height="6" Fill="{Binding StatusBrush}" Margin="0,0,7,0" />
-                    <TextBlock x:Name="FooterText" FontSize="12" Foreground="#B4BCCB" TextTrimming="CharacterEllipsis"
-                               Effect="{StaticResource TextShadow}" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,12,0">
-                    <!-- Boss timers: always visible, shows the next respawn -->
-                    <Button Style="{StaticResource TimersPill}" Click="Timers_Click" ToolTip="{Binding T.TipTimers}" Margin="10,0,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE121;" FontFamily="{StaticResource IconFont}" FontSize="12" Margin="0,1,6,0" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding TimersLabel}" VerticalAlignment="Center" />
-                        </StackPanel>
+            <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                <!-- New version on GitHub: a slim banner until it is installed, skipped or closed for this session -->
+                <Grid x:Name="UpdateBanner" Margin="0,0,0,8" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Style="{StaticResource UpdateBannerButton}" Click="Update_Click" ToolTip="{Binding T.TipUpdate}">
+                        <DockPanel>
+                            <TextBlock Text="&#xE896;" FontFamily="{StaticResource IconFont}" FontSize="12" Margin="0,1,8,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="UpdateBannerText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
                     </Button>
-                    <Button Style="{StaticResource FooterLink}" Content="{Binding T.OpenFight}" Click="Details_Click" Effect="{StaticResource TextShadow}" />
-                    <Button Style="{StaticResource FooterLink}" Click="Segments_Click" Effect="{StaticResource TextShadow}">
-                        <TextBlock><Run Text="{Binding T.Fights, Mode=OneWay}" /><Run Text=" " /><Run Text="&#xE70D;" FontFamily="{StaticResource IconFont}" FontSize="9" /></TextBlock>
-                    </Button>
-                </StackPanel>
-            </Grid>
+                    <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE711;" Click="UpdateBannerClose_Click" Margin="4,0,8,0"
+                            VerticalAlignment="Center" ToolTip="{Binding T.UpdateLater}" />
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Status}">
+                        <Ellipse Width="6" Height="6" Fill="{Binding StatusBrush}" Margin="0,0,7,0" />
+                        <TextBlock x:Name="FooterText" FontSize="12" Foreground="#B4BCCB" TextTrimming="CharacterEllipsis"
+                                   Effect="{StaticResource TextShadow}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,12,0">
+                        <!-- Boss timers: always visible, shows the next respawn -->
+                        <Button Style="{StaticResource TimersPill}" Click="Timers_Click" ToolTip="{Binding T.TipTimers}" Margin="10,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE121;" FontFamily="{StaticResource IconFont}" FontSize="12" Margin="0,1,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding TimersLabel}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FooterLink}" Content="{Binding T.OpenFight}" Click="Details_Click" Effect="{StaticResource TextShadow}" />
+                        <Button Style="{StaticResource FooterLink}" Click="Segments_Click" Effect="{StaticResource TextShadow}">
+                            <TextBlock><Run Text="{Binding T.Fights, Mode=OneWay}" /><Run Text=" " /><Run Text="&#xE70D;" FontFamily="{StaticResource IconFont}" FontSize="9" /></TextBlock>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
         </Grid>
 
         <!-- Resize grip -->
