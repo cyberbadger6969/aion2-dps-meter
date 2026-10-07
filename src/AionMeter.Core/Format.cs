@@ -23,6 +23,12 @@ public static class Format
 
     public static string Grouped(long value) => value.ToString("#,0", Inv);
 
+    /// <summary>Combat power at a glance: 82,115 → 82.1K, 1,234,567 → 1.23M (one decimal is how players quote it).</summary>
+    public static string Power(long value) =>
+        value >= 1_000_000 ? (value / 1e6).ToString("0.##", Inv) + "M"
+        : value >= 1_000 ? (value / 1e3).ToString("0.#", Inv) + "K"
+        : value.ToString(Inv);
+
     public static string Percent(double fraction, int decimals = 1) =>
         (fraction * 100).ToString(decimals == 0 ? "0" : "0." + new string('0', decimals), Inv) + "%";
 

@@ -84,7 +84,6 @@ public partial class OverlayWindow : Window
     public void Refresh()
     {
         _vm.ShowGear = _settings.ShowGear;
-        _vm.GearBelow = _settings.RowSize >= 80; // smaller rows have no room for a second line
         // Looking at an old fight when a new pull starts: jump back to live so the fight is never missed.
         if ((_saved is not null || _segment is not null) &&
             _meter.Tracker.Segments() is [{ IsActive: true } running, ..] && running.StartedAt > _selectedAt)
@@ -194,8 +193,7 @@ public partial class OverlayWindow : Window
         Resources["RowMargin"] = new Thickness(0, 0, 0, Math.Max(2, Math.Round(6 * k)));
         Resources["RowGlossHeight"] = Math.Round(19 * k);
         Resources["RowNameFont"] = Math.Round(16.5 * f, 1);
-        Resources["RowGearFont"] = Math.Round(12.5 * f, 1);
-        Resources["RowGearBelowFont"] = Math.Round(11 * f, 1);
+        Resources["RowGearFont"] = Math.Round(14 * f, 1);
         Resources["RowNumberFont"] = Math.Round(16 * f, 1);
         Resources["RowGlyphSize"] = Math.Min(Math.Round(30 * f), height - 2);
         Resources["RowRankSize"] = Math.Min(Math.Round(24 * f), height - 3);
@@ -203,9 +201,7 @@ public partial class OverlayWindow : Window
         Resources["ColHeaderFont"] = Math.Max(9, Math.Round(11 * f, 1));
         Resources["ColRankWidth"] = new GridLength(Math.Round(30 * f));
         Resources["ColGlyphWidth"] = new GridLength(Math.Round(32 * f));
-        Resources["ColDpsWidth"] = new GridLength(Math.Round(104 * f));
-        Resources["ColDamageWidth"] = new GridLength(Math.Round(74 * f));
-        Resources["ColShareWidth"] = new GridLength(Math.Round(68 * f));
+        Resources["ColGap"] = new Thickness(Math.Round(12 * f), 0, 0, 0);
     }
 
     /// <summary>Ctrl + mouse wheel over the rows: row size in 5 % steps, kept right away.</summary>

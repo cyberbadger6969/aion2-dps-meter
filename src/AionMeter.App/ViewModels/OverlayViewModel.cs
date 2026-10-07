@@ -20,24 +20,35 @@ public sealed class RowViewModel : ObservableObject
     private double _fill;
     private int _rank;
     private string _tooltip = "";
-    private string _gearInline = "";
-    private string _gearBelow = "";
+    private string _gearScore = "";
+    private string _combatPower = "";
 
     public uint ActorId { get => _actorId; set => Set(ref _actorId, value); }
     public string Name { get => _name; set => Set(ref _name, value); }
-    /// <summary>" (GS 2859 / CP 59.07K)" right after the name (small rows); empty otherwise.</summary>
-    public string GearInline { get => _gearInline; set => Set(ref _gearInline, value); }
-    /// <summary>"(GS 2859 / CP 59.07K)" on a line of its own under the name (rows tall enough); empty otherwise.</summary>
-    public string GearBelow
+
+    /// <summary>"1859": gear score from the party roster; empty when not known.</summary>
+    public string GearScore
     {
-        get => _gearBelow;
+        get => _gearScore;
         set
         {
-            if (Set(ref _gearBelow, value)) Raise(nameof(HasGearBelow));
+            if (Set(ref _gearScore, value)) Raise(nameof(HasGearScore));
         }
     }
 
-    public bool HasGearBelow => _gearBelow.Length > 0;
+    public bool HasGearScore => _gearScore.Length > 0;
+
+    /// <summary>"82.1K": combat power from the party roster or the own record; empty when not known.</summary>
+    public string CombatPower
+    {
+        get => _combatPower;
+        set
+        {
+            if (Set(ref _combatPower, value)) Raise(nameof(HasCombatPower));
+        }
+    }
+
+    public bool HasCombatPower => _combatPower.Length > 0;
     public string Dps { get => _dps; set => Set(ref _dps, value); }
     public string Damage { get => _damage; set => Set(ref _damage, value); }
     public string Share { get => _share; set => Set(ref _share, value); }
@@ -246,7 +257,7 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Biggest single hit of the fight, "1,052,914".</summary>
     public string TopHit { get => _topHit; set => Set(ref _topHit, value); }
     public string TopHitBy { get => _topHitBy; set => Set(ref _topHitBy, value); }
-    /// <summary>"5 players · 56.3 s · party 4.0M/s"</summary>
+    /// <summary>"5 players · party 4.0M/s" (the fight's length is the clock in the header).</summary>
     public string Footer { get => _footer; set => Set(ref _footer, value); }
     /// <summary>Letter-spaced card label: "● LIVE FIGHT", "SAVED · 05.10 19:04" …</summary>
     public string HeaderLabel { get => _headerLabel; private set => Set(ref _headerLabel, value); }
@@ -260,11 +271,12 @@ public sealed class OverlayViewModel : ObservableObject
     public Guid? SegmentId { get; private set; }
     public string Version { get; } = "v" + (typeof(OverlayViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.1.0");
 
-    /// <summary>Gear score and combat power after the names (Settings → Overlay).</summary>
+    /// <summary>Gear score and combat power columns (Settings → Overlay).</summary>
     public bool ShowGear { get; set; } = true;
 
-    /// <summary>Rows tall enough for a second line: gear score and combat power go under the name instead of after it.</summary>
-    public bool GearBelow { get; set; } = true;
+    /// <summary>Someone in the ranking has a gear score or combat power: the GS / CP column labels show.</summary>
+    public bool HasGear { get => _hasGear; private set => Set(ref _hasGear, value); }
+    private bool _hasGear;
 
     public void Apply(EncounterSnapshot? snap, int maxRows, bool relativeToTop)
     {
@@ -282,6 +294,7 @@ public sealed class OverlayViewModel : ObservableObject
             TopHit = "";
             Footer = "";
             SelfPlace = "";
+            HasGear = false;
             Rows.Clear();
             return;
         }
@@ -312,8 +325,7 @@ public sealed class OverlayViewModel : ObservableObject
             _ => null,
         };
         Detail = partial is not null ? $"{result} · {partial}" : string.IsNullOrEmpty(zone) ? result : $"{zone} · {result}";
-        Footer = $"{T.Players(snap.PlayerCount)} · " +
-                 $"{(snap.CombatMs / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} {T.Seconds} · {T.Party} {PartyDps}";
+        Footer = $"{T.Players(snap.PlayerCount)} · {T.Party} {PartyDps}";
 
         var top = snap.Combatants.MaxBy(x => x.MaxHit);
         TopHit = top is { MaxHit: > 0 } ? Format.Grouped(top.MaxHit) : "";
@@ -352,9 +364,8 @@ public sealed class OverlayViewModel : ObservableObject
             row.ActorId = cb.ActorId;
             row.Rank = cb.IsUnknownSummons ? 0 : i + 1;
             row.Name = T.CombatantLabel(cb.ActorId, cb.Name, cb.Class);
-            var gear = ShowGear ? ChatLine.Gear(cb, T.Chat).Trim() : "";
-            row.GearBelow = GearBelow ? gear : "";
-            row.GearInline = GearBelow || gear.Length == 0 ? "" : " " + gear;
+            row.GearScore = ShowGear && cb.GearScore > 0 ? cb.GearScore.ToString() : "";
+            row.CombatPower = ShowGear && cb.CombatPower > 0 ? Format.Power(cb.CombatPower) : "";
             row.Class = cb.Class;
             row.IsSelf = cb.IsSelf;
             row.Dps = Format.Compact(cb.Dps) + "/s";
@@ -366,6 +377,7 @@ public sealed class OverlayViewModel : ObservableObject
                           $"{T.RowDamage} {Format.Grouped(cb.Damage)} ({Format.Share(cb.Share)}) · DPS {Format.Compact(cb.Dps)}\n" +
                           $"{T.RowHits} {cb.Hits} · {T.RowCrit} {Format.Percent(cb.CritRate)} · {T.RowMax} {Format.Grouped(cb.MaxHit)}";
         }
+        HasGear = Rows.Any(r => r.HasGearScore || r.HasCombatPower);
         SelfPlace = selfIndex >= 0 ? $"{selfIndex + 1} / {snap.PlayerCount}" : "";
         SelfPlaceBrush = RankBrushes.For(selfIndex + 1).Bg;
         SelfPlaceForeground = RankBrushes.For(selfIndex + 1).Fg;

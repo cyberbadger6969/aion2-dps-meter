@@ -150,6 +150,8 @@ public sealed class UiText
     public string TipDps { get; init; } = "Damage per second over the fight";
     public string TipDamage { get; init; } = "Total damage dealt in this fight";
     public string TipShare { get; init; } = "Share of the whole group's damage";
+    public string TipGs { get; init; } = "Gear score (equipment item level), from the party roster";
+    public string TipCp { get; init; } = "Combat power, from the party roster";
 
     // ---------------------------------------------------------------- overlay: card
     public string LiveFight { get; init; } = "live fight";
@@ -467,6 +469,8 @@ public sealed class UiText
         TipDps = "Урон в секунду за время боя (DPS)",
         TipDamage = "Весь урон, нанесённый за бой",
         TipShare = "Доля от урона всей группы",
+        TipGs = "Уровень экипировки (GS), из состава группы",
+        TipCp = "Боевая мощь (CP), из состава группы",
 
         LiveFight = "идёт бой",
         LastFight = "последний бой",

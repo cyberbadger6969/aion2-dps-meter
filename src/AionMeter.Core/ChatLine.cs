@@ -95,7 +95,7 @@ public static class ChatLine
         var w = words ?? ChatWords.English;
         var parts = new List<string>(2);
         if (c.GearScore > 0) parts.Add($"{w.GearScore} {c.GearScore}");
-        if (c.CombatPower > 0) parts.Add($"{w.CombatPower} {Format.Compact(c.CombatPower)}");
+        if (c.CombatPower > 0) parts.Add($"{w.CombatPower} {Format.Power(c.CombatPower)}");
         return parts.Count == 0 ? "" : $" ({string.Join(" / ", parts)})";
     }
 
@@ -115,7 +115,7 @@ public static class ChatLine
             {
                 string[] row = [(i + 1).ToString(), Cut(name(c), 20), Format.Compact(c.Dps) + "/s", Format.Compact(c.Damage), Format.Share(c.Share)];
                 return gear
-                    ? [.. row, c.GearScore > 0 ? c.GearScore.ToString() : "-", c.CombatPower > 0 ? Format.Compact(c.CombatPower) : "-"]
+                    ? [.. row, c.GearScore > 0 ? c.GearScore.ToString() : "-", c.CombatPower > 0 ? Format.Power(c.CombatPower) : "-"]
                     : row;
             })
             .ToList();

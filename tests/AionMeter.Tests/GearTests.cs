@@ -146,7 +146,7 @@ public class GearTests
             "Balhash 2:40 KILL | Talwyn (CP 47.8K) #3 of 3: 5K/s, 800K dmg (20%), crit 15%, top hit 34.52K | party 25K/s",
             ChatLine.Player(fight, 3));
         Assert.Equal(
-            "Balhash 2:40 KILL | 1.Sylvaen (GS 2859 / CP 59.07K) 10K/s 40% | 2.Borgrim (GS 3012 / CP 61.23K) 7.5K/s 30% | " +
+            "Balhash 2:40 KILL | 1.Sylvaen (GS 2859 / CP 59.1K) 10K/s 40% | 2.Borgrim (GS 3012 / CP 61.2K) 7.5K/s 30% | " +
             "3.Talwyn (CP 47.8K) 5K/s 20% | party 25K/s",
             ChatLine.Party(fight));
     }
@@ -166,9 +166,9 @@ public class GearTests
         var expected = string.Join(Environment.NewLine,
             "**Balhash 2:40 KILL** | party 25K/s",
             "```",
-            "#  Player      DPS  Damage  Share    GS      CP",
-            "1  Sylvaen   10K/s    1.6M  40.0%  2859  59.07K",
-            "2  Borgrim  7.5K/s    1.2M  30.0%     -       -",
+            "#  Player      DPS  Damage  Share    GS     CP",
+            "1  Sylvaen   10K/s    1.6M  40.0%  2859  59.1K",
+            "2  Borgrim  7.5K/s    1.2M  30.0%     -      -",
             "```");
         Assert.Equal(expected, ChatLine.Table(Fight(Player(1, "Sylvaen", 1_600_000, 2859, 59_072), Player(2, "Borgrim", 1_200_000))));
     }
