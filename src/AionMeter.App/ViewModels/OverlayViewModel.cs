@@ -274,6 +274,9 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Gear score and combat power columns (Settings → Overlay).</summary>
     public bool ShowGear { get; set; } = true;
 
+    /// <summary>False while the overlay is too narrow for them next to the names (the fight's numbers come first).</summary>
+    public bool GearFits { get; set; } = true;
+
     /// <summary>Someone in the ranking has a gear score or combat power: the GS / CP column labels show.</summary>
     public bool HasGear { get => _hasGear; private set => Set(ref _hasGear, value); }
     private bool _hasGear;
@@ -364,8 +367,8 @@ public sealed class OverlayViewModel : ObservableObject
             row.ActorId = cb.ActorId;
             row.Rank = cb.IsUnknownSummons ? 0 : i + 1;
             row.Name = T.CombatantLabel(cb.ActorId, cb.Name, cb.Class);
-            row.GearScore = ShowGear && cb.GearScore > 0 ? cb.GearScore.ToString() : "";
-            row.CombatPower = ShowGear && cb.CombatPower > 0 ? Format.Power(cb.CombatPower) : "";
+            row.GearScore = ShowGear && GearFits && cb.GearScore > 0 ? cb.GearScore.ToString() : "";
+            row.CombatPower = ShowGear && GearFits && cb.CombatPower > 0 ? Format.Power(cb.CombatPower) : "";
             row.Class = cb.Class;
             row.IsSelf = cb.IsSelf;
             row.Dps = Format.Compact(cb.Dps) + "/s";

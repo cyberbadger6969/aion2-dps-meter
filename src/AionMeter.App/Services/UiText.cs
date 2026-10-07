@@ -291,7 +291,8 @@ public sealed class UiText
     public string ShowBossPanel { get; init; } = "Show boss HP bar";
     public string ShowGear { get; init; } = "Show GS / CP after names";
     public string ShowGearHint { get; init; } =
-        "Gear score and combat power come with the party roster: your party members and you. Other players have none to show.";
+        "Gear score and combat power come with the party roster: your party members and you. Other players have none to show. " +
+        "On a narrow overlay the columns step aside so the fight's numbers fit: widen it or make the rows smaller.";
     public string RowsShown { get; init; } = "Rows shown";
     public string BackgroundOpacity { get; init; } = "Background opacity";
     public string RowSize { get; init; } = "Row size";
@@ -616,7 +617,8 @@ public sealed class UiText
         BarsRelativeHint = "Полоса лидера полная, остальные — пропорционально ему. Выключено: полосы показывают долю урона группы.",
         ShowBossPanel = "Показывать полосу HP босса",
         ShowGear = "Показывать GS / CP после ников",
-        ShowGearHint = "GS и CP сервер присылает в составе группы: они есть у членов вашей группы и у вас. У остальных игроков их нет.",
+        ShowGearHint = "GS и CP сервер присылает в составе группы: они есть у членов вашей группы и у вас. У остальных игроков их нет. " +
+                       "На узком оверлее колонки прячутся, чтобы влезли цифры боя: сделайте оверлей шире или строки меньше.",
         RowsShown = "Строк в списке",
         BackgroundOpacity = "Плотность фона",
         RowSize = "Размер строк",

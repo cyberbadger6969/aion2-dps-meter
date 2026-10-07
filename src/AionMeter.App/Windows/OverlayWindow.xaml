@@ -22,7 +22,10 @@
              name gets all the room that is left. -->
         <GridLength x:Key="ColRankWidth">30</GridLength>
         <GridLength x:Key="ColGlyphWidth">32</GridLength>
-        <Thickness x:Key="ColGap">12,0,0,0</Thickness>
+        <Thickness x:Key="ColGap">10,0,0,0</Thickness>
+        <GridLength x:Key="ColRuleWidth">12</GridLength>
+        <Thickness x:Key="RuleMargin">0,8,0,8</Thickness>
+        <sys:Double x:Key="NameMaxWidth">220</sys:Double>
         <sys:Double x:Key="RowHeight">42</sys:Double>
         <Thickness x:Key="RowMargin">0,0,0,6</Thickness>
         <sys:Double x:Key="RowGlossHeight">19</sys:Double>
@@ -215,13 +218,16 @@
                     </Border.Effect>
                 </Border>
 
+                <!-- The player (name, gear score, combat power) on the left; a rule; the fight's numbers on the right -->
                 <Grid Margin="8,0,14,0" Effect="{StaticResource TextShadow}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{DynamicResource ColRankWidth}" />
                         <ColumnDefinition Width="{DynamicResource ColGlyphWidth}" />
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Gs" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Cp" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="{DynamicResource ColRuleWidth}" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Dps" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Damage" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Share" />
@@ -239,17 +245,23 @@
                     <c:ClassGlyph Grid.Column="1" Class="{Binding Class}" OnBar="True" Width="{DynamicResource RowGlyphSize}"
                                   Height="{DynamicResource RowGlyphSize}" HorizontalAlignment="Left" />
 
+                    <!-- As wide as the longest name, up to what the other columns leave (OverlayWindow.FitNames) -->
                     <TextBlock x:Name="NameText" Grid.Column="2" Text="{Binding Name}" FontSize="{DynamicResource RowNameFont}" FontWeight="Bold"
-                               Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,0,1" />
+                               Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,0,1"
+                               MaxWidth="{DynamicResource NameMaxWidth}" />
 
-                    <!-- Gear score and combat power: only players of your party have them (the party roster) -->
+                    <!-- Gear score and combat power, right by the name: only players of your party have them (the party roster) -->
                     <TextBlock Grid.Column="3" Text="{Binding GearScore}" Style="{StaticResource RowGear}"
                                Visibility="{Binding HasGearScore, Converter={StaticResource VisibleIf}}" />
                     <TextBlock Grid.Column="4" Text="{Binding CombatPower}" Style="{StaticResource RowGear}"
                                Visibility="{Binding HasCombatPower, Converter={StaticResource VisibleIf}}" />
-                    <TextBlock Grid.Column="5" Text="{Binding Dps}" Style="{StaticResource RowNumber}" />
-                    <TextBlock Grid.Column="6" Text="{Binding Damage}" Style="{StaticResource RowNumber}" />
-                    <TextBlock Grid.Column="7" Text="{Binding Share}" Style="{StaticResource RowNumber}" />
+
+                    <Rectangle Grid.Column="6" Width="1.2" Fill="#8CFFFFFF" HorizontalAlignment="Center" Margin="{DynamicResource RuleMargin}"
+                               Visibility="{Binding DataContext.HasGear, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleIf}}" />
+
+                    <TextBlock Grid.Column="7" Text="{Binding Dps}" Style="{StaticResource RowNumber}" />
+                    <TextBlock Grid.Column="8" Text="{Binding Damage}" Style="{StaticResource RowNumber}" />
+                    <TextBlock Grid.Column="9" Text="{Binding Share}" Style="{StaticResource RowNumber}" />
                 </Grid>
             </Grid>
             <DataTemplate.Triggers>
@@ -446,14 +458,16 @@
                 </Grid.RowDefinitions>
 
                 <!-- Column labels (same widths as the rows below) -->
-                <Grid Margin="8,0,14,5" Visibility="{Binding HasData, Converter={StaticResource VisibleIf}}"
+                <Grid x:Name="ColumnLabels" Margin="8,0,14,5" Visibility="{Binding HasData, Converter={StaticResource VisibleIf}}"
                       Effect="{StaticResource TextShadow}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{DynamicResource ColRankWidth}" />
                         <ColumnDefinition Width="{DynamicResource ColGlyphWidth}" />
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Gs" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Cp" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="{DynamicResource ColRuleWidth}" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Dps" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Damage" />
                         <ColumnDefinition Width="Auto" SharedSizeGroup="Share" />
@@ -465,9 +479,9 @@
                                Visibility="{Binding HasGear, Converter={StaticResource VisibleIf}}" />
                     <TextBlock Grid.Column="4" Text="CP" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipCp}"
                                Visibility="{Binding HasGear, Converter={StaticResource VisibleIf}}" />
-                    <TextBlock Grid.Column="5" Text="{Binding T.ColDps}" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipDps}" />
-                    <TextBlock Grid.Column="6" Text="{Binding T.ColDamage}" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipDamage}" />
-                    <TextBlock Grid.Column="7" Text="{Binding T.ColShare}" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipShare}" />
+                    <TextBlock Grid.Column="7" Text="{Binding T.ColDps}" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipDps}" />
+                    <TextBlock Grid.Column="8" Text="{Binding T.ColDamage}" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipDamage}" />
+                    <TextBlock Grid.Column="9" Text="{Binding T.ColShare}" Style="{StaticResource ColValueHeader}" ToolTip="{Binding T.TipShare}" />
                 </Grid>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"

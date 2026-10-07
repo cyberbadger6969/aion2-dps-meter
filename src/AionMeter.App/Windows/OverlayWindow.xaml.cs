@@ -50,6 +50,7 @@ public partial class OverlayWindow : Window
         ApplyRowSize(_settings.RowSize);
         UpdateModeLabel();
         ApplyHotkeyTips();
+        LayoutUpdated += (_, _) => FitNames();
         _meter.Updates.Changed += ShowUpdateBanner;
         ShowUpdateBanner();
 
@@ -201,7 +202,44 @@ public partial class OverlayWindow : Window
         Resources["ColHeaderFont"] = Math.Max(9, Math.Round(11 * f, 1));
         Resources["ColRankWidth"] = new GridLength(Math.Round(30 * f));
         Resources["ColGlyphWidth"] = new GridLength(Math.Round(32 * f));
-        Resources["ColGap"] = new Thickness(Math.Round(12 * f), 0, 0, 0);
+        Resources["ColGap"] = new Thickness(Math.Round(10 * f), 0, 0, 0);
+        Resources["ColRuleWidth"] = new GridLength(Math.Round(12 * f));
+        Resources["RuleMargin"] = new Thickness(0, Math.Round(height * 0.2), 0, Math.Round(height * 0.2));
+    }
+
+    private const int NameColumn = 2, GsColumn = 3, CpColumn = 4, SpacerColumn = 5; // in the row and label grids
+    private const double MinNameWidth = 60;
+    private double _gearWidth; // GS + CP columns when last shown
+
+    /// <summary>
+    /// The name column is as wide as the longest name, which may take all the room the other columns leave but no more,
+    /// so the fight's numbers always show (a long name is cut instead). A little is kept back for the rows' scrollbar.
+    /// When even that leaves the names too little, the GS / CP columns step aside until the overlay is wide enough again.
+    /// </summary>
+    private void FitNames()
+    {
+        if (ColumnLabels.ActualWidth <= 0) return;
+        var columns = ColumnLabels.ColumnDefinitions;
+        double others = 0;
+        for (var i = 0; i < columns.Count; i++)
+            if (i is not (NameColumn or SpacerColumn)) others += columns[i].ActualWidth;
+        var room = ColumnLabels.ActualWidth - others - 16; // 4 name margin + 12 for the scrollbar
+
+        if (_vm.GearFits && _vm.HasGear && room < MinNameWidth)
+        {
+            _gearWidth = columns[GsColumn].ActualWidth + columns[CpColumn].ActualWidth;
+            _vm.GearFits = false;
+            Refresh();
+        }
+        else if (!_vm.GearFits && room - _gearWidth >= MinNameWidth + 20) // a margin, so it does not flip back and forth
+        {
+            _vm.GearFits = true;
+            Refresh();
+        }
+
+        var max = Math.Max(30, Math.Floor(room));
+        if (Resources["NameMaxWidth"] is double current && Math.Abs(current - max) < 1) return;
+        Resources["NameMaxWidth"] = max;
     }
 
     /// <summary>Ctrl + mouse wheel over the rows: row size in 5 % steps, kept right away.</summary>
