@@ -312,22 +312,20 @@ public partial class OverlayWindow : Window
         var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
         var open = new MenuItem { Header = UiText.Current.OpenBreakdown };
         open.Click += (_, _) => OpenBreakdown(row.ActorId);
-        var copyMe = new MenuItem { Header = string.Format(UiText.Current.CopyPlayer, row.Name) };
-        copyMe.Click += (_, _) => CopyChat(row.ActorId);
-        var copyAll = new MenuItem { Header = UiText.Current.CopyParty };
-        copyAll.Click += (_, _) => CopyChat(null);
         menu.Items.Add(open);
         menu.Items.Add(new Separator());
-        menu.Items.Add(copyMe);
-        menu.Items.Add(copyAll);
+        var player = row.ActorId == Combatant.UnknownSummonsId ? null : (uint?)row.ActorId;
+        foreach (var item in ChatCopy.Items(CardBody, ShownSummary, player, row.Name)) menu.Items.Add(item);
         menu.IsOpen = true;
         e.Handled = true;
     }
 
-    private void CopyChat(uint? actorId)
+    /// <summary>The toolbar's chat button: your result (when you took part), the party ranking or the Discord table.</summary>
+    private void Chat_Click(object sender, RoutedEventArgs e)
     {
-        if (ShownSummary() is not { } snap) return;
-        AppHost.CopyText(actorId is { } id ? ChatLine.Player(snap, id) : ChatLine.Party(snap));
+        if (ShownSummary() is null) return;
+        var self = _vm.Rows.FirstOrDefault(r => r.IsSelf);
+        ChatCopy.ShowMenu((FrameworkElement)sender, CardBody, ShownSummary, self?.ActorId, self?.Name);
     }
 
     private void Details_Click(object sender, RoutedEventArgs e)

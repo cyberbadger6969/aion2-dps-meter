@@ -75,6 +75,10 @@ public sealed class UiText
     public string CombatantLabel(uint actorId, string name, Core.Events.GameClass cls) =>
         actorId == Core.Combat.Combatant.UnknownSummonsId ? UnknownSummons : PlayerLabel(name, cls);
 
+    /// <summary>A fight's title as shown: a boss the meter never saw appear has nothing but its id.</summary>
+    public string FightTitle(Core.Combat.EncounterSnapshot s) =>
+        s.Boss is { NpcCode: 0 } b && s.Title == $"#{b.ActorId}" ? UnknownBoss : s.Title;
+
     public string UnknownSummons { get; init; } = "Summons (owner unknown)";
     public string UnknownSummonsTip { get; init; } =
         "Pets, spirits and skill effects (Bittercold Wind, Fire Wall …) whose caster could not be identified. Not a player: not counted in places or the player total.";
@@ -200,6 +204,12 @@ public sealed class UiText
     public string OpenBreakdown { get; init; } = "Open breakdown";
     public string CopyPlayer { get; init; } = "Copy {0}'s result to chat";
     public string CopyParty { get; init; } = "Copy party ranking to chat";
+    public string CopyTable { get; init; } = "Copy party table for Discord";
+    public string Copied { get; init; } = "Copied — paste it into the chat with Ctrl+V";
+    public string CopyFailed { get; init; } = "The clipboard is busy — try again";
+    public string TipChat { get; init; } = "Result to chat or Discord";
+    /// <summary>What a pasted result says, in this language (numbers keep their units in every language).</summary>
+    public Core.ChatWords Chat { get; init; } = Core.ChatWords.English;
     public string RowDamage { get; init; } = "Damage";
     public string RowHits { get; init; } = "Hits";
     public string RowCrit { get; init; } = "Crit";
@@ -244,7 +254,6 @@ public sealed class UiText
     public string RotationHint { get; init; } = "Every cast in order. Gold ring = critical hit · tile size follows damage · DoT ticks hidden.";
     public string You { get; init; } = "you";
     public string PartyDpsSuffix { get; init; } = "party";
-    public string TipCopyChat { get; init; } = "Copy result to chat (one line)";
     public string TipCopyImage { get; init; } = "Copy as image";
     public string TipMinimize { get; init; } = "Minimize";
     public string TipClose { get; init; } = "Close";
@@ -505,6 +514,26 @@ public sealed class UiText
         OpenBreakdown = "Открыть разбор",
         CopyPlayer = "Скопировать результат {0} в чат",
         CopyParty = "Скопировать рейтинг группы в чат",
+        CopyTable = "Скопировать таблицу группы для Discord",
+        Copied = "Скопировано — вставьте в чат: Ctrl+V",
+        CopyFailed = "Буфер обмена занят — попробуйте ещё раз",
+        TipChat = "Результат в чат или Discord",
+        Chat = new Core.ChatWords
+        {
+            Kill = "УБИТ",
+            Wipe = "ВАЙП",
+            BossLeft = "босс {0}",
+            Party = "группа {0}",
+            Place = "{0}-й из {1}",
+            Damage = "урон {0}",
+            Crit = "крит {0}",
+            TopHit = "макс. удар {0}",
+            More = "+ещё {0}",
+            ColPlayer = "Игрок",
+            ColDps = "DPS",
+            ColDamage = "Урон",
+            ColShare = "Доля",
+        },
         RowDamage = "Урон",
         RowHits = "Удары",
         RowCrit = "Крит",
@@ -548,7 +577,6 @@ public sealed class UiText
         RotationHint = "Все применения по порядку. Золотое кольцо — крит · размер плитки зависит от урона · тики DoT скрыты.",
         You = "вы",
         PartyDpsSuffix = "группа",
-        TipCopyChat = "Скопировать результат в чат (одной строкой)",
         TipCopyImage = "Скопировать картинкой",
         TipMinimize = "Свернуть",
         TipClose = "Закрыть",

@@ -51,7 +51,7 @@ driver — see [Installation](#installation).
   overlay or browse the history window.
 - **Field boss timers from the game** — open the field boss list on the in-game map once and the meter keeps every
   respawn counting down, per server, with a tray alert before a boss you watch returns.
-- **Share in chat** — right-click a player to copy a one-line result for the game chat.
+- **Share in chat** — the chat button on the overlay (or a right-click on a player) copies a one-line result for the game chat, with units, places and the boss result spelled out, or the ranking as a table for Discord.
 - **English and Russian** — interface and skill / NPC names in either language, switchable at any time.
 - **Updates itself** — new versions download in the background and install themselves when you are not playing.
 - **Passive** — reads only your own game's network traffic; never touches game memory or sends anything to the game.
@@ -108,10 +108,10 @@ supported) · Npcap · about 200 MB of disk space.
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | boss timers |
 | left-click a player | open the breakdown |
 | column header in the breakdown | sort the skills by it (skill, hits, damage, DPS, avg, max, crit, share, accuracy columns); click again to reverse |
-| right-click a player | copy the result for the game chat |
+| right-click a player, or 💬 on the toolbar | copy for chat: one player's result or the party ranking as one line for the game chat, or the ranking as a table for Discord; paste with <kbd>Ctrl</kbd>+<kbd>V</kbd> |
 | **BOSS / ALL** chip | count only the boss, or everything you hit |
 | **EN / RU** chip | interface and name language (English by default; also in Settings and the tray menu) |
-| fights button in the header | pick a fight: live, this session's, or saved ones by day |
+| *Fights* in the footer | pick a fight: live, this session's, or saved ones by day |
 | clock button / gold *Boss timers* pill | boss respawn timers |
 | mouse wheel over the fight title | scroll through fights (down = older, up = newer, top = live) |
 | <kbd>Ctrl</kbd> + mouse wheel over the rows | row size, 50–100 % (also *Settings → Overlay → Row size*) |

@@ -165,7 +165,7 @@ GitHub, сайт для него не нужен.
    open the history window.
 5. **Field boss timers** — Respawn timers come straight from the game: open the field boss list on the map once and the
    meter keeps counting, separately for each server, with a tray alert before a boss you watch comes back.
-6. **Share in chat** — Right-click a player to copy a one-line result for the game chat.
+6. **Share in chat** — One click copies your result or the party ranking as a single readable line for the game chat, or as a table for Discord.
 7. **English and Russian** — The interface and skill names in English or Russian; switch at any time.
 8. **Updates itself** — A new version is announced in the meter and installed in one click. *(from version 0.2.0)*
 
@@ -258,7 +258,7 @@ Third-party tools may be against the game's terms of service — use at your own
 4. **История боёв** — Бои с боссами сохраняются сами. Листайте прошлые бои прямо в оверлее или в окне истории.
 5. **Таймеры полевых боссов** — Таймеры берутся прямо из игры: откройте один раз список полевых боссов на карте, и метр
    продолжит отсчёт — отдельно для каждого сервера, с уведомлением перед возрождением отмеченного босса.
-6. **Результат в чат** — Правый клик по игроку копирует результат одной строкой для игрового чата.
+6. **Результат в чат** — Один щелчок копирует ваш результат или рейтинг группы понятной строкой для игрового чата или таблицей для Discord.
 7. **Английский и русский** — Интерфейс и названия умений на английском или русском, переключение в любой момент.
 8. **Обновляется сам** — Метр сообщает о новой версии и ставит её в один клик. *(с версии 0.2.0)*
 

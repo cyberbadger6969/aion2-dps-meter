@@ -13,21 +13,22 @@ public static class AppHost
 {
     public static App Current => (App)Application.Current;
 
-    /// <summary>Clipboard writes fail while another process holds the clipboard; retry briefly.</summary>
-    public static void CopyText(string text)
+    /// <summary>Clipboard writes fail while another process holds the clipboard; retry briefly. False if it never let go.</summary>
+    public static bool CopyText(string text)
     {
         for (var attempt = 0; attempt < 5; attempt++)
         {
             try
             {
                 Clipboard.SetText(text);
-                return;
+                return true;
             }
             catch (System.Runtime.InteropServices.COMException)
             {
                 Thread.Sleep(30);
             }
         }
+        return false;
     }
 }
 

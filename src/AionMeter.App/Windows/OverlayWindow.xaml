@@ -261,7 +261,7 @@
         </Border>
         <Border Height="2" VerticalAlignment="Top" Margin="70,0" Background="{StaticResource GoldTopLine}" IsHitTestVisible="False" />
 
-        <Grid Margin="20,14,20,10">
+        <Grid x:Name="CardBody" Margin="20,14,20,10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -298,7 +298,7 @@
                             ToolTip="Boss only / everything you hit" />
                     <Button Style="{StaticResource Chip}" Content="{Binding LanguageCode}" Click="Language_Click" Margin="0,0,6,0"
                             ToolTip="{Binding T.SwitchLanguage}" />
-                    <Button Style="{StaticResource IconButton}" Content="&#xE81C;" Click="Segments_Click" ToolTip="Fight segments" />
+                    <Button Style="{StaticResource IconButton}" Content="&#xE8BD;" Click="Chat_Click" ToolTip="{Binding T.TipChat}" />
                     <Button Style="{StaticResource IconButton}" Content="&#xE121;" Click="Timers_Click" ToolTip="{Binding T.TipTimers}" />
                     <Button x:Name="RestartButton" Style="{StaticResource IconButton}" Content="&#xE72C;" Click="Restart_Click" />
                     <ToggleButton x:Name="LockButton" Style="{StaticResource IconToggle}" Click="Lock_Click" ToolTip="Lock position">

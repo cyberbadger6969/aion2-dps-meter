@@ -268,8 +268,7 @@ public sealed class OverlayViewModel : ObservableObject
         SegmentId = snap.Id;
         HasData = true;
         IsActive = snap.IsActive;
-        // A boss the meter never saw appear has no name, only its id.
-        Title = snap.Boss is { NpcCode: 0 } nameless && snap.Title == $"#{nameless.ActorId}" ? T.UnknownBoss : snap.Title;
+        Title = T.FightTitle(snap);
         // Running: wall clock since the pull. Finished: the fight's real length (first to last hit).
         Clock = Format.ClockShort(snap.IsActive ? snap.ClockMs : snap.CombatMs);
         PartyDps = Format.Compact(snap.PartyDps) + "/s";

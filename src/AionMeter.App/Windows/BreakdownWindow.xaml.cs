@@ -308,9 +308,12 @@ public partial class BreakdownWindow : Window
         }
     }
 
+    /// <summary>The selected player's result or the party ranking for the game chat, or the ranking as a Discord table.</summary>
     private void CopyChat_Click(object sender, RoutedEventArgs e)
     {
-        if (_view.Summary() is { } s) AppHost.CopyText(ChatLine.Player(s, _actor));
+        var button = (FrameworkElement)sender;
+        var player = _actor == Combatant.UnknownSummonsId ? null : (uint?)_actor;
+        ChatCopy.ShowMenu(button, button, _view.Summary, player, PlayerName.Text);
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
