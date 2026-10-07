@@ -24,6 +24,9 @@ public sealed record ChatWords
     public string ColDps { get; init; } = "DPS";
     public string ColDamage { get; init; } = "Damage";
     public string ColShare { get; init; } = "Share";
+    /// <summary>Gear score and combat power after a name: "(GS 2859 / CP 59.07K)".</summary>
+    public string GearScore { get; init; } = "GS";
+    public string CombatPower { get; init; } = "CP";
 }
 
 /// <summary>
@@ -34,7 +37,10 @@ public static class ChatLine
 {
     public const int MaxLength = 180;
 
-    /// <summary><c>Balhash 2:41 KILL | Sylvaen #3 of 5: 5.05K/s, 813.2K dmg (20%), crit 15%, top hit 34.52K | party 24.79K/s</c></summary>
+    /// <summary>
+    /// <c>Balhash 2:41 KILL | Talwyn (GS 2859 / CP 59.07K) #3 of 5: 5.05K/s, 813.2K dmg (20%), crit 15%, top hit 34.52K |
+    /// party 24.79K/s</c> — gear score and combat power when the party roster gave them.
+    /// </summary>
     /// <param name="name">How a player is called (e.g. "Templar #10388" for one whose name the server never sent).</param>
     public static string Player(EncounterSnapshot s, uint actorId, ChatWords? words = null, Func<CombatantSnapshot, string>? name = null)
     {
@@ -51,20 +57,27 @@ public static class ChatLine
         if (c.Hits > 0) stats.Add(string.Format(w.Crit, Pct(c.CritRate)));
         if (c.MaxHit > 0) stats.Add(string.Format(w.TopHit, Format.Compact(c.MaxHit)));
         var place = string.Format(w.Place, players.IndexOf(c) + 1, players.Count);
-        return Trim($"{Header(s, w)} | {name(c)} {place}: {string.Join(", ", stats)} | {PartyDps(s, w)}");
+        return Trim($"{Header(s, w)} | {name(c)}{Gear(c, w)} {place}: {string.Join(", ", stats)} | {PartyDps(s, w)}");
     }
 
     /// <summary>
-    /// <c>Balhash 2:41 KILL | 1.Sylvaen 10.18K/s 41% | 2.Borgrim 7.09K/s 29% | … | party 24.79K/s</c> — as many players as
-    /// fit in one message, then "+3 more".
+    /// <c>Balhash 2:41 KILL | 1.Sylvaen 10.18K/s 41% | 2.Borgrim 7.09K/s 29% | … | party 24.79K/s</c> — gear score and
+    /// combat power after the names when the whole party fits in one message with them; otherwise as many players as fit,
+    /// then "+3 more".
     /// </summary>
     public static string Party(EncounterSnapshot s, ChatWords? words = null, Func<CombatantSnapshot, string>? name = null)
     {
         var w = words ?? ChatWords.English;
         name ??= c => c.Name;
-        var parts = Players(s).Select((c, i) => $" | {i + 1}.{name(c)} {Format.Compact(c.Dps)}/s {Pct(c.Share)}").ToList();
+        var players = Players(s);
         var head = Header(s, w);
         var tail = " | " + PartyDps(s, w);
+
+        var geared = string.Concat(players.Select((c, i) => Part(c, i, Gear(c, w))));
+        if (geared.Length > 0 && head.Length + geared.Length + tail.Length <= MaxLength && players.Any(c => Gear(c, w).Length > 0))
+            return head + geared + tail;
+
+        var parts = players.Select((c, i) => Part(c, i, "")).ToList();
         for (var shown = parts.Count; shown >= 0; shown--)
         {
             var more = shown < parts.Count ? " | " + string.Format(w.More, parts.Count - shown) : "";
@@ -72,6 +85,18 @@ public static class ChatLine
             if (line.Length <= MaxLength || shown == 0) return Trim(line);
         }
         return Trim(head + tail);
+
+        string Part(CombatantSnapshot c, int i, string gear) => $" | {i + 1}.{name(c)}{gear} {Format.Compact(c.Dps)}/s {Pct(c.Share)}";
+    }
+
+    /// <summary>" (GS 2859 / CP 59.07K)", or as much of it as is known; empty when neither is.</summary>
+    public static string Gear(CombatantSnapshot c, ChatWords? words = null)
+    {
+        var w = words ?? ChatWords.English;
+        var parts = new List<string>(2);
+        if (c.GearScore > 0) parts.Add($"{w.GearScore} {c.GearScore}");
+        if (c.CombatPower > 0) parts.Add($"{w.CombatPower} {Format.Compact(c.CombatPower)}");
+        return parts.Count == 0 ? "" : $" ({string.Join(" / ", parts)})";
     }
 
     /// <summary>
@@ -82,13 +107,21 @@ public static class ChatLine
     {
         var w = words ?? ChatWords.English;
         name ??= c => c.Name;
-        var rows = Players(s)
-            .Select((c, i) => new[]
+        var players = Players(s);
+        // Gear score and combat power columns only when the party roster gave them for someone.
+        var gear = players.Any(c => c.GearScore > 0 || c.CombatPower > 0);
+        var rows = players
+            .Select((c, i) =>
             {
-                (i + 1).ToString(), Cut(name(c), 20), Format.Compact(c.Dps) + "/s", Format.Compact(c.Damage), Format.Share(c.Share),
+                string[] row = [(i + 1).ToString(), Cut(name(c), 20), Format.Compact(c.Dps) + "/s", Format.Compact(c.Damage), Format.Share(c.Share)];
+                return gear
+                    ? [.. row, c.GearScore > 0 ? c.GearScore.ToString() : "-", c.CombatPower > 0 ? Format.Compact(c.CombatPower) : "-"]
+                    : row;
             })
             .ToList();
-        string[] head = ["#", w.ColPlayer, w.ColDps, w.ColDamage, w.ColShare];
+        string[] head = gear
+            ? ["#", w.ColPlayer, w.ColDps, w.ColDamage, w.ColShare, w.GearScore, w.CombatPower]
+            : ["#", w.ColPlayer, w.ColDps, w.ColDamage, w.ColShare];
         var widths = Enumerable.Range(0, head.Length).Select(col => rows.Append(head).Max(r => r[col].Length)).ToArray();
 
         var sb = new StringBuilder();

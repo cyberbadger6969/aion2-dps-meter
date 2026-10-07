@@ -54,7 +54,20 @@ public sealed record DamageEvent(
 public sealed record HealEvent(long TimeMs, uint SourceId, uint TargetId, int SkillCode, long Amount, HitFlags Flags) : GameEvent(TimeMs);
 
 /// <summary>The local player's own character.</summary>
-public sealed record SelfIdentifiedEvent(long TimeMs, uint ActorId, string Name, int ServerId, GameClass Class, int Level = 0) : GameEvent(TimeMs);
+/// <param name="CombatPower">The character's combat power (CP) as the game shows it; 0 when the record did not carry it.</param>
+public sealed record SelfIdentifiedEvent(long TimeMs, uint ActorId, string Name, int ServerId, GameClass Class, int Level = 0,
+    long CombatPower = 0) : GameEvent(TimeMs);
+
+/// <summary>One member of the party roster: the only place the server gives other players' gear score and combat power.</summary>
+/// <param name="GearScore">Equipment item level ("GS"); 0 when it did not read.</param>
+/// <param name="CombatPower">Combat power ("CP"), as on the character sheet.</param>
+public sealed record PartyMemberInfo(string Name, int ServerId, int Level, int GearScore, long CombatPower, GameClass Class);
+
+/// <summary>
+/// The party roster (<c>02 97</c>), sent whenever the party changes. Members are named, not identified by entity id:
+/// the meter joins them to the players it sees by name.
+/// </summary>
+public sealed record PartyRosterEvent(long TimeMs, IReadOnlyList<PartyMemberInfo> Members) : GameEvent(TimeMs);
 
 public sealed record PlayerSeenEvent(long TimeMs, uint ActorId, string Name, int ServerId, GameClass Class) : GameEvent(TimeMs);
 

@@ -88,8 +88,13 @@ public sealed class CombatTracker
                     break;
                 case SelfIdentifiedEvent s:
                     _entities.SetSelf(s.ActorId, s.Name, s.ServerId, s.Class);
+                    _entities.SetGear(s.Name, 0, s.CombatPower);
                     LinkSummonsCastBy(s.ActorId, s.Name);
                     selfName = s.Name;
+                    break;
+                case PartyRosterEvent roster:
+                    foreach (var m in roster.Members) _entities.SetGear(m.Name, m.GearScore, m.CombatPower);
+                    _pendingRosters.Add(roster);
                     break;
                 case PlayerSeenEvent p:
                     _entities.UpsertPlayer(p.ActorId, p.Name, p.ServerId, p.Class);
@@ -434,6 +439,10 @@ public sealed class CombatTracker
 
     private readonly List<BossNotice> _pendingNotices = new();
     private readonly List<FieldBossListEvent> _pendingLists = new();
+    private readonly List<PartyRosterEvent> _pendingRosters = new();
+
+    /// <summary>A party roster arrived (gear score and combat power of the party). Raised outside the lock.</summary>
+    public event Action<PartyRosterEvent>? RosterReceived;
 
     /// <summary>The in-game map's field boss list arrived (respawn times from the server). Raised outside the lock.</summary>
     public event Action<FieldBossListEvent>? FieldBossListed;
@@ -495,6 +504,8 @@ public sealed class CombatTracker
             if (!string.IsNullOrEmpty(p.Name)) c.Name = p.Name;
             if (p.Class != GameClass.Unknown) c.Class = p.Class;
             c.ServerId = p.ServerId;
+            if (p.GearScore > 0) c.GearScore = p.GearScore;
+            if (p.CombatPower > 0) c.CombatPower = p.CombatPower;
         }
         c.IsSelf = _entities.SelfId == c.ActorId;
         if (string.IsNullOrEmpty(c.Name)) c.Name = $"#{c.ActorId}";
@@ -527,8 +538,14 @@ public sealed class CombatTracker
         List<FightRecord>? records = null;
         List<BossNotice>? notices = null;
         List<FieldBossListEvent>? lists = null;
+        List<PartyRosterEvent>? rosters = null;
         lock (_gate)
         {
+            if (_pendingRosters.Count > 0)
+            {
+                rosters = new List<PartyRosterEvent>(_pendingRosters);
+                _pendingRosters.Clear();
+            }
             if (_pendingNotices.Count > 0)
             {
                 notices = new List<BossNotice>(_pendingNotices);
@@ -554,6 +571,8 @@ public sealed class CombatTracker
             foreach (var n in notices) notify(n);
         if (lists is not null && FieldBossListed is { } listed)
             foreach (var l in lists) listed(l);
+        if (rosters is not null && RosterReceived is { } received)
+            foreach (var r in rosters) received(r);
         if (records is not null && EncounterFinished is { } handler)
             foreach (var r in records) handler(r);
     }
@@ -664,7 +683,7 @@ public sealed class CombatTracker
                 c.ActorId, c.Name, c.Class, c.IsSelf,
                 t.Damage, t.Damage / seconds, (double)t.Damage / total,
                 t.Hits, t.Hits > 0 ? (double)t.Crits / t.Hits : 0,
-                t.Max, c.DamageTaken, c.ServerId));
+                t.Max, c.DamageTaken, c.ServerId, c.GearScore, c.CombatPower));
         }
         rows.Sort((a, b) => b.Damage.CompareTo(a.Damage));
         // Pets without a known owner are not a player: list them last so they never take a place in the ranking.
@@ -721,7 +740,7 @@ public sealed class CombatTracker
         var casts = c.Casts.Count <= maxCasts ? c.Casts.ToArray() : c.Casts.GetRange(0, maxCasts).ToArray();
         return new CombatantDetail(
             c.ActorId, c.Name, c.Class, c.IsSelf, t.Damage, t.Damage / seconds, (double)t.Damage / Math.Max(1, enc.TotalDamage),
-            enc.CombatMs, c.DamageTaken, c.HitsTaken, quality, skills, c.PerSecond.ToArray(), casts, c.ServerId);
+            enc.CombatMs, c.DamageTaken, c.HitsTaken, quality, skills, c.PerSecond.ToArray(), casts, c.ServerId, c.GearScore, c.CombatPower);
     }
 
     private FightRecord BuildRecord(Encounter enc)

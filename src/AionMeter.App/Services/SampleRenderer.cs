@@ -209,6 +209,10 @@ public static class SampleRenderer
             var rnd = new Random(2305);
             _events.Add(new SelfIdentifiedEvent(start, 2, "Sylvaen", 2305, GameClass.Elementalist));
             foreach (var m in Party.Where(m => m.Id != 2)) _events.Add(new PlayerSeenEvent(start, m.Id, m.Name, 2305, m.Class));
+            // Your party's gear score and combat power come with the roster; the others (not in your party) have none.
+            _events.Add(new PartyRosterEvent(start, Party.Take(6)
+                .Select(m => new PartyMemberInfo(m.Name, 2305, 45, 2700 + (int)m.Id * 61 % 400, 45_000 + (int)m.Id * 2_731 % 17_000, m.Class))
+                .ToList()));
             _events.Add(new NpcSeenEvent(start, Boss, SampleBossCode, BossHp));
 
             var hits = new List<DamageEvent>();

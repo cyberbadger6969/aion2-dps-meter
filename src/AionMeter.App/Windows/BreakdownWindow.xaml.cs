@@ -152,7 +152,9 @@ public partial class BreakdownWindow : Window
         HeaderGlyph.Class = d.Class;
         PlayerName.Text = T.CombatantLabel(d.ActorId, d.Name, d.Class);
         var server = d.ServerId != 0 ? $" · {_serverName(d.ServerId)} {GameData.RegionOf(d.ServerId)}".TrimEnd() : "";
-        PlayerMeta.Text = $"{T.ClassName(d.Class)}{server} · {summary.Title}" + (d.IsSelf ? $" · {T.You}" : "");
+        var gear = (d.GearScore > 0 ? $" · {T.Chat.GearScore} {d.GearScore}" : "") +
+                   (d.CombatPower > 0 ? $" · {T.Chat.CombatPower} {Format.Grouped(d.CombatPower)}" : "");
+        PlayerMeta.Text = $"{T.ClassName(d.Class)}{server}{gear} · {summary.Title}" + (d.IsSelf ? $" · {T.You}" : "");
         var place = d.ActorId == Combatant.UnknownSummonsId ? 0 : summary.Combatants.ToList().FindIndex(c => c.ActorId == d.ActorId) + 1;
         StatPlace.Text = place > 0 ? $"{place} / {summary.PlayerCount}" : "—";
         var (placeBg, placeFg, placeBorder) = RankBrushes.For(place);

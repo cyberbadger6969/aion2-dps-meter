@@ -52,6 +52,7 @@ driver — see [Installation](#installation).
 - **Field boss timers from the game** — open the field boss list on the in-game map once and the meter keeps every
   respawn counting down, per server, with a tray alert before a boss you watch returns.
 - **Share in chat** — the chat button on the overlay (or a right-click on a player) copies a one-line result for the game chat, with units, places and the boss result spelled out, or the ranking as a table for Discord.
+- **Gear score and combat power** — `(GS 2859 / CP 59.07K)` with the names of your party members and yours, in the overlay, the breakdown and the chat lines (the party roster is the only place the game sends them; *Settings → Overlay* turns them off).
 - **English and Russian** — interface and skill / NPC names in either language, switchable at any time.
 - **Updates itself** — new versions download in the background and install themselves when you are not playing.
 - **Passive** — reads only your own game's network traffic; never touches game memory or sends anything to the game.

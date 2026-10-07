@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Text;
 using AionMeter.Core.Events;
 using AionMeter.Core.Game;
@@ -58,8 +59,11 @@ public sealed class PacketParser
                 ParseDot(body);
                 break;
             case Opcodes.SelfInfo:
-                ParseIdentity(body, 0, isSelf: true);
+                ParseIdentity(body, 0, isSelf: true, SelfCombatPower(body));
                 ScanEmbeddedBundles(body);
+                break;
+            case Opcodes.PartyRoster:
+                ParsePartyRoster(body);
                 break;
             case Opcodes.PlayerInfo:
             case Opcodes.PlayerInfoOld:
@@ -93,6 +97,7 @@ public sealed class PacketParser
                 if (body.Length >= 16)
                 {
                     ScanForIdentities(body);
+                    ScanForRoster(body);
                     ScanEmbeddedBundles(body);
                 }
                 break;
@@ -119,6 +124,7 @@ public sealed class PacketParser
                     if (decoded <= 0) continue;
                     EmbeddedBundles++;
                     ScanForIdentities(target.AsSpan(0, decoded));
+                    ScanForRoster(target.AsSpan(0, decoded));
                 }
                 finally
                 {
@@ -450,7 +456,7 @@ public sealed class PacketParser
     /// <code>id varint, mask1 u32, mask2 u8, [mask2 &amp; 1] len u8 + utf8 name, server u16, class u32, u8, level u32</code>
     /// The tail after the name is only trusted when server and class both validate.
     /// </summary>
-    private bool ParseIdentity(ReadOnlySpan<byte> b, int o, bool isSelf)
+    private bool ParseIdentity(ReadOnlySpan<byte> b, int o, bool isSelf, long combatPower = 0)
     {
         if (!Wire.TryVarint(b, ref o, out var id) || !IsEntityId(id)) return false;
         o += 4; // mask1
@@ -490,9 +496,114 @@ public sealed class PacketParser
         }
 
         Emit(isSelf
-            ? new SelfIdentifiedEvent(TimeMs, id, name, server, cls, level)
+            ? new SelfIdentifiedEvent(TimeMs, id, name, server, cls, level, combatPower)
             : new PlayerSeenEvent(TimeMs, id, name, server, cls));
         return true;
+    }
+
+    /// <summary>
+    /// The own-character record (a whole <c>33 36</c> packet) ends with the combat power twice — current, then highest —
+    /// as u64s, 48 bytes before the end on Global (the user's captures: 47,796 on 2026-10-05, 59,072 the next night).
+    /// The pair is looked for back from the end, as the tail's length may change. 0 when there is none.
+    /// </summary>
+    internal static long SelfCombatPower(ReadOnlySpan<byte> b)
+    {
+        for (var o = b.Length - 16; o >= Math.Max(0, b.Length - 16 - 255); o--)
+        {
+            var current = BinaryPrimitives.ReadUInt64LittleEndian(b[o..]);
+            var highest = BinaryPrimitives.ReadUInt64LittleEndian(b[(o + 8)..]);
+            if (current is >= MinCombatPower and <= MaxCombatPower && highest is >= MinCombatPower and <= MaxCombatPower &&
+                current <= highest)
+                return (long)current;
+        }
+        return 0;
+    }
+
+    private const ulong MinCombatPower = 1_000, MaxCombatPower = 10_000_000;
+
+    // ------------------------------------------------------------------ party roster (02 97)
+
+    /// <summary>
+    /// <code>party key u32, party name (u8 len + utf8), size u8, dungeon u32, 2 bytes, leader dbid u64, 3 bytes,
+    /// member count varint, then per member: mask u8, slot u8, dbid u64 (its top u16 is the server), nickname (u8 len +
+    /// utf8; empty = a vacant slot, and so are the rest), class u32, level u32, gear score u32, a few flags, the server
+    /// id again (u16), another u16, one byte, combat power u64, then a tail of varying length.</code>
+    /// Layout as documented by A2Tools-DPS-Meter (GPL-3.0). The flags before the combat power vary in width, so it is
+    /// found past the member's server id; the next member is found by its header (the next slot, a plausible server in
+    /// the dbid, a readable name). Some builds put one more u32 before the gear score (when mask bit 1 is set): a gear
+    /// score that reads too small is then taken from the next u32.
+    /// </summary>
+    private bool ParsePartyRoster(ReadOnlySpan<byte> b)
+    {
+        var o = 4; // party key
+        if (o >= b.Length) return false;
+        int partyNameLength = b[o++];
+        if (partyNameLength > 64 || o + partyNameLength + 18 > b.Length || !IsText(b.Slice(o, partyNameLength))) return false;
+        o += partyNameLength;
+        if (b[o] is < 1 or > 12) return false; // party size
+        o += 1 + 4 + 2 + 8 + 3;                // size, dungeon, 2 bytes, leader dbid, 3 bytes
+        if (!Wire.TryVarint(b, ref o, out var count) || count is < 1 or > 12) return false;
+
+        var members = new List<PartyMemberInfo>();
+        for (var i = 0; i < count && o + 11 <= b.Length; i++)
+        {
+            var mask = b[o];
+            var slot = b[o + 1];
+            var server = Wire.U16(b, o + 8);
+            int nameLength = b[o + 10];
+            if (nameLength == 0) break; // vacant slot: the rest are vacant too
+            if (server is 0 or > 9_999 || nameLength > 40 || o + 11 + nameLength + 12 > b.Length ||
+                !Wire.TryName(b.Slice(o + 11, nameLength), out var name)) break;
+            o += 11 + nameLength;
+            var cls = GameData.ClassFromWire(Wire.U32(b, o));
+            var level = Wire.U32(b, o + 4);
+            var gear = Wire.U32(b, o + 8);
+            o += 12;
+            if (level is < 1 or > 200) break;
+            if ((mask & 0x01) != 0 && gear < 100 && o + 4 <= b.Length && Wire.U32(b, o) is var next and >= 100 and <= 50_000)
+            {
+                gear = next;
+                o += 4;
+            }
+
+            var anchor = -1;
+            for (var at = o; at <= Math.Min(o + 10, b.Length - 2); at++)
+                if (Wire.U16(b, at) == server) { anchor = at; break; }
+            if (anchor < 0 || anchor + 5 + 8 > b.Length) break;
+            var power = BinaryPrimitives.ReadUInt64LittleEndian(b[(anchor + 5)..]);
+            if (power > MaxCombatPower) break;
+            o = anchor + 5 + 8;
+            members.Add(new PartyMemberInfo(name, server, (int)level, gear is >= 1 and <= 50_000 ? (int)gear : 0, (long)power, cls));
+
+            if (i + 1 == count) break;
+            var nextMember = FindRosterMember(b, o, (byte)(slot + 1));
+            if (nextMember < 0) break;
+            o = nextMember;
+        }
+        if (members.Count == 0) return false;
+        Emit(new PartyRosterEvent(TimeMs, members));
+        return true;
+    }
+
+    /// <summary>Rosters also ride inside other packets and in the bundles embedded in them, like identity records.</summary>
+    private void ScanForRoster(ReadOnlySpan<byte> b)
+    {
+        for (var i = 0; i + 40 < b.Length; i++)
+            if (b[i] == 0x02 && b[i + 1] == 0x97 && ParsePartyRoster(b[(i + 2)..])) return;
+    }
+
+    /// <summary>The start of the roster record for <paramref name="slot"/>, by its header shape, within 32 bytes.</summary>
+    private static int FindRosterMember(ReadOnlySpan<byte> b, int from, byte slot)
+    {
+        for (var i = from; i <= Math.Min(from + 32, b.Length - 12); i++)
+        {
+            if (b[i + 1] != slot) continue;
+            var server = Wire.U16(b, i + 8);
+            int nameLength = b[i + 10];
+            if (server is 0 or > 9_999 || nameLength is 0 or > 40 || i + 11 + nameLength > b.Length) continue;
+            if (Wire.TryName(b.Slice(i + 11, nameLength), out _)) return i;
+        }
+        return -1;
     }
 
     private void ScanForIdentities(ReadOnlySpan<byte> b)

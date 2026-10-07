@@ -73,6 +73,9 @@ public sealed class Combatant
     public GameClass Class { get; set; }
     public bool IsSelf { get; set; }
     public int ServerId { get; set; }
+    /// <summary>Gear score ("GS") and combat power ("CP") when the party roster or the own record gave them; 0 = not known.</summary>
+    public int GearScore { get; set; }
+    public long CombatPower { get; set; }
 
     public HitStats Total { get; } = new();
     public Dictionary<int, SkillStats> Skills { get; } = new();

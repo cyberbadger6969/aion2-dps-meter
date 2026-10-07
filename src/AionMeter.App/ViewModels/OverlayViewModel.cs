@@ -20,9 +20,24 @@ public sealed class RowViewModel : ObservableObject
     private double _fill;
     private int _rank;
     private string _tooltip = "";
+    private string _gearInline = "";
+    private string _gearBelow = "";
 
     public uint ActorId { get => _actorId; set => Set(ref _actorId, value); }
     public string Name { get => _name; set => Set(ref _name, value); }
+    /// <summary>" (GS 2859 / CP 59.07K)" right after the name (small rows); empty otherwise.</summary>
+    public string GearInline { get => _gearInline; set => Set(ref _gearInline, value); }
+    /// <summary>"(GS 2859 / CP 59.07K)" on a line of its own under the name (rows tall enough); empty otherwise.</summary>
+    public string GearBelow
+    {
+        get => _gearBelow;
+        set
+        {
+            if (Set(ref _gearBelow, value)) Raise(nameof(HasGearBelow));
+        }
+    }
+
+    public bool HasGearBelow => _gearBelow.Length > 0;
     public string Dps { get => _dps; set => Set(ref _dps, value); }
     public string Damage { get => _damage; set => Set(ref _damage, value); }
     public string Share { get => _share; set => Set(ref _share, value); }
@@ -245,6 +260,12 @@ public sealed class OverlayViewModel : ObservableObject
     public Guid? SegmentId { get; private set; }
     public string Version { get; } = "v" + (typeof(OverlayViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.1.0");
 
+    /// <summary>Gear score and combat power after the names (Settings → Overlay).</summary>
+    public bool ShowGear { get; set; } = true;
+
+    /// <summary>Rows tall enough for a second line: gear score and combat power go under the name instead of after it.</summary>
+    public bool GearBelow { get; set; } = true;
+
     public void Apply(EncounterSnapshot? snap, int maxRows, bool relativeToTop)
     {
         if (snap is null)
@@ -331,6 +352,9 @@ public sealed class OverlayViewModel : ObservableObject
             row.ActorId = cb.ActorId;
             row.Rank = cb.IsUnknownSummons ? 0 : i + 1;
             row.Name = T.CombatantLabel(cb.ActorId, cb.Name, cb.Class);
+            var gear = ShowGear ? ChatLine.Gear(cb, T.Chat).Trim() : "";
+            row.GearBelow = GearBelow ? gear : "";
+            row.GearInline = GearBelow || gear.Length == 0 ? "" : " " + gear;
             row.Class = cb.Class;
             row.IsSelf = cb.IsSelf;
             row.Dps = Format.Compact(cb.Dps) + "/s";

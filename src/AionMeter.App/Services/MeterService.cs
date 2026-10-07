@@ -39,6 +39,14 @@ public sealed class MeterService : IDisposable
             Log.FieldBossList(list);
             Timers.OnList(list);
         };
+        // Ranges only, no names: enough to see in a user's log whether the roster still reads right.
+        Tracker.RosterReceived += roster =>
+        {
+            if (_replaying) return;
+            var gear = roster.Members.Where(m => m.GearScore > 0).Select(m => m.GearScore).DefaultIfEmpty().ToList();
+            var power = roster.Members.Where(m => m.CombatPower > 0).Select(m => m.CombatPower).DefaultIfEmpty().ToList();
+            Log.Info($"Party roster: {roster.Members.Count} members, GS {gear.Min()}-{gear.Max()}, CP {power.Min()}-{power.Max()}");
+        };
 
         // Names and bosses learned before a restart (same zone, recent) come back immediately: no "#id" players, and a boss
         // already in view keeps its name and real max HP.

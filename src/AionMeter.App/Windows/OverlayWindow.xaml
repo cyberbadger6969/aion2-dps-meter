@@ -28,6 +28,8 @@
         <Thickness x:Key="RowMargin">0,0,0,6</Thickness>
         <sys:Double x:Key="RowGlossHeight">19</sys:Double>
         <sys:Double x:Key="RowNameFont">16.5</sys:Double>
+        <sys:Double x:Key="RowGearFont">12.5</sys:Double>
+        <sys:Double x:Key="RowGearBelowFont">11</sys:Double>
         <sys:Double x:Key="RowNumberFont">16</sys:Double>
         <sys:Double x:Key="RowGlyphSize">30</sys:Double>
         <sys:Double x:Key="RowRankSize">24</sys:Double>
@@ -222,8 +224,17 @@
                     <c:ClassGlyph Grid.Column="1" Class="{Binding Class}" OnBar="True" Width="{DynamicResource RowGlyphSize}"
                                   Height="{DynamicResource RowGlyphSize}" HorizontalAlignment="Left" />
 
-                    <TextBlock x:Name="NameText" Grid.Column="2" Text="{Binding Name}" FontSize="{DynamicResource RowNameFont}" FontWeight="Bold"
-                               Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,8,1" />
+                    <!-- Name; "(GS 2859 / CP 59.07K)" smaller and dimmer under it, or right after it in small rows
+                         (where a narrow row trims the gear first) -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="4,0,8,1">
+                        <TextBlock FontSize="{DynamicResource RowNameFont}" Foreground="White" TextTrimming="CharacterEllipsis"><Run
+                                   x:Name="NameRun" Text="{Binding Name, Mode=OneWay}" FontWeight="Bold" /><Run
+                                   Text="{Binding GearInline, Mode=OneWay}" FontSize="{DynamicResource RowGearFont}" FontWeight="SemiBold"
+                                   Foreground="#C9D0DC" /></TextBlock>
+                        <TextBlock Text="{Binding GearBelow}" FontSize="{DynamicResource RowGearBelowFont}" FontWeight="SemiBold"
+                                   Foreground="#C9D0DC" TextTrimming="CharacterEllipsis" Margin="0,-3,0,0"
+                                   Visibility="{Binding HasGearBelow, Converter={StaticResource VisibleIf}}" />
+                    </StackPanel>
 
                     <TextBlock Grid.Column="3" Text="{Binding Dps}" Style="{StaticResource RowNumber}" />
                     <TextBlock Grid.Column="4" Text="{Binding Damage}" Style="{StaticResource RowNumber}" />
@@ -235,7 +246,7 @@
                     <Setter TargetName="Hover" Property="BorderBrush" Value="#66FFFFFF" />
                 </Trigger>
                 <DataTrigger Binding="{Binding IsSelf}" Value="True">
-                    <Setter TargetName="NameText" Property="TextDecorations" Value="{StaticResource SelfUnderline}" />
+                    <Setter TargetName="NameRun" Property="TextDecorations" Value="{StaticResource SelfUnderline}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>

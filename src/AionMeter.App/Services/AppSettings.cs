@@ -53,6 +53,8 @@ public sealed class AppSettings
     public const int MinRowSize = 50, MaxRowSize = 100;
     /// <summary>Overlay row size in percent of the original (Settings → Overlay, or Ctrl + wheel over the rows).</summary>
     public int RowSize { get; set; } = 100;
+    /// <summary>Gear score and combat power after the names in the overlay (when the party roster gave them).</summary>
+    public bool ShowGear { get; set; } = true;
     public bool ShowBossPanel { get; set; } = true;
     public int IdleTimeoutSec { get; set; } = 10;
     public int BossIdleTimeoutSec { get; set; } = 30;

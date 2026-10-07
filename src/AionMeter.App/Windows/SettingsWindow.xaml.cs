@@ -28,6 +28,7 @@ public partial class SettingsWindow : Window
         var s = _meter.Settings;
         BarsRelative.IsChecked = s.BarsRelativeToTop;
         ShowBoss.IsChecked = s.ShowBossPanel;
+        ShowGear.IsChecked = s.ShowGear;
         AutoShow.IsChecked = s.AutoShow;
         AutoHideSeconds.Text = s.AutoHideSeconds.ToString();
         ShowOnStart.IsChecked = s.ShowOnStart;
@@ -83,6 +84,7 @@ public partial class SettingsWindow : Window
 
         s.BarsRelativeToTop = BarsRelative.IsChecked == true;
         s.ShowBossPanel = ShowBoss.IsChecked == true;
+        s.ShowGear = ShowGear.IsChecked == true;
         s.AutoShow = AutoShow.IsChecked == true;
         if (int.TryParse(AutoHideSeconds.Text, out var autoHide)) s.AutoHideSeconds = Math.Clamp(autoHide, 0, 3600);
         s.ShowOnStart = ShowOnStart.IsChecked == true;
