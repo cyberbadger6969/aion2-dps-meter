@@ -10,6 +10,9 @@ public static class Log
 
     public static string Directory => Path.GetDirectoryName(FilePath)!;
 
+    /// <summary>Off for the render tool: its sample fight must not end up in the log of the meter the player runs.</summary>
+    public static bool Enabled { get; set; } = true;
+
     public static void Info(string message) => Write("INFO", message);
 
     public static void Error(string message, Exception? ex = null) =>
@@ -23,6 +26,7 @@ public static class Log
     /// </summary>
     public static void FieldBossList(Core.Events.FieldBossListEvent list)
     {
+        if (!Enabled) return;
         var hex = Convert.ToHexString(list.Raw);
         try
         {
@@ -43,6 +47,7 @@ public static class Log
 
     private static void Write(string level, string message)
     {
+        if (!Enabled) return;
         try
         {
             lock (Gate)

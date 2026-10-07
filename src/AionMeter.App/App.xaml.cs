@@ -54,6 +54,7 @@ public partial class App : Application
         base.OnStartup(e);
         if (ArgValue(e.Args, "--render-sample") is { } samplePath)
         {
+            Log.Enabled = false;
             // --render-sample <out.png | folder with --animate> [--lang ru] [--window …] [--width N] [--height N] [--tab …]
             // [--backdrop game|dark|none] [--scale 1.5] [--row-size 50..100] [--animate <seconds> [--fps 10]]
             var options = new SampleRenderer.Options(
