@@ -98,7 +98,6 @@ public partial class OverlayWindow : Window
             _vm.Apply(saved.Record.Summary with { Title = saved.Title, Zone = _meter.DisplayZone(saved.Record.Summary.Zone) },
                 _settings.MaxRows, _settings.BarsRelativeToTop);
             _vm.SetSegment("saved", saved.Entry.StartedAt.ToString("dd.MM HH:mm"));
-            _vm.Portrait = _meter.PortraitOf(saved.Entry);
         }
         else
         {
@@ -112,7 +111,6 @@ public partial class OverlayWindow : Window
             }
             _vm.Apply(snap, _settings.MaxRows, _settings.BarsRelativeToTop);
             _vm.SetSegment(_segment is null ? "live" : "session", snap?.StartedAt.ToString("HH:mm"));
-            _vm.Portrait = snap is null ? null : _meter.PortraitOf(snap);
         }
         if (!_settings.ShowBossPanel) _vm.HasBoss = false;
         if (Environment.TickCount64 - _timersLabelAt >= 1_000) UpdateTimersLabel();

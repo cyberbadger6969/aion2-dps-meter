@@ -184,7 +184,6 @@ public sealed class OverlayViewModel : ObservableObject
     private static readonly Brush Dim = Frozen(Color.FromRgb(0x8A, 0x93, 0xA8));
 
     private string _title = UiText.Current.WaitingTitle;
-    private ImageSource? _portrait;
     private string _clock = "0:00";
     private bool _isActive;
     private bool _hasData;
@@ -222,18 +221,6 @@ public sealed class OverlayViewModel : ObservableObject
     }
 
     public string Title { get => _title; set => Set(ref _title, value); }
-
-    /// <summary>The boss (or main target) portrait in the card's medallion; null shows the generic skull.</summary>
-    public ImageSource? Portrait
-    {
-        get => _portrait;
-        set
-        {
-            if (Set(ref _portrait, value)) Raise(nameof(HasPortrait));
-        }
-    }
-
-    public bool HasPortrait => _portrait is not null;
 
     /// <summary>The footer's timer button: "Timers", or the next respawn ("Gartua 12:34").</summary>
     public string TimersLabel { get => _timersLabel; set => Set(ref _timersLabel, value); }
