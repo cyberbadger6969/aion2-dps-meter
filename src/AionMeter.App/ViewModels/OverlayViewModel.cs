@@ -244,6 +244,9 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Biggest single hit of the fight, "1,052,914".</summary>
     public string TopHit { get => _topHit; set => Set(ref _topHit, value); }
     public string TopHitBy { get => _topHitBy; set => Set(ref _topHitBy, value); }
+    /// <summary>Tooltip of the title: the biggest hit of the fight and how to step through fights.</summary>
+    public string TitleTip { get => _titleTip; set => Set(ref _titleTip, value); }
+    private string _titleTip = "";
     /// <summary>"5 players · party 4.0M/s" (the fight's length is the clock in the header).</summary>
     public string Footer { get => _footer; set => Set(ref _footer, value); }
     /// <summary>Letter-spaced card label: "● LIVE FIGHT", "SAVED · 05.10 19:04" …</summary>
@@ -278,6 +281,7 @@ public sealed class OverlayViewModel : ObservableObject
             IsActive = false;
             Title = T.WaitingTitle;
             Detail = T.WaitingDetail;
+            TitleTip = T.TipScrollFights;
             Clock = "0:00";
             PartyDps = "—";
             TotalDamage = "—";
@@ -320,12 +324,15 @@ public sealed class OverlayViewModel : ObservableObject
         var top = snap.Combatants.MaxBy(x => x.MaxHit);
         TopHit = top is { MaxHit: > 0 } ? Format.Grouped(top.MaxHit) : "";
         TopHitBy = top is { MaxHit: > 0 } ? string.Format(T.TopHitBy, top.Name) : "";
+        // The top line holds only the title: the biggest hit lives in its tooltip.
+        TitleTip = (TopHit.Length > 0 ? $"{TopHitBy}: {TopHit}\n" : "") + T.TipScrollFights;
 
         if (snap.Boss is { } boss && boss.MaxHp > 0 && boss.Hp >= 0)
         {
             HasBoss = true;
             BossHpFraction = boss.HpFraction;
-            BossHpText = boss.Hp == 0 ? T.Defeated : Format.Grouped(boss.Hp) + " HP";
+            // "counted from 82% HP" rides in the bar now that there is no detail line.
+            BossHpText = boss.Hp == 0 ? T.Defeated : Format.Grouped(boss.Hp) + " HP" + (partial is null ? "" : " · " + partial);
             BossPercent = boss.MaxHpKnown || boss.Hp == 0 ? Format.Percent(boss.HpFraction) : "?";
         }
         else

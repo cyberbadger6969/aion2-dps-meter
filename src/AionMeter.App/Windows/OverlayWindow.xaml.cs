@@ -57,15 +57,18 @@ public partial class OverlayWindow : Window
         // Drag the card by any part of it (unless locked); a click without movement still opens a breakdown.
         _drag = DragAnywhere.Attach(this, canDrag: () => !_settings.Locked, dropped: SavePlacement);
 
-        // The card stays clean: its buttons only appear while the mouse is over it.
+        // The card stays clean: its buttons only appear while the mouse is over it, in place of the title and the state
+        // label (the timer stays).
         MouseEnter += (_, _) =>
         {
+            TitleText.Visibility = Visibility.Collapsed;
             LabelPanel.Visibility = Visibility.Collapsed;
             Toolbar.Visibility = Visibility.Visible;
         };
         MouseLeave += (_, _) =>
         {
             Toolbar.Visibility = Visibility.Collapsed;
+            TitleText.Visibility = Visibility.Visible;
             LabelPanel.Visibility = Visibility.Visible;
         };
 

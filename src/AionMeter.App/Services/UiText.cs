@@ -164,6 +164,7 @@ public sealed class UiText
     public string EmptyParty { get; init; } = "Your party appears here as soon as someone lands a hit.";
     public string TopHit { get; init; } = "TOP HIT";
     public string TopHitBy { get; init; } = "Biggest single hit — {0}";
+    public string TipScrollFights { get; init; } = "Mouse wheel here: step through fights";
     public string Defeated { get; init; } = "Defeated";
     public string UnknownBoss { get; init; } = "Unknown boss";
     /// <summary>"counted from 82% HP": the meter started (or restarted) after the boss had already lost the rest.</summary>
@@ -483,6 +484,7 @@ public sealed class UiText
         EmptyParty = "Группа появится здесь после первого удара.",
         TopHit = "МАКС. УДАР",
         TopHitBy = "Самый сильный удар — {0}",
+        TipScrollFights = "Колесо мыши здесь: листать бои",
         Defeated = "Повержен",
         UnknownBoss = "Неизвестный босс",
         CountedFrom = "учтено с {0} HP",
