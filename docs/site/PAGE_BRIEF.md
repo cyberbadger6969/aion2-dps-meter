@@ -155,8 +155,9 @@ GitHub, сайт для него не нужен.
 
 ### Features
 
-1. **Live overlay** — Party DPS, damage and share for every player, the boss's HP and the biggest hit, updated five
-   times a second. Class colours and emblems, your own row highlighted, your place in the group.
+1. **Live overlay** — Party DPS, damage and share for every player and the boss's HP, updated five times a second.
+   Class colours and emblems, your own row highlighted, gear score and combat power of your party. Compact: one line
+   on top, rows as small as you like.
 2. **Shows up when you fight** — The overlay appears when a boss is fought nearby or you hit anything, and hides again
    after the fight. Lock it in place, make it click-through, set the opacity.
 3. **Full breakdown** — Click a player: DPS timeline, every skill with hits, average, max and crit rate, accuracy and
@@ -249,8 +250,9 @@ Third-party tools may be against the game's terms of service — use at your own
 
 ### Возможности
 
-1. **Оверлей в реальном времени** — DPS, урон и доля каждого игрока, HP босса и самый сильный удар, пять обновлений в
-   секунду. Цвета и эмблемы классов, ваша строка выделена, ваше место в группе.
+1. **Оверлей в реальном времени** — DPS, урон и доля каждого игрока и HP босса, пять обновлений в секунду. Цвета и
+   эмблемы классов, ваша строка выделена, уровень экипировки и боевая мощь вашей группы. Компактный: одна строка
+   сверху, строки любого размера.
 2. **Появляется в бою** — Оверлей показывается, когда рядом бьют босса или вы кого-то ударили, и прячется после боя.
    Его можно закрепить, сделать прозрачным для кликов, настроить прозрачность.
 3. **Полный разбор** — Нажмите на игрока: график DPS, каждое умение с числом ударов, средним и максимальным уроном и

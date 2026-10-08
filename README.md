@@ -39,8 +39,9 @@ driver — see [Installation](#installation).
 
 ## Features
 
-- **Live overlay** — party DPS, damage and share for every player, the boss's HP and the biggest hit, updated five
-  times a second. Class colours and emblems, your own row highlighted, your place in the group (★ 2 / 9).
+- **Live overlay** — party DPS, damage and share for every player and the boss's HP, updated five times a second.
+  Class colours and emblems, your own row highlighted. A compact top: one line with the boss and the fight's timer, a
+  slim HP bar, the menu buttons only while the mouse is over it; rows can be made smaller (*Settings → Overlay*).
 - **Shows up when you fight** — the overlay appears when a boss is fought nearby or you hit anything, and hides again
   60 s after the fight. Lock it in place, make it click-through, set the opacity. It never takes focus from the game.
 - **Full breakdown** — click a player for their fight: DPS timeline against the party, every skill with hits, damage,

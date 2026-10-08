@@ -39,7 +39,7 @@ function Crop-Bottom([string]$from, [string]$to, [int]$height, [int]$skip) {
 }
 
 # ---------------------------------------------------------------- screenshots
-$overlaySize = @('--width', '500', '--height', '760')
+$overlaySize = @('--width', '520', '--height', '600')
 foreach ($lang in 'en', 'ru') {
     Render (Join-Path $images "overlay-$lang.png") (@('--lang', $lang, '--backdrop', 'dark') + $overlaySize)
     foreach ($tab in 'dps', 'accuracy', 'rotation') {
