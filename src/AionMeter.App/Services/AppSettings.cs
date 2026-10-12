@@ -56,6 +56,8 @@ public sealed class AppSettings
     /// <summary>Gear score and combat power after the names in the overlay (when the party roster gave them).</summary>
     public bool ShowGear { get; set; } = true;
     public bool ShowBossPanel { get; set; } = true;
+    /// <summary>The overlay lists only your own row (the toolbar's solo button).</summary>
+    public bool SoloMode { get; set; }
     public int IdleTimeoutSec { get; set; } = 10;
     public int BossIdleTimeoutSec { get; set; } = 30;
 

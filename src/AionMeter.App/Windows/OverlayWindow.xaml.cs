@@ -88,6 +88,7 @@ public partial class OverlayWindow : Window
     public void Refresh()
     {
         _vm.ShowGear = _settings.ShowGear;
+        _vm.SoloMode = _settings.SoloMode;
         // Looking at an old fight when a new pull starts: jump back to live so the fight is never missed.
         if ((_saved is not null || _segment is not null) &&
             _meter.Tracker.Segments() is [{ IsActive: true } running, ..] && running.StartedAt > _selectedAt)
@@ -274,6 +275,7 @@ public partial class OverlayWindow : Window
     private void ApplyLock()
     {
         LockButton.IsChecked = _settings.Locked;
+        SoloButton.IsChecked = _settings.SoloMode;
         LockGlyph.Text = _settings.Locked ? "" : "";
         ResizeGrip.Visibility = _settings.Locked ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -373,6 +375,14 @@ public partial class OverlayWindow : Window
         if (_vm.Rows.Count == 0) return;
         var target = _vm.Rows.FirstOrDefault(r => r.IsSelf) ?? _vm.Rows[0];
         OpenBreakdown(target.ActorId);
+    }
+
+    /// <summary>Solo: only your own row in the overlay (kept in the settings).</summary>
+    private void Solo_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.SoloMode = SoloButton.IsChecked == true;
+        _settings.Save();
+        Refresh();
     }
 
     private void Mode_Click(object sender, RoutedEventArgs e)

@@ -21,11 +21,11 @@ public static class SampleRenderer
     /// <param name="Backdrop">Behind the translucent overlay: game (a stand-in colour), dark (a navy gradient) or none (transparent).</param>
     /// <param name="RowSize">Overlay row size in percent (Settings → Overlay → Row size).</param>
     public sealed record Options(string Window = "overlay", int? Width = null, int? Height = null, string? Tab = null,
-        string Backdrop = "game", double Scale = 1.5, int RowSize = 100);
+        string Backdrop = "game", double Scale = 1.5, int RowSize = 100, bool Solo = false);
 
     public static void Render(string path, string language, Options o)
     {
-        using var meter = CreateMeter(language, o.RowSize);
+        using var meter = CreateMeter(language, o.RowSize, o.Solo);
         var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 20_500; // a fight that is still going
         var fight = new SampleFight(start, 20);
         fight.FeedUntil(meter.Tracker, start + 20_000);
@@ -86,7 +86,7 @@ public static class SampleRenderer
     /// </summary>
     public static void Animate(string folder, string language, Options o, double seconds, int fps)
     {
-        using var meter = CreateMeter(language, o.RowSize);
+        using var meter = CreateMeter(language, o.RowSize, o.Solo);
         WaitForPortraits(meter);
         var start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - 600_000;
         var fight = new SampleFight(start, seconds);
@@ -110,11 +110,11 @@ public static class SampleRenderer
         }
     }
 
-    private static MeterService CreateMeter(string language, int rowSize = 100)
+    private static MeterService CreateMeter(string language, int rowSize = 100, bool solo = false)
     {
         var settings = new AppSettings
         {
-            Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language, RowSize = rowSize,
+            Transient = true, SaveHistory = false, MaxRows = 10, LayoutVersion = 99, Language = language, RowSize = rowSize, SoloMode = solo,
         };
         UiText.Use(settings.Language);
         var meter = new MeterService(settings, _ => new QuietSource());

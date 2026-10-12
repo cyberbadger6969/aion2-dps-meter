@@ -325,6 +325,14 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Gear score and combat power columns (Settings → Overlay).</summary>
     public bool ShowGear { get; set; } = true;
 
+    /// <summary>Show only the local player's row (Settings → SoloMode, the toolbar's solo button).</summary>
+    public bool SoloMode { get; set; }
+
+    private bool _soloWaiting;
+    /// <summary>Solo mode, but the fight has no row of yours (you have not hit anything, or the meter does not know you
+    /// yet): the overlay says so instead of showing nothing.</summary>
+    public bool SoloWaiting { get => _soloWaiting; private set => Set(ref _soloWaiting, value); }
+
     /// <summary>False while the overlay is too narrow for them next to the names (the fight's numbers come first).</summary>
     public bool GearFits { get; set; } = true;
 
@@ -349,6 +357,7 @@ public sealed class OverlayViewModel : ObservableObject
             TopHit = "";
             Footer = "";
             MostDamageUnsent = false;
+            SoloWaiting = false;
             SelfPlace = "";
             HasGear = false;
             Rows.Clear();
@@ -405,13 +414,15 @@ public sealed class OverlayViewModel : ObservableObject
         }
 
         var list = snap.Combatants;
-        var count = Math.Min(maxRows, list.Count);
+        // Solo: only your own row, with your real place and share of the whole fight.
+        var count = SoloMode ? 0 : Math.Min(maxRows, list.Count);
         // Always keep the local player visible even when they are outside the top N.
         var selfIndex = -1;
         for (var i = 0; i < list.Count; i++)
             if (list[i].IsSelf) { selfIndex = i; break; }
         var showSelfExtra = selfIndex >= count;
         var rowsNeeded = count + (showSelfExtra ? 1 : 0);
+        SoloWaiting = SoloMode && selfIndex < 0;
 
         while (Rows.Count > rowsNeeded) Rows.RemoveAt(Rows.Count - 1);
         while (Rows.Count < rowsNeeded) Rows.Add(new RowViewModel());

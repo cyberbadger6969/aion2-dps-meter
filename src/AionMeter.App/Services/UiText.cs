@@ -162,6 +162,8 @@ public sealed class UiText
     public string WaitingTitle { get; init; } = "Waiting for combat";
     public string WaitingDetail { get; init; } = "Hit something — the meter starts on its own";
     public string EmptyParty { get; init; } = "Your party appears here as soon as someone lands a hit.";
+    public string TipSolo { get; init; } = "Solo: show only you (your place and share stay those of the whole fight)";
+    public string SoloWaiting { get; init; } = "Solo: your row appears once you hit something (or after a loading screen, if the meter does not know you yet).";
     public string TopHit { get; init; } = "TOP HIT";
     public string TopHitBy { get; init; } = "Biggest single hit — {0}";
     public string TipScrollFights { get; init; } = "Mouse wheel here: step through fights";
@@ -492,6 +494,8 @@ public sealed class UiText
         WaitingTitle = "Ожидание боя",
         WaitingDetail = "Атакуйте цель — метр запустится сам",
         EmptyParty = "Группа появится здесь после первого удара.",
+        TipSolo = "Соло: показывать только вас (место и доля — от всего боя)",
+        SoloWaiting = "Соло: ваша строка появится после вашего первого удара (или после загрузки экрана, если метр вас ещё не знает).",
         TopHit = "МАКС. УДАР",
         TopHitBy = "Самый сильный удар — {0}",
         TipScrollFights = "Колесо мыши здесь: листать бои",

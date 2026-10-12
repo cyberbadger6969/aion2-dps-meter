@@ -266,6 +266,8 @@
                             ToolTip="Boss only / everything you hit" />
                     <Button Style="{StaticResource Chip}" Content="{Binding LanguageCode}" Click="Language_Click" Margin="0,0,5,0"
                             ToolTip="{Binding T.SwitchLanguage}" />
+                    <ToggleButton x:Name="SoloButton" Style="{StaticResource ToolToggle}" Content="&#xE77B;" Click="Solo_Click"
+                                  ToolTip="{Binding T.TipSolo}" />
                     <Button Style="{StaticResource ToolIcon}" Content="&#xE8BD;" Click="Chat_Click" ToolTip="{Binding T.TipChat}" />
                     <Button Style="{StaticResource ToolIcon}" Content="&#xE121;" Click="Timers_Click" ToolTip="{Binding T.TipTimers}" />
                     <Button x:Name="RestartButton" Style="{StaticResource ToolIcon}" Content="&#xE72C;" Click="Restart_Click" />
@@ -361,6 +363,9 @@
                 <TextBlock Grid.RowSpan="2" Text="{Binding T.EmptyParty}" FontSize="12"
                            Foreground="#6B7590" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
                            Visibility="{Binding HasData, Converter={StaticResource VisibleIf}, ConverterParameter=!}" />
+                <TextBlock Grid.RowSpan="2" Text="{Binding T.SoloWaiting}" FontSize="12" Margin="10,0"
+                           Foreground="#8A93A8" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
+                           Visibility="{Binding SoloWaiting, Converter={StaticResource VisibleIf}}" />
             </Grid>
 
             <!-- Footer -->
