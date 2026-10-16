@@ -211,7 +211,7 @@ public partial class OverlayWindow : Window
     }
 
     private const int NameColumn = 2, GsColumn = 3, CpColumn = 4, SpacerColumn = 5; // in the row and label grids
-    private const double MinNameWidth = 60;
+    private const double MinNameWidth = 44; // a short name ("DonkelOk…"): GS / CP matter more than its tail
     private double _gearWidth; // GS + CP columns when last shown
 
     /// <summary>
@@ -234,7 +234,7 @@ public partial class OverlayWindow : Window
             _vm.GearFits = false;
             Refresh();
         }
-        else if (!_vm.GearFits && room - _gearWidth >= MinNameWidth + 20) // a margin, so it does not flip back and forth
+        else if (!_vm.GearFits && room - _gearWidth >= MinNameWidth + 8) // a small margin, so it does not flip back and forth
         {
             _vm.GearFits = true;
             Refresh();
