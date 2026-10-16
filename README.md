@@ -113,6 +113,7 @@ supported) · Npcap · about 200 MB of disk space.
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | boss timers |
 | left-click a player | open the breakdown |
 | column header in the breakdown | sort the skills by it (skill, hits, damage, DPS, avg, max, crit, share, accuracy columns); click again to reverse |
+| person button on the toolbar | solo mode: only your own row, with your real place and share |
 | right-click a player, or 💬 on the toolbar | copy for chat: one player's result or the party ranking as one line for the game chat, or the ranking as a table for Discord; paste with <kbd>Ctrl</kbd>+<kbd>V</kbd> |
 | **BOSS / ALL** chip | count only the boss, or everything you hit |
 | **EN / RU** chip | interface and name language (English by default; also in Settings and the tray menu) |
