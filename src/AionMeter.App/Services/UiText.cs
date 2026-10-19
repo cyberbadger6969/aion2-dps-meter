@@ -337,6 +337,10 @@ public sealed class UiText
     public string AdapterHint { get; init; } = "Automatic finds the adapter that carries the AION 2 connection (loopback for ping accelerators). Pick one only if your VPN hides it.";
     public string RecordPackets { get; init; } = "Record game packets to .pcap (for debugging the parser)";
     public string RecordHint { get; init; } = "Recordings contain your own game traffic only, including character names. Keep them private.";
+    public string UnlockCode { get; init; } = "Code";
+    public string UnlockApply { get; init; } = "Apply";
+    public string UnlockOk { get; init; } = "Unlocked: the hidden cube hint is in Overlay, above.";
+    public string UnlockBad { get; init; } = "Wrong code.";
     public string StatusPrefix { get; init; } = "Status: ";
     public string NpcapMissing { get; init; } = "Npcap not installed";
     public string NpcapNeeded { get; init; } =
@@ -677,6 +681,10 @@ public sealed class UiText
         AdapterHint = "Автоматически выбирается адаптер с соединением AION 2 (loopback для ускорителей пинга). Выбирайте вручную, только если VPN его скрывает.",
         RecordPackets = "Записывать игровые пакеты в .pcap (для отладки)",
         RecordHint = "В записи только ваш игровой трафик, включая ники. Не публикуйте их.",
+        UnlockCode = "Код",
+        UnlockApply = "Применить",
+        UnlockOk = "Открыто: подсказка о скрытых кубах — выше, в разделе «Оверлей».",
+        UnlockBad = "Неверный код.",
         StatusPrefix = "Статус: ",
         NpcapMissing = "Npcap не установлен",
         NpcapNeeded =

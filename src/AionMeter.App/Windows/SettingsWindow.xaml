@@ -87,9 +87,12 @@
                             <CheckBox x:Name="ShowGear" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
                                       Content="{Binding ShowGear, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding ShowGearHint, Source={x:Static s:UiText.Current}}" />
-                            <CheckBox x:Name="CubeAlert" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
-                                      Content="{Binding CubeAlert, Source={x:Static s:UiText.Current}}" />
-                            <TextBlock Style="{StaticResource Hint}" Text="{Binding CubeAlertHint, Source={x:Static s:UiText.Current}}" />
+                            <!-- Shown only once unlocked with its code (Capture в†’ Code) -->
+                            <StackPanel x:Name="CubePanel" Visibility="Collapsed">
+                                <CheckBox x:Name="CubeAlert" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
+                                          Content="{Binding CubeAlert, Source={x:Static s:UiText.Current}}" />
+                                <TextBlock Style="{StaticResource Hint}" Text="{Binding CubeAlertHint, Source={x:Static s:UiText.Current}}" />
+                            </StackPanel>
                             <CheckBox x:Name="AutoShow" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
                                       Content="{Binding AutoShow, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding AutoShowHint, Source={x:Static s:UiText.Current}}" />
@@ -177,6 +180,13 @@
                                       Content="{Binding RecordPackets, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding RecordHint, Source={x:Static s:UiText.Current}}" />
                             <TextBlock x:Name="CaptureState" Style="{StaticResource Hint}" Margin="0,6,0,0" Foreground="{StaticResource TextDim}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBlock Text="{Binding UnlockCode, Source={x:Static s:UiText.Current}}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="UnlockCode" MinWidth="160" />
+                                <Button Style="{StaticResource GhostButton}" Content="{Binding UnlockApply, Source={x:Static s:UiText.Current}}"
+                                        Click="Unlock_Click" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <TextBlock x:Name="UnlockState" Style="{StaticResource Hint}" Visibility="Collapsed" />
                         </StackPanel>
                     </Border>
 

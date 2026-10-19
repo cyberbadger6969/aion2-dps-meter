@@ -23,6 +23,24 @@ public partial class SettingsWindow : Window
         Closed += (_, _) => AppHost.Current.PreviewRowSize(_meter.Settings.RowSize);
     }
 
+    /// <summary>The code opens the hidden cube hint for good (kept in the settings right away).</summary>
+    private void Unlock_Click(object sender, RoutedEventArgs e)
+    {
+        var s = _meter.Settings;
+        var ok = AppSettings.IsCubeCode(UnlockCode.Text);
+        if (ok && !s.CubeUnlocked)
+        {
+            s.CubeUnlocked = true;
+            s.CubeAlert = true;
+            s.Save();
+            CubeAlert.IsChecked = true;
+        }
+        CubePanel.Visibility = s.CubeUnlocked ? Visibility.Visible : Visibility.Collapsed;
+        UnlockState.Text = ok ? UiText.Current.UnlockOk : UiText.Current.UnlockBad;
+        UnlockState.Visibility = Visibility.Visible;
+        UnlockCode.Clear();
+    }
+
     private void Load()
     {
         var s = _meter.Settings;
@@ -30,6 +48,7 @@ public partial class SettingsWindow : Window
         ShowBoss.IsChecked = s.ShowBossPanel;
         ShowGear.IsChecked = s.ShowGear;
         CubeAlert.IsChecked = s.CubeAlert;
+        CubePanel.Visibility = s.CubeUnlocked ? Visibility.Visible : Visibility.Collapsed;
         AutoShow.IsChecked = s.AutoShow;
         AutoHideSeconds.Text = s.AutoHideSeconds.ToString();
         ShowOnStart.IsChecked = s.ShowOnStart;

@@ -61,6 +61,23 @@ public sealed class AppSettings
     /// <summary>"Hidden cube nearby" on the overlay while the server has a hidden cube in view. Off by default: unlike the
     /// meter it points at something the game hides.</summary>
     public bool CubeAlert { get; set; }
+    /// <summary>The cube hint was unlocked with its code (Settings в†’ Code); until then it is hidden and off.</summary>
+    public bool CubeUnlocked { get; set; }
+
+    /// <summary>The cube hint is on: unlocked, and ticked.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool CubeHintOn => CubeUnlocked && CubeAlert;
+
+    // SHA-256 of the cube hint's code (the code itself is not in the source).
+    private const string CubeCodeHash = "567820b74c4a1d2d59b36153dd6d22fc3900e4b2419add0cbbb458c398cbd2ba";
+
+    /// <summary>True for the cube hint's code (spaces and letter case do not matter).</summary>
+    public static bool IsCubeCode(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return false;
+        var bytes = System.Text.Encoding.UTF8.GetBytes(code.Trim().ToUpperInvariant());
+        return Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)) == CubeCodeHash;
+    }
     public int IdleTimeoutSec { get; set; } = 10;
     public int BossIdleTimeoutSec { get; set; } = 30;
 

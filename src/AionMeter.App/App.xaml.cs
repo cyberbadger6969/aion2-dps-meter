@@ -207,7 +207,7 @@ public partial class App : Application
         UpdateAutoVisibility();
         if (_overlay.IsVisible) _overlay.Refresh();
         // The hidden cube card lives on its own, whether the overlay is up or not.
-        _cubeAlert?.Update(_meter.Settings.CubeAlert ? _meter.Tracker.HiddenCubes() : null, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        _cubeAlert?.Update(_meter.Settings.CubeHintOn ? _meter.Tracker.HiddenCubes() : null, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         if (++_ticks % 5 == 0)
         {
             _tray?.Update(_overlay.IsVisible, _meter.Settings.ClickThrough, _meter.DemoRunning ? "demo" : _meter.CaptureStatus.Message);
