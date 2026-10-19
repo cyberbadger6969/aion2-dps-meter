@@ -227,12 +227,15 @@ public partial class App : Application
     {
         var s = _meter.Settings;
         var fight = _meter.Tracker.LiveFight();
-        var engaged = fight is { } f && (f.Boss || f.Self);
+        // A hidden cube near (with its hint on) brings it up too: the hint is on the overlay, and cubes are found
+        // walking around, not fighting.
+        var cube = s.CubeAlert && _meter.Tracker.HiddenCubes() is not null;
+        var engaged = fight is { } f && (f.Boss || f.Self) || cube;
         var now = Environment.TickCount64;
         if (engaged) _lastEngagedTick = now;
         if (!s.AutoShow) return;
 
-        if (engaged && !_overlay.IsVisible && fight!.Value.Id != _suppressedFight)
+        if (engaged && !_overlay.IsVisible && (cube || fight!.Value.Id != _suppressedFight))
         {
             _overlay.Show();
             _autoShown = true;
