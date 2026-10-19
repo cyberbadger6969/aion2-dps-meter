@@ -65,6 +65,11 @@ public static class SampleRenderer
                 host = timers;
                 refresh = timers.ReloadNow;
                 break;
+            case "cube":
+                var cube = new CubeAlertWindow { Width = o.Width ?? 420, Height = o.Height ?? 100 };
+                host = cube;
+                refresh = () => cube.Fill(1, 12_000);
+                break;
             case "settings":
                 host = new SettingsWindow(meter) { Width = o.Width ?? 640, Height = o.Height ?? 900 };
                 refresh = () => { };

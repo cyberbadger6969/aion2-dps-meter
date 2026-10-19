@@ -40,6 +40,7 @@ public partial class App : Application
     private RegisteredWaitHandle? _showWait;
     private MeterService _meter = null!;
     private OverlayWindow _overlay = null!;
+    private CubeAlertWindow? _cubeAlert;
     private TrayIcon? _tray;
     private HotkeyManager? _hotkeys;
     private DispatcherTimer? _timer;
@@ -109,6 +110,7 @@ public partial class App : Application
         _meter.StartCapture();
 
         _overlay = new OverlayWindow(_meter);
+        _cubeAlert = new CubeAlertWindow();
         if (settings.OverlayVisible || e.Args.Contains("--show")) _overlay.Show(); // --show: this run only, not saved
         else
         {
@@ -204,6 +206,8 @@ public partial class App : Application
         _meter.Tick();
         UpdateAutoVisibility();
         if (_overlay.IsVisible) _overlay.Refresh();
+        // The hidden cube card lives on its own, whether the overlay is up or not.
+        _cubeAlert?.Update(_meter.Settings.CubeAlert ? _meter.Tracker.HiddenCubes() : null, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         if (++_ticks % 5 == 0)
         {
             _tray?.Update(_overlay.IsVisible, _meter.Settings.ClickThrough, _meter.DemoRunning ? "demo" : _meter.CaptureStatus.Message);
@@ -227,15 +231,12 @@ public partial class App : Application
     {
         var s = _meter.Settings;
         var fight = _meter.Tracker.LiveFight();
-        // A hidden cube near (with its hint on) brings it up too: the hint is on the overlay, and cubes are found
-        // walking around, not fighting.
-        var cube = s.CubeAlert && _meter.Tracker.HiddenCubes() is not null;
-        var engaged = fight is { } f && (f.Boss || f.Self) || cube;
+        var engaged = fight is { } f && (f.Boss || f.Self);
         var now = Environment.TickCount64;
         if (engaged) _lastEngagedTick = now;
         if (!s.AutoShow) return;
 
-        if (engaged && !_overlay.IsVisible && (cube || fight!.Value.Id != _suppressedFight))
+        if (engaged && !_overlay.IsVisible && fight!.Value.Id != _suppressedFight)
         {
             _overlay.Show();
             _autoShown = true;

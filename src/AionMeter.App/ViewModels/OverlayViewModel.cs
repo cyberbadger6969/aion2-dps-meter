@@ -270,25 +270,6 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Amber; red for the last minute or the last tenth of the time.</summary>
     public Brush LimitBrush { get => _limitBrush; private set => Set(ref _limitBrush, value); }
 
-    private string _cubeText = "";
-
-    /// <summary>"Hidden cube nearby · 0:12" while the server has a hidden cube in view; empty otherwise.</summary>
-    public string CubeText
-    {
-        get => _cubeText;
-        private set
-        {
-            if (Set(ref _cubeText, value)) Raise(nameof(HasCube));
-        }
-    }
-
-    public bool HasCube => _cubeText.Length > 0;
-
-    public void SetCube((int Count, long SinceMs)? cubes, long nowMs) =>
-        CubeText = cubes is { } c
-            ? string.Format(c.Count > 1 ? T.CubesNearby : T.CubeNearby, Format.ClockShort(nowMs - c.SinceMs), c.Count)
-            : "";
-
     public void SetLimit(InstanceTimerEvent? timer, long nowMs)
     {
         if (timer is null)

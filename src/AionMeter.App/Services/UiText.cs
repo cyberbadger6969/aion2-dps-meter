@@ -163,14 +163,12 @@ public sealed class UiText
     public string WaitingDetail { get; init; } = "Hit something — the meter starts on its own";
     public string EmptyParty { get; init; } = "Your party appears here as soon as someone lands a hit.";
     public string TipSolo { get; init; } = "Solo: show only you (your place and share stay those of the whole fight)";
-    /// <summary>{0} = how long it has been in view, {1} = how many.</summary>
-    public string CubeNearby { get; init; } = "Hidden cube nearby · {0} — look around";
-    public string CubesNearby { get; init; } = "{1} hidden cubes nearby · {0} — look around";
-    public string CubeTip { get; init; } =
-        "The server put a hidden cube in view: it is close (the game chimes for it). The hint goes out when it is picked up or out of range.";
+    /// <summary>The hidden cube card: its small title and its line (the clock beside it says how long it has been near).</summary>
+    public string CubeTitle { get; init; } = "Hidden cube";
+    public string CubeMessage { get; init; } = "Nearby, take a look …";
     public string CubeAlert { get; init; } = "Hidden cube hint";
     public string CubeAlertHint { get; init; } =
-        "Says on the overlay when a hidden cube is near, read from the game's traffic like everything else. Unlike the meter it points at something the game hides on purpose — use it at your own risk.";
+        "A card in the middle of the screen while a hidden cube is near — the moment the game chimes for it — read from the game's traffic like everything else. Unlike the meter it points at something the game hides on purpose — use it at your own risk.";
     public string SoloWaiting { get; init; } ="Solo: your row appears once you hit something (or after a loading screen, if the meter does not know you yet).";
     public string TopHit { get; init; } = "TOP HIT";
     public string TopHitBy { get; init; } = "Biggest single hit — {0}";
@@ -503,11 +501,10 @@ public sealed class UiText
         WaitingDetail = "Атакуйте цель — метр запустится сам",
         EmptyParty = "Группа появится здесь после первого удара.",
         TipSolo = "Соло: показывать только вас (место и доля — от всего боя)",
-        CubeNearby = "Скрытый куб рядом · {0} — осмотритесь",
-        CubesNearby = "Скрытых кубов рядом: {1} · {0} — осмотритесь",
-        CubeTip = "Сервер прислал скрытый куб в зону видимости: он близко (игра в этот момент подаёт звук). Подсказка гаснет, когда куб поднят или вы отошли.",
+        CubeTitle = "Скрытый куб",
+        CubeMessage = "Рядом, осмотритесь …",
         CubeAlert = "Подсказка о скрытых кубах",
-        CubeAlertHint = "Пишет на оверлее, когда рядом скрытый куб — по трафику игры, как и всё остальное. В отличие от метра она указывает на то, что игра прячет специально: используйте на свой риск.",
+        CubeAlertHint = "Карточка посреди экрана, пока рядом скрытый куб — в тот же момент, когда игра подаёт его звук, — по трафику игры, как и всё остальное. В отличие от метра она указывает на то, что игра прячет специально: используйте на свой риск.",
         SoloWaiting = "Соло:ваша строка появится после вашего первого удара (или после загрузки экрана, если метр вас ещё не знает).",
         TopHit = "МАКС. УДАР",
         TopHitBy = "Самый сильный удар — {0}",
