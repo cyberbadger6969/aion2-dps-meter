@@ -68,15 +68,19 @@ public sealed class AppSettings
     [System.Text.Json.Serialization.JsonIgnore]
     public bool CubeHintOn => CubeUnlocked && CubeAlert;
 
-    // SHA-256 of the cube hint's code (the code itself is not in the source).
-    private const string CubeCodeHash = "567820b74c4a1d2d59b36153dd6d22fc3900e4b2419add0cbbb458c398cbd2ba";
+    // SHA-256 of the cube hint's codes (the codes themselves are not in the source): the owner's, and one to hand out.
+    private static readonly string[] CubeCodeHashes =
+    [
+        "567820b74c4a1d2d59b36153dd6d22fc3900e4b2419add0cbbb458c398cbd2ba",
+        "21061c6c79565855e6b8df1d29c7993a2c469e2fe50626b80249013b7675d782",
+    ];
 
-    /// <summary>True for the cube hint's code (spaces and letter case do not matter).</summary>
+    /// <summary>True for one of the cube hint's codes (spaces and letter case do not matter).</summary>
     public static bool IsCubeCode(string? code)
     {
         if (string.IsNullOrWhiteSpace(code)) return false;
         var bytes = System.Text.Encoding.UTF8.GetBytes(code.Trim().ToUpperInvariant());
-        return Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)) == CubeCodeHash;
+        return CubeCodeHashes.Contains(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)));
     }
     public int IdleTimeoutSec { get; set; } = 10;
     public int BossIdleTimeoutSec { get; set; } = 30;
