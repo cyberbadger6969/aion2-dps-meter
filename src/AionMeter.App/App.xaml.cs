@@ -66,7 +66,7 @@ public partial class App : Application
                 double.TryParse(ArgValue(e.Args, "--scale"), System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var scale) ? scale : 1.5,
                 int.TryParse(ArgValue(e.Args, "--row-size"), out var rowSize) ? rowSize : 100,
-                e.Args.Contains("--solo"));
+                e.Args.Contains("--solo"), e.Args.Contains("--cube"));
             var language = ArgValue(e.Args, "--lang") ?? "en";
             if (double.TryParse(ArgValue(e.Args, "--animate"), System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var seconds))

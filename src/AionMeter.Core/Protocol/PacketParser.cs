@@ -94,6 +94,12 @@ public sealed class PacketParser
             case Opcodes.InstanceTimer:
                 ParseInstanceTimer(body);
                 break;
+            case Opcodes.ObjectSpawn:
+                ParseObjectSpawn(body);
+                break;
+            case Opcodes.ObjectGone:
+                if (Wire.TryVarint(body, 0, out var goneId, out _) && IsEntityId(goneId)) Emit(new WorldObjectGoneEvent(TimeMs, goneId));
+                break;
             case Opcodes.BattleToggle:
                 ParseBattleToggle(body);
                 break;
@@ -224,6 +230,22 @@ public sealed class PacketParser
         o += 2;
         if (!Wire.TryVarint(b, ref o, out var target) || !IsEntityId(target)) return;
         Emit(new CastEvent(TimeMs, actor, target, (int)skill));
+    }
+
+    // ------------------------------------------------------------------ world objects (34 36)
+
+    /// <summary><c>id varint, u8, u8, template u32, x y z f32, …</c></summary>
+    private void ParseObjectSpawn(ReadOnlySpan<byte> b)
+    {
+        var o = 0;
+        if (!Wire.TryVarint(b, ref o, out var id) || !IsEntityId(id) || o + 18 > b.Length) return;
+        var code = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(b[(o + 2)..]);
+        if (code is < 1_000_000 or > 9_999_999) return;
+        var x = System.Buffers.Binary.BinaryPrimitives.ReadSingleLittleEndian(b[(o + 6)..]);
+        var y = System.Buffers.Binary.BinaryPrimitives.ReadSingleLittleEndian(b[(o + 10)..]);
+        var z = System.Buffers.Binary.BinaryPrimitives.ReadSingleLittleEndian(b[(o + 14)..]);
+        if (!float.IsFinite(x) || !float.IsFinite(y) || !float.IsFinite(z)) return;
+        Emit(new WorldObjectSeenEvent(TimeMs, id, code, x, y, z));
     }
 
     // ------------------------------------------------------------------ instance timers (00 61)

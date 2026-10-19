@@ -178,6 +178,21 @@ public class EngineTests
     }
 
     [Fact]
+    public void A_hidden_cube_is_nearby_while_the_server_keeps_it_in_view()
+    {
+        var t = Tracker();
+        t.Process(new WorldObjectSeenEvent(1_000, 900, 1300011, 0, 0, 0));   // an ore node: not a cube
+        Assert.Null(t.HiddenCubes());
+        t.Process(new WorldObjectSeenEvent(2_000, 901, 1301199, 0, 0, 0));
+        t.Process(new WorldObjectSeenEvent(5_000, 902, 1301199, 0, 0, 0));
+        Assert.Equal((2, 2_000L), t.HiddenCubes());
+        t.Process(new WorldObjectGoneEvent(9_000, 901));                     // picked up
+        Assert.Equal((1, 5_000L), t.HiddenCubes());
+        t.Process(new ZoneChangedEvent(10_000, 1110, "Open world", false));  // another map
+        Assert.Null(t.HiddenCubes());
+    }
+
+    [Fact]
     public void A_boss_time_limit_runs_until_the_boss_dies_or_leaves_combat()
     {
         var t = Tracker();

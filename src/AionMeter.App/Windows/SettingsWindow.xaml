@@ -87,6 +87,9 @@
                             <CheckBox x:Name="ShowGear" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
                                       Content="{Binding ShowGear, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding ShowGearHint, Source={x:Static s:UiText.Current}}" />
+                            <CheckBox x:Name="CubeAlert" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
+                                      Content="{Binding CubeAlert, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding CubeAlertHint, Source={x:Static s:UiText.Current}}" />
                             <CheckBox x:Name="AutoShow" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
                                       Content="{Binding AutoShow, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding AutoShowHint, Source={x:Static s:UiText.Current}}" />

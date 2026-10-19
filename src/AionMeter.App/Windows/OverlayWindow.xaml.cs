@@ -120,6 +120,7 @@ public partial class OverlayWindow : Window
         // The instance's time limit (or the wait after entering), whatever fight is shown: it is about where you are now.
         var wall = ClockOverride?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         _vm.SetLimit(_meter.Tracker.NextTimer(wall), wall);
+        _vm.SetCube(_settings.CubeAlert ? _meter.Tracker.HiddenCubes() : null, wall);
         if (Environment.TickCount64 - _timersLabelAt >= 1_000) UpdateTimersLabel();
 
         var status = _meter.DemoRunning ? new CaptureStatus(CaptureState.Capturing, "Demo fight running") : _meter.CaptureStatus;

@@ -22,6 +22,8 @@ public static class Opcodes
     public const ushort Dot = 0x0538;
     public const ushort RemainHp = 0x008D;
     public const ushort InstanceTimer = 0x0061;  // map u32, kind u8, start u64 ms, end u64 ms
+    public const ushort ObjectSpawn = 0x3436;    // a world object in view: id, 2 bytes, template u32, x y z f32 …
+    public const ushort ObjectGone = 0x3536;     // id, reason bytes
     public const ushort KillCredit = 0x048D;
     public const ushort BattleToggle = 0x218D;   // KR only, unverified on Global
     public const ushort HpMp = 0x1B92;

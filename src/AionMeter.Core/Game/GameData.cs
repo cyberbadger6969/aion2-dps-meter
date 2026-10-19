@@ -188,6 +188,12 @@ public sealed class GameData
         return $"Skill {code}";
     }
 
+    /// <summary>
+    /// World object templates of hidden cubes (the object the game chimes for). Learned from a recording on 2026-10-19:
+    /// two cubes in different places, both 1301199. Other regions may use other templates вЂ” add them here.
+    /// </summary>
+    public static readonly HashSet<int> HiddenCubeCodes = [1301199];
+
     public bool IsDamageDot(int rawDotSkill) => DotSkills.Count == 0 || DotSkills.Contains(rawDotSkill);
 
     /// <summary>

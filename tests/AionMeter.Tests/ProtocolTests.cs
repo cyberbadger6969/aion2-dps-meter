@@ -61,6 +61,19 @@ public class ProtocolTests
         Assert.Equal(length, t.EndMs - t.StartMs);
     }
 
+    // A hidden cube coming into view (2026-10-19, template 1301199), and it going away once picked up.
+    [Fact]
+    public void World_objects_come_and_go()
+    {
+        var seen = Assert.IsType<WorldObjectSeenEvent>(Assert.Single(Parse(Opcodes.ObjectSpawn,
+            "88A4020400CFDA1300853F59C7D0079FC7007CC946000000000000000001010655565F55A101000000000000000000009574E4E4070000")));
+        Assert.Equal(37384u, seen.ActorId);
+        Assert.Equal(1301199, seen.Code);
+        Assert.Equal(-55615.5f, seen.X, 1);
+
+        Assert.Equal(37384u, Assert.IsType<WorldObjectGoneEvent>(Assert.Single(Parse(Opcodes.ObjectGone, "88A402040300"))).ActorId);
+    }
+
     // Ferocious Horn Nuakum (2026-10-12) entering combat with its 5 minute limit; an ordinary boss without one.
     [Fact]
     public void A_boss_entering_combat_may_bring_its_time_limit()

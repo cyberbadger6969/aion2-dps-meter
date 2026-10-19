@@ -370,6 +370,13 @@
 
             <!-- Footer -->
             <StackPanel Grid.Row="3" Margin="0,6,0,0">
+                <!-- A hidden cube in view (Settings в†’ Hidden cube hint) -->
+                <Border CornerRadius="6" Padding="9,3,9,3" Margin="0,0,0,6" BorderThickness="1" BorderBrush="#99B58CFF" Background="#33B58CFF"
+                        Visibility="{Binding HasCube, Converter={StaticResource VisibleIf}}" ToolTip="{Binding T.CubeTip}">
+                    <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="#E4D6FF" Effect="{StaticResource TextShadow}">
+                        <Run Text="&#x2726; " /><Run Text="{Binding CubeText, Mode=OneWay}" />
+                    </TextBlock>
+                </Border>
                 <!-- New version on GitHub: a slim banner until it is installed, skipped or closed for this session -->
                 <Grid x:Name="UpdateBanner" Margin="0,0,0,6" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>

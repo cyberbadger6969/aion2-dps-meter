@@ -124,6 +124,12 @@ public sealed class CombatTracker
                 case InstanceTimerEvent it:
                     _timers[it.Kind] = it;
                     break;
+                case WorldObjectSeenEvent ws when GameData.HiddenCubeCodes.Contains(ws.Code):
+                    _cubes.TryAdd(ws.ActorId, ws.TimeMs);
+                    break;
+                case WorldObjectGoneEvent wg:
+                    _cubes.Remove(wg.ActorId);
+                    break;
                 case BossTimeLimitEvent bl:
                     _timers[InstanceTimerEvent.BossLimit] = new InstanceTimerEvent(bl.TimeMs, _entities.MapId, InstanceTimerEvent.BossLimit,
                         bl.TimeMs, bl.EndMs);
@@ -148,6 +154,7 @@ public sealed class CombatTracker
                     // came back as "#id".
                     if (z.IsTeleport || z.MapId == _entities.MapId) break;
                     _timers.Clear(); // the instance's countdowns end with it
+                    _cubes.Clear();
                     if (_current is { IsActive: true }) Finish(EncounterEndReason.ZoneChange, _current.LastDamageMs);
                     _entities.OnZoneChanged(z.MapId, z.ZoneName);
                     break;
@@ -479,6 +486,14 @@ public sealed class CombatTracker
     private readonly List<PartyRosterEvent> _pendingRosters = new();
     private readonly Dictionary<int, InstanceTimerEvent> _timers = new();
     private uint _bossLimitActor;
+    private readonly Dictionary<uint, long> _cubes = new(); // hidden cubes in view в†’ when they came into view
+
+    /// <summary>Hidden cubes the server has put in view (it does so once you are close), and since when the first of
+    /// them is there; null when there is none.</summary>
+    public (int Count, long SinceMs)? HiddenCubes()
+    {
+        lock (_gate) return _cubes.Count == 0 ? null : (_cubes.Count, _cubes.Values.Min());
+    }
 
     /// <summary>The boss whose time limit runs died or left combat: its clock is gone.</summary>
     private void EndBossLimit(uint actorId)

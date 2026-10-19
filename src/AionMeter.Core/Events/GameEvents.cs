@@ -129,6 +129,16 @@ public sealed record InstanceTimerEvent(long TimeMs, int MapId, int Kind, long S
 }
 
 /// <summary>
+/// A world object came into view (<c>34 36</c>): gathering nodes, chests, hidden cubes … — template
+/// <paramref name="Code"/> at a position. The server sends it once the player is close enough; a hidden cube's chime in
+/// the game is the client reacting to this.
+/// </summary>
+public sealed record WorldObjectSeenEvent(long TimeMs, uint ActorId, int Code, float X, float Y, float Z) : GameEvent(TimeMs);
+
+/// <summary>A world object left view (<c>35 36</c>): picked up, gathered, or out of range.</summary>
+public sealed record WorldObjectGoneEvent(long TimeMs, uint ActorId) : GameEvent(TimeMs);
+
+/// <summary>
 /// A boss with a time limit entered combat (<c>21 8D</c> with a deadline): the fight is lost at <paramref name="EndMs"/>
 /// (server epoch ms; Ferocious Horn Nuakum: 5 minutes).
 /// </summary>

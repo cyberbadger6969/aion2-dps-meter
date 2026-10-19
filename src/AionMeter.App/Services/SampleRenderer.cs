@@ -21,7 +21,7 @@ public static class SampleRenderer
     /// <param name="Backdrop">Behind the translucent overlay: game (a stand-in colour), dark (a navy gradient) or none (transparent).</param>
     /// <param name="RowSize">Overlay row size in percent (Settings → Overlay → Row size).</param>
     public sealed record Options(string Window = "overlay", int? Width = null, int? Height = null, string? Tab = null,
-        string Backdrop = "game", double Scale = 1.5, int RowSize = 100, bool Solo = false);
+        string Backdrop = "game", double Scale = 1.5, int RowSize = 100, bool Solo = false, bool Cube = false);
 
     public static void Render(string path, string language, Options o)
     {
@@ -31,6 +31,11 @@ public static class SampleRenderer
         fight.FeedUntil(meter.Tracker, start + 20_000);
         // A dungeon's time limit, 12:48 of its hour gone: the countdown in the overlay's top line.
         meter.Tracker.Process(new InstanceTimerEvent(start, 600092, 2, start - 768_000, start + 2_832_000));
+        if (o.Cube)
+        {
+            meter.Settings.CubeAlert = true;
+            meter.Tracker.Process(new WorldObjectSeenEvent(start + 8_000, 950_001, 1301199, 0, 0, 0)); // a hidden cube, 12 s in view
+        }
         if (o.Window == "overlay-crowd") fight.FeedCrowd(meter.Tracker, start + 20_000, 124);
         if (o.Window == "history")
             foreach (var entry in meter.History.List().Take(20)) meter.PortraitOf(entry);

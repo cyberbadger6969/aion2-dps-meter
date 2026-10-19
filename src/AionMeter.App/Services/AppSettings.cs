@@ -58,6 +58,9 @@ public sealed class AppSettings
     public bool ShowBossPanel { get; set; } = true;
     /// <summary>The overlay lists only your own row (the toolbar's solo button).</summary>
     public bool SoloMode { get; set; }
+    /// <summary>"Hidden cube nearby" on the overlay while the server has a hidden cube in view. Off by default: unlike the
+    /// meter it points at something the game hides.</summary>
+    public bool CubeAlert { get; set; }
     public int IdleTimeoutSec { get; set; } = 10;
     public int BossIdleTimeoutSec { get; set; } = 30;
 
