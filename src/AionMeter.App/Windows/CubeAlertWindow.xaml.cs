@@ -38,6 +38,22 @@ public partial class CubeAlertWindow : Window
     // Bars count from the quietest the hum has been since the cube came into view, 3 dB a bar; louder on one side by
     // 3 dB or more points that way (flying round a cube swung it 10–15 dB, recording of 2026-10-24).
     private const double BarDb = 3, SideDb = 3;
+    private const double FullSideDb = 10; // this much louder on one side turns the arrow all the way (90°) to it
+    private double _turn = double.NaN;
+
+    /// <summary>Turns the arrow (degrees, clockwise from ahead), smoothly.</summary>
+    private void Turn(double angle)
+    {
+        if (Math.Abs(angle - _turn) < 3) return;
+        var first = double.IsNaN(_turn);
+        _turn = angle;
+        foreach (var r in new[] { ArrowTurn, ArrowTurnBack })
+        {
+            if (first) r.Angle = angle;
+            else r.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty,
+                new System.Windows.Media.Animation.DoubleAnimation(angle, TimeSpan.FromMilliseconds(350)));
+        }
+    }
     private static readonly System.Windows.Media.Brush BarOn = Frozen(0xFF, 0xE7, 0x7C, 0x93);
     private static readonly System.Windows.Media.Brush BarOff = Frozen(0x40, 0xFF, 0xFF, 0xFF);
 
@@ -62,17 +78,18 @@ public partial class CubeAlertWindow : Window
         for (var i = 0; i < bars.Length; i++) bars[i].Fill = i < lit ? BarOn : BarOff;
         if (!hearing.Hearing)
         {
-            ArrowText.Text = "";
+            Arrow.Visibility = Visibility.Collapsed;
             HintText.Text = t.CubeListening;
             return;
         }
-        var (arrow, side) = hearing.BalanceDb switch
+        var side = hearing.BalanceDb switch
         {
-            >= SideDb => ("◀", t.CubeLeft),
-            <= -SideDb => ("▶", t.CubeRight),
-            _ => ("▲", t.CubeAhead),
+            >= SideDb => t.CubeLeft,
+            <= -SideDb => t.CubeRight,
+            _ => t.CubeAhead,
         };
-        ArrowText.Text = arrow;
+        Arrow.Visibility = Visibility.Visible;
+        Turn(-Math.Clamp(hearing.BalanceDb / FullSideDb, -1, 1) * 90);
         var trend = hearing.TrendDb switch
         {
             >= TrendDb => t.CubeWarmer,
