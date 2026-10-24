@@ -58,7 +58,10 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <!-- Warmer / colder: the chime's loudness, the more bars the nearer the cube -->
+                <!-- Which side the cube's hum comes from: ◀ left, ▶ right, ▲ ahead (or behind: stereo cannot tell) -->
+                <TextBlock x:Name="ArrowText" FontFamily="Segoe UI Symbol" FontSize="22" Foreground="#FFE77C93"
+                           VerticalAlignment="Center" Margin="0,0,12,0" />
+                <!-- Warmer / colder: the hum's loudness, the more bars the nearer the cube -->
                 <StackPanel x:Name="Meter" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,14,4">
                     <Rectangle x:Name="Bar1" Width="5" Height="6" RadiusX="1" RadiusY="1" Margin="0,0,3,0" VerticalAlignment="Bottom" />
                     <Rectangle x:Name="Bar2" Width="5" Height="10" RadiusX="1" RadiusY="1" Margin="0,0,3,0" VerticalAlignment="Bottom" />

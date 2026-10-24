@@ -166,14 +166,17 @@ public sealed class UiText
     /// <summary>The hidden cube card: its small title and its line (the clock beside it says how long it has been near).</summary>
     public string CubeTitle { get; init; } = "Hidden cube";
     public string CubeMessage { get; init; } = "Nearby, take a look …";
-    /// <summary>From the cube's chime (the game's sound): which side and whether it grows louder.</summary>
-    public string CubeListening { get; init; } = "listening for its chime …";
-    public string CubeWarmer { get; init; } = "warmer: you are getting closer";
-    public string CubeColder { get; init; } = "colder: you are moving away";
+    /// <summary>From the cube's sound (the game's sound): which side and whether it grows louder.</summary>
+    public string CubeListening { get; init; } = "no game sound — is the game in front?";
+    public string CubeLeft { get; init; } = "on the left";
+    public string CubeRight { get; init; } = "on the right";
+    public string CubeAhead { get; init; } = "ahead or behind";
+    public string CubeWarmer { get; init; } = "warmer";
+    public string CubeColder { get; init; } = "colder";
     public string CubeSteady { get; init; } = "the louder, the closer";
     public string CubeAlert { get; init; } = "Hidden cube hint";
     public string CubeAlertHint { get; init; } =
-        "A card in the middle of the screen while a hidden cube is near — the moment the game chimes for it — read from the game's traffic like everything else. Unlike the meter it points at something the game hides on purpose — use it at your own risk.";
+        "A card in the middle of the screen while a hidden cube is near — the moment the game chimes for it — read from the game's traffic like everything else. Its side and its bars come from the cube's hum, so turn the game's music and ambient sounds off to hear it. Unlike the meter it points at something the game hides on purpose — use it at your own risk.";
     public string SoloWaiting { get; init; } ="Solo: your row appears once you hit something (or after a loading screen, if the meter does not know you yet).";
     public string TopHit { get; init; } = "TOP HIT";
     public string TopHitBy { get; init; } = "Biggest single hit — {0}";
@@ -512,12 +515,15 @@ public sealed class UiText
         TipSolo = "Соло: показывать только вас (место и доля — от всего боя)",
         CubeTitle = "Скрытый куб",
         CubeMessage = "Рядом, осмотритесь …",
-        CubeListening = "слушаю звон …",
-        CubeWarmer = "теплее: вы приближаетесь",
-        CubeColder = "холоднее: вы удаляетесь",
-        CubeSteady = "чем громче звон, тем ближе",
+        CubeListening = "нет звука игры — игра на переднем плане?",
+        CubeLeft = "слева",
+        CubeRight = "справа",
+        CubeAhead = "прямо или позади",
+        CubeWarmer = "теплее",
+        CubeColder = "холоднее",
+        CubeSteady = "чем громче, тем ближе",
         CubeAlert = "Подсказка о скрытых кубах",
-        CubeAlertHint = "Карточка посреди экрана, пока рядом скрытый куб — в тот же момент, когда игра подаёт его звук, — по трафику игры, как и всё остальное. В отличие от метра она указывает на то, что игра прячет специально: используйте на свой риск.",
+        CubeAlertHint = "Карточка посреди экрана, пока рядом скрытый куб — в тот же момент, когда игра подаёт его звук, — по трафику игры, как и всё остальное. Сторону и деления она берёт из гула куба, поэтому музыку и звуки окружения в игре лучше выключить. В отличие от метра она указывает на то, что игра прячет специально: используйте на свой риск.",
         SoloWaiting = "Соло:ваша строка появится после вашего первого удара (или после загрузки экрана, если метр вас ещё не знает).",
         TopHit = "МАКС. УДАР",
         TopHitBy = "Самый сильный удар — {0}",

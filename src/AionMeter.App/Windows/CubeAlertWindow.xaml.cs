@@ -35,8 +35,9 @@ public partial class CubeAlertWindow : Window
     }
 
     private const double TrendDb = 1.5;
-    // The chime's loudness to bars: about −36 dB standing at the cube (recordings of 2026-10-24), 6 dB a bar.
-    private const double NearDb = -36, BarDb = 6;
+    // Bars count from the quietest the hum has been since the cube came into view, 3 dB a bar; louder on one side by
+    // 3 dB or more points that way (flying round a cube swung it 10–15 dB, recording of 2026-10-24).
+    private const double BarDb = 3, SideDb = 3;
     private static readonly System.Windows.Media.Brush BarOn = Frozen(0xFF, 0xE7, 0x7C, 0x93);
     private static readonly System.Windows.Media.Brush BarOff = Frozen(0x40, 0xFF, 0xFF, 0xFF);
 
@@ -55,22 +56,30 @@ public partial class CubeAlertWindow : Window
         TitleText.Text = string.Join(' ', t.CubeTitle.ToUpperInvariant().ToCharArray()) + (count > 1 ? $"  ×{count}" : "");
         MessageText.Text = t.CubeMessage;
         ClockText.Text = Format.ClockShort(nearMs);
-        // The chime is not a 3D sound (walking round a cube keeps it equal in both ears), so it tells no direction —
-        // only how near: it grows louder as you get closer.
-        var lit = hearing.Hearing ? (int)Math.Clamp(Math.Round(5 + (hearing.LevelDb - NearDb) / BarDb), 1, 5) : 0;
+        // The cube hums in 3D: the louder ear is its side, and it grows louder as you get closer.
+        var lit = hearing.Hearing ? (int)Math.Clamp(1 + Math.Round(hearing.RiseDb / BarDb), 1, 5) : 0;
         var bars = new[] { Bar1, Bar2, Bar3, Bar4, Bar5 };
         for (var i = 0; i < bars.Length; i++) bars[i].Fill = i < lit ? BarOn : BarOff;
         if (!hearing.Hearing)
         {
+            ArrowText.Text = "";
             HintText.Text = t.CubeListening;
             return;
         }
-        HintText.Text = hearing.TrendDb switch
+        var (arrow, side) = hearing.BalanceDb switch
+        {
+            >= SideDb => ("◀", t.CubeLeft),
+            <= -SideDb => ("▶", t.CubeRight),
+            _ => ("▲", t.CubeAhead),
+        };
+        ArrowText.Text = arrow;
+        var trend = hearing.TrendDb switch
         {
             >= TrendDb => t.CubeWarmer,
             <= -TrendDb => t.CubeColder,
             _ => t.CubeSteady,
         };
+        HintText.Text = $"{side} · {trend}";
     }
 
     /// <summary>Upper middle of the primary screen, where the game's own toasts are.</summary>
