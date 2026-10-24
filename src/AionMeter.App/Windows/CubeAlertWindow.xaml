@@ -58,16 +58,14 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <!-- Turns toward the chime: straight up = ahead, sideways = to that side, down = behind -->
-                <Grid Width="34" Height="34" Margin="0,0,12,0" VerticalAlignment="Center">
-                    <Ellipse x:Name="ArrowRing" Stroke="#66E77C93" StrokeThickness="1.5" Visibility="Collapsed" />
-                    <Path x:Name="ArrowPath" Data="M17,4 L26,20 L19.5,17.5 L19.5,29 L14.5,29 L14.5,17.5 L8,20 Z" Fill="#FFE9EE"
-                          RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
-                        <Path.RenderTransform>
-                            <RotateTransform x:Name="ArrowTurn" Angle="0" />
-                        </Path.RenderTransform>
-                    </Path>
-                </Grid>
+                <!-- Warmer / colder: the chime's loudness, the more bars the nearer the cube -->
+                <StackPanel x:Name="Meter" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,14,4">
+                    <Rectangle x:Name="Bar1" Width="5" Height="6" RadiusX="1" RadiusY="1" Margin="0,0,3,0" VerticalAlignment="Bottom" />
+                    <Rectangle x:Name="Bar2" Width="5" Height="10" RadiusX="1" RadiusY="1" Margin="0,0,3,0" VerticalAlignment="Bottom" />
+                    <Rectangle x:Name="Bar3" Width="5" Height="14" RadiusX="1" RadiusY="1" Margin="0,0,3,0" VerticalAlignment="Bottom" />
+                    <Rectangle x:Name="Bar4" Width="5" Height="18" RadiusX="1" RadiusY="1" Margin="0,0,3,0" VerticalAlignment="Bottom" />
+                    <Rectangle x:Name="Bar5" Width="5" Height="22" RadiusX="1" RadiusY="1" VerticalAlignment="Bottom" />
+                </StackPanel>
                 <TextBlock x:Name="ClockText" FontFamily="{StaticResource NumberFont}" FontSize="13" Foreground="#C9C0CF"
                            VerticalAlignment="Center" />
             </StackPanel>

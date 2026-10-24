@@ -68,7 +68,7 @@ public static class SampleRenderer
             case "cube":
                 var cube = new CubeAlertWindow { Width = o.Width ?? 420, Height = o.Height ?? 100 };
                 host = cube;
-                refresh = () => cube.Fill(1, 12_000);
+                refresh = () => cube.Fill(1, 12_000, new CubeHearing(true, 0, -42, 2)); // 4 bars, warmer
                 break;
             case "settings":
                 host = new SettingsWindow(meter) { Width = o.Width ?? 640, Height = o.Height ?? 900 };

@@ -168,12 +168,9 @@ public sealed class UiText
     public string CubeMessage { get; init; } = "Nearby, take a look …";
     /// <summary>From the cube's chime (the game's sound): which side and whether it grows louder.</summary>
     public string CubeListening { get; init; } = "listening for its chime …";
-    public string CubeLeft { get; init; } = "to your left";
-    public string CubeRight { get; init; } = "to your right";
-    public string CubeAhead { get; init; } = "ahead";
-    public string CubeBehind { get; init; } = "behind you";
-    public string CubeCloser { get; init; } = "closer";
-    public string CubeFarther { get; init; } = "farther";
+    public string CubeWarmer { get; init; } = "warmer: you are getting closer";
+    public string CubeColder { get; init; } = "colder: you are moving away";
+    public string CubeSteady { get; init; } = "the louder, the closer";
     public string CubeAlert { get; init; } = "Hidden cube hint";
     public string CubeAlertHint { get; init; } =
         "A card in the middle of the screen while a hidden cube is near — the moment the game chimes for it — read from the game's traffic like everything else. Unlike the meter it points at something the game hides on purpose — use it at your own risk.";
@@ -516,12 +513,9 @@ public sealed class UiText
         CubeTitle = "Скрытый куб",
         CubeMessage = "Рядом, осмотритесь …",
         CubeListening = "слушаю звон …",
-        CubeLeft = "левее",
-        CubeRight = "правее",
-        CubeAhead = "прямо",
-        CubeBehind = "позади",
-        CubeCloser = "ближе",
-        CubeFarther = "дальше",
+        CubeWarmer = "теплее: вы приближаетесь",
+        CubeColder = "холоднее: вы удаляетесь",
+        CubeSteady = "чем громче звон, тем ближе",
         CubeAlert = "Подсказка о скрытых кубах",
         CubeAlertHint = "Карточка посреди экрана, пока рядом скрытый куб — в тот же момент, когда игра подаёт его звук, — по трафику игры, как и всё остальное. В отличие от метра она указывает на то, что игра прячет специально: используйте на свой риск.",
         SoloWaiting = "Соло:ваша строка появится после вашего первого удара (или после загрузки экрана, если метр вас ещё не знает).",

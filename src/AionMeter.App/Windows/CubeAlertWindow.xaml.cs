@@ -34,9 +34,18 @@ public partial class CubeAlertWindow : Window
         if (!IsVisible) Show();
     }
 
-    private const double SideDb = 1.5, TrendDb = 1.5;
-    private const double FullSideDb = 9;   // this much louder on one side ≈ the cube is straight to that side
-    private bool _behind;                  // last call: louder as you go means ahead, quieter means it is behind you
+    private const double TrendDb = 1.5;
+    // The chime's loudness to bars: about −36 dB standing at the cube (recordings of 2026-10-24), 6 dB a bar.
+    private const double NearDb = -36, BarDb = 6;
+    private static readonly System.Windows.Media.Brush BarOn = Frozen(0xFF, 0xE7, 0x7C, 0x93);
+    private static readonly System.Windows.Media.Brush BarOff = Frozen(0x40, 0xFF, 0xFF, 0xFF);
+
+    private static System.Windows.Media.Brush Frozen(byte a, byte r, byte g, byte b)
+    {
+        var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(a, r, g, b));
+        brush.Freeze();
+        return brush;
+    }
 
     /// <summary>The card's text: how many cubes, how long they have been near, the chime's side and trend (the render
     /// tool calls this alone).</summary>
@@ -46,34 +55,22 @@ public partial class CubeAlertWindow : Window
         TitleText.Text = string.Join(' ', t.CubeTitle.ToUpperInvariant().ToCharArray()) + (count > 1 ? $"  ×{count}" : "");
         MessageText.Text = t.CubeMessage;
         ClockText.Text = Format.ClockShort(nearMs);
+        // The chime is not a 3D sound (walking round a cube keeps it equal in both ears), so it tells no direction —
+        // only how near: it grows louder as you get closer.
+        var lit = hearing.Hearing ? (int)Math.Clamp(Math.Round(5 + (hearing.LevelDb - NearDb) / BarDb), 1, 5) : 0;
+        var bars = new[] { Bar1, Bar2, Bar3, Bar4, Bar5 };
+        for (var i = 0; i < bars.Length; i++) bars[i].Fill = i < lit ? BarOn : BarOff;
         if (!hearing.Hearing)
         {
-            ArrowPath.Visibility = ArrowRing.Visibility = Visibility.Collapsed;
             HintText.Text = t.CubeListening;
             return;
         }
-
-        // Stereo tells left from right, and how far to the side; it cannot tell ahead from behind. Going on and the chime
-        // growing quieter can: then the cube is behind you.
-        if (hearing.TrendDb >= TrendDb) _behind = false;
-        else if (hearing.TrendDb <= -TrendDb) _behind = true;
-        var side = Math.Clamp(hearing.BalanceDb / FullSideDb, -1, 1) * 90; // + = left
-        ArrowTurn.Angle = _behind ? 180 + side : -side;
-        ArrowPath.Visibility = ArrowRing.Visibility = Visibility.Visible;
-
-        var where = hearing.BalanceDb switch
+        HintText.Text = hearing.TrendDb switch
         {
-            >= SideDb => t.CubeLeft,
-            <= -SideDb => t.CubeRight,
-            _ => _behind ? t.CubeBehind : t.CubeAhead,
+            >= TrendDb => t.CubeWarmer,
+            <= -TrendDb => t.CubeColder,
+            _ => t.CubeSteady,
         };
-        var trend = hearing.TrendDb switch
-        {
-            >= TrendDb => " · " + t.CubeCloser,
-            <= -TrendDb => " · " + t.CubeFarther,
-            _ => "",
-        };
-        HintText.Text = where + trend;
     }
 
     /// <summary>Upper middle of the primary screen, where the game's own toasts are.</summary>
