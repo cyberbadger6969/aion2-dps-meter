@@ -41,6 +41,7 @@ public partial class App : Application
     private MeterService _meter = null!;
     private OverlayWindow _overlay = null!;
     private CubeAlertWindow? _cubeAlert;
+    private readonly CubeSound _cubeSound = new();
     private TrayIcon? _tray;
     private HotkeyManager? _hotkeys;
     private DispatcherTimer? _timer;
@@ -207,7 +208,10 @@ public partial class App : Application
         UpdateAutoVisibility();
         if (_overlay.IsVisible) _overlay.Refresh();
         // The hidden cube card lives on its own, whether the overlay is up or not.
-        _cubeAlert?.Update(_meter.Settings.CubeHintOn ? _meter.Tracker.HiddenCubes() : null, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        // Its chime is listened to only while a cube is in view: that is when it rings, and nothing else is heard.
+        var cubes = _meter.Settings.CubeHintOn ? _meter.Tracker.HiddenCubes() : null;
+        _cubeSound.Run(cubes is not null);
+        _cubeAlert?.Update(cubes, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), _cubeSound.Current);
         if (++_ticks % 5 == 0)
         {
             _tray?.Update(_overlay.IsVisible, _meter.Settings.ClickThrough, _meter.DemoRunning ? "demo" : _meter.CaptureStatus.Message);

@@ -4,6 +4,12 @@
     <ProjectReference Include="..\AionMeter.Core\AionMeter.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Listening to what the PC plays (WASAPI loopback) for the hidden cube's chime; MIT licence -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <PackageReference Include="NAudio.Core" Version="2.2.1" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>

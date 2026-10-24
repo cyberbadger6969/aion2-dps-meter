@@ -53,10 +53,24 @@
                         <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.9" Color="Black" />
                     </TextBlock.Effect>
                 </TextBlock>
+                <!-- From the chime: which side, nearer or farther -->
+                <TextBlock x:Name="HintText" FontSize="12" Foreground="#E8B6C1" Margin="0,2,0,0" />
             </StackPanel>
 
-            <TextBlock x:Name="ClockText" Grid.Column="2" FontFamily="{StaticResource NumberFont}" FontSize="13" Foreground="#C9C0CF"
-                       VerticalAlignment="Center" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Turns toward the chime: straight up = ahead, sideways = to that side, down = behind -->
+                <Grid Width="34" Height="34" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <Ellipse x:Name="ArrowRing" Stroke="#66E77C93" StrokeThickness="1.5" Visibility="Collapsed" />
+                    <Path x:Name="ArrowPath" Data="M17,4 L26,20 L19.5,17.5 L19.5,29 L14.5,29 L14.5,17.5 L8,20 Z" Fill="#FFE9EE"
+                          RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="ArrowTurn" Angle="0" />
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+                <TextBlock x:Name="ClockText" FontFamily="{StaticResource NumberFont}" FontSize="13" Foreground="#C9C0CF"
+                           VerticalAlignment="Center" />
+            </StackPanel>
         </Grid>
     </Border>
 </Window>
