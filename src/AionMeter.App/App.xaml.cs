@@ -100,6 +100,16 @@ public partial class App : Application
         var settings = AppSettings.Load();
         settings.Save(); // persist any migration done while loading
         UiText.Use(settings.Language);
+
+        // Since 2026-10-27 the game's anti-cheat appears to close the game while the meter runs: say so at every start,
+        // before anything is captured, and leave unless the player chooses to go on.
+        if (MessageBox.Show(UiText.Current.AnticheatWarning, AppInfo.Name, MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                MessageBoxResult.No) != MessageBoxResult.Yes)
+        {
+            Log.Info("Anti-cheat warning: the player chose not to run the meter");
+            Shutdown();
+            return;
+        }
         Func<Core.Game.GameData, IEventSource> factory = data => new LiveCapture(data, new LiveCaptureOptions
         {
             DeviceName = settings.CaptureDevice,

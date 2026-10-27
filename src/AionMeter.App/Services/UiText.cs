@@ -174,6 +174,8 @@ public sealed class UiText
     public string CubeWarmer { get; init; } = "warmer";
     public string CubeColder { get; init; } = "colder";
     public string CubeSteady { get; init; } = "the louder, the closer";
+    public string AnticheatWarning { get; init; } =
+        "Warning: since 27 October 2026 the AION 2 anti-cheat (NCGuard) appears to close the game about 8 minutes after it starts while this meter is running. An account ban cannot be ruled out.\n\nWe recommend not using the meter until this is cleared up.\n\nRun the meter anyway, at your own risk?\nYes — run it.  No — exit.";
     public string SafeMode { get; init; } = "Safe mode: an ordinary window, not an overlay";
     public string SafeModeHint { get; init; } =
         "The meter becomes a normal window with a frame and a taskbar button: not kept above the game, never see-through or click-through, and the hidden cube hint stays off. Put it on a second monitor or Alt+Tab to it. Saving restarts the meter.";
@@ -525,6 +527,7 @@ public sealed class UiText
         CubeWarmer = "теплее",
         CubeColder = "холоднее",
         CubeSteady = "чем громче, тем ближе",
+        AnticheatWarning = "Внимание: с 27 октября 2026 года античит AION 2 (NCGuard), судя по всему, закрывает игру примерно через 8 минут после запуска, если работает этот метр. Бан аккаунта тоже исключать нельзя.\n\nРекомендуем не пользоваться метром, пока это не выяснится.\n\nЗапустить метр всё равно, на свой риск?\nДа — запустить.  Нет — выйти.",
         SafeMode = "Безопасный режим: обычное окно вместо оверлея",
         SafeModeHint = "Метр становится обычным окном с рамкой и кнопкой на панели задач: не висит поверх игры, не бывает прозрачным и не пропускает клики, а подсказка о кубах выключена. Держите его на втором мониторе или переключайтесь Alt+Tab. После сохранения метр перезапустится.",
         CubeAlert = "Подсказка о скрытых кубах",
