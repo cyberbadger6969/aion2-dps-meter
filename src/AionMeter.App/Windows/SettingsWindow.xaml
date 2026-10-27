@@ -79,6 +79,9 @@
                     <Border Style="{StaticResource Section}">
                         <StackPanel>
                             <TextBlock Text="{Binding SecOverlay, Source={x:Static s:UiText.Current}}" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="SafeMode" Style="{StaticResource DarkCheck}"
+                                      Content="{Binding SafeMode, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding SafeModeHint, Source={x:Static s:UiText.Current}}" />
                             <CheckBox x:Name="BarsRelative" Style="{StaticResource DarkCheck}"
                                       Content="{Binding BarsRelative, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding BarsRelativeHint, Source={x:Static s:UiText.Current}}" />

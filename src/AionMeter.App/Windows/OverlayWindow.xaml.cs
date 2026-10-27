@@ -37,6 +37,7 @@ public partial class OverlayWindow : Window
         InitializeComponent();
         _settings.BackgroundOpacity = opacity;
         DataContext = _vm;
+        if (_settings.SafeMode) UsePlainWindow();
 
         Left = _settings.OverlayLeft;
         Top = _settings.OverlayTop;
@@ -75,14 +76,27 @@ public partial class OverlayWindow : Window
         SourceInitialized += (_, _) =>
         {
             _hwnd = new WindowInteropHelper(this).Handle;
-            // Clicking the overlay must never pull keyboard focus away from the game window.
-            NativeMethods.SetExStyle(_hwnd, NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW);
+            // Clicking the overlay must never pull keyboard focus away from the game window (in safe mode it is an
+            // ordinary window and behaves like one).
+            if (!_settings.SafeMode) NativeMethods.SetExStyle(_hwnd, NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW);
             ApplyClickThrough();
             FitToMonitor();
         };
     }
 
     public nint Handle => _hwnd;
+
+    /// <summary>Safe mode: an ordinary app window — framed, in the taskbar, opaque, not kept on top — not a see-through
+    /// layer over the game. Set before the window first shows (transparency cannot change after that).</summary>
+    private void UsePlainWindow()
+    {
+        AllowsTransparency = false;
+        WindowStyle = WindowStyle.SingleBorderWindow;
+        ResizeMode = ResizeMode.CanResize;
+        Topmost = false;
+        ShowInTaskbar = true; // still shown without taking the focus: a fight bringing it up must not pull it off the game
+        Background = new SolidColorBrush(Color.FromRgb(0x0B, 0x0F, 0x17));
+    }
 
     /// <summary>Called by the app's UI timer (≈5 Hz).</summary>
     public void Refresh()
@@ -268,9 +282,9 @@ public partial class OverlayWindow : Window
     private void ApplyClickThrough()
     {
         if (_hwnd == 0) return;
-        if (_settings.ClickThrough) NativeMethods.SetExStyle(_hwnd, NativeMethods.WS_EX_TRANSPARENT);
+        if (_settings.ClickThrough && !_settings.SafeMode) NativeMethods.SetExStyle(_hwnd, NativeMethods.WS_EX_TRANSPARENT);
         else NativeMethods.SetExStyle(_hwnd, 0, NativeMethods.WS_EX_TRANSPARENT);
-        Frame.BorderBrush = _settings.ClickThrough ? (Brush)FindResource("Line") : (Brush)FindResource("CardFrame");
+        Frame.BorderBrush = _settings.ClickThrough && !_settings.SafeMode ? (Brush)FindResource("Line") : (Brush)FindResource("CardFrame");
     }
 
     private void ApplyLock()

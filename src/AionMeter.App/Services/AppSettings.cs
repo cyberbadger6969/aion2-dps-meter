@@ -66,9 +66,16 @@ public sealed class AppSettings
     /// <summary>The cube hint was unlocked with its code (Settings в†’ Code); until then it is hidden and off.</summary>
     public bool CubeUnlocked { get; set; }
 
-    /// <summary>The cube hint is on: unlocked, and ticked.</summary>
+    /// <summary>
+    /// Safe mode: the meter is an ordinary window (frame, taskbar button, not kept above other windows, never
+    /// see-through or click-through) instead of a layer over the game, and the hidden cube hint is off whatever its box
+    /// says. Takes effect when the app starts (Settings restarts it).
+    /// </summary>
+    public bool SafeMode { get; set; }
+
+    /// <summary>The cube hint is on: unlocked, ticked, and not in safe mode.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public bool CubeHintOn => CubeUnlocked && CubeAlert;
+    public bool CubeHintOn => CubeUnlocked && CubeAlert && !SafeMode;
 
     // SHA-256 of the cube hint's codes (the codes themselves are not in the source): the owner's, and one to hand out.
     private static readonly string[] CubeCodeHashes =

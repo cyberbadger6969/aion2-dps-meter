@@ -174,6 +174,9 @@ public sealed class UiText
     public string CubeWarmer { get; init; } = "warmer";
     public string CubeColder { get; init; } = "colder";
     public string CubeSteady { get; init; } = "the louder, the closer";
+    public string SafeMode { get; init; } = "Safe mode: an ordinary window, not an overlay";
+    public string SafeModeHint { get; init; } =
+        "The meter becomes a normal window with a frame and a taskbar button: not kept above the game, never see-through or click-through, and the hidden cube hint stays off. Put it on a second monitor or Alt+Tab to it. Saving restarts the meter.";
     public string CubeAlert { get; init; } = "Hidden cube hint";
     public string CubeAlertHint { get; init; } =
         "A card in the middle of the screen while a hidden cube is near — the moment the game chimes for it — read from the game's traffic like everything else. Its side and its bars come from the cube's hum, so turn the game's music and ambient sounds off to hear it. Unlike the meter it points at something the game hides on purpose — use it at your own risk.";
@@ -522,6 +525,8 @@ public sealed class UiText
         CubeWarmer = "теплее",
         CubeColder = "холоднее",
         CubeSteady = "чем громче, тем ближе",
+        SafeMode = "Безопасный режим: обычное окно вместо оверлея",
+        SafeModeHint = "Метр становится обычным окном с рамкой и кнопкой на панели задач: не висит поверх игры, не бывает прозрачным и не пропускает клики, а подсказка о кубах выключена. Держите его на втором мониторе или переключайтесь Alt+Tab. После сохранения метр перезапустится.",
         CubeAlert = "Подсказка о скрытых кубах",
         CubeAlertHint = "Карточка посреди экрана, пока рядом скрытый куб — в тот же момент, когда игра подаёт его звук, — по трафику игры, как и всё остальное. Сторону и деления она берёт из гула куба, поэтому музыку и звуки окружения в игре лучше выключить. В отличие от метра она указывает на то, что игра прячет специально: используйте на свой риск.",
         SoloWaiting = "Соло:ваша строка появится после вашего первого удара (или после загрузки экрана, если метр вас ещё не знает).",

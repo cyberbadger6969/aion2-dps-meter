@@ -111,7 +111,6 @@ public partial class App : Application
         _meter.StartCapture();
 
         _overlay = new OverlayWindow(_meter);
-        _cubeAlert = new CubeAlertWindow();
         if (settings.OverlayVisible || e.Args.Contains("--show")) _overlay.Show(); // --show: this run only, not saved
         else
         {
@@ -211,6 +210,8 @@ public partial class App : Application
         // Its chime is listened to only while a cube is in view: that is when it rings, and nothing else is heard.
         var cubes = _meter.Settings.CubeHintOn ? _meter.Tracker.HiddenCubes() : null;
         _cubeSound.Run(cubes is not null);
+        // The card's window is made the first time a cube shows up: with the hint off it never exists.
+        if (cubes is not null) _cubeAlert ??= new CubeAlertWindow();
         _cubeAlert?.Update(cubes, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), _cubeSound.Current);
         if (++_ticks % 5 == 0)
         {
@@ -326,6 +327,7 @@ public partial class App : Application
 
     private void ToggleClickThrough()
     {
+        if (_meter.Settings.SafeMode) return; // an ordinary window: always takes the mouse
         var on = !_meter.Settings.ClickThrough;
         _overlay.SetClickThrough(on);
         _tray?.ShowBalloon(AppInfo.Name, on
@@ -399,7 +401,7 @@ public partial class App : Application
             Activate(_timersWindow);
             return;
         }
-        _timersWindow = new BossTimersWindow(_meter);
+        _timersWindow = new BossTimersWindow(_meter) { Topmost = !_meter.Settings.SafeMode };
         _timersWindow.Closed += (_, _) => _timersWindow = null;
         _timersWindow.Show();
     }
@@ -550,6 +552,19 @@ public partial class App : Application
                 _tray?.ShowBalloon(AppInfo.Name, string.Format(t.UpdateCheckFailed, _meter.Updates.LastError));
                 break;
         }
+    }
+
+    /// <summary>Starts a fresh copy of the app and closes this one (safe mode changes the overlay's window kind, which
+    /// only a new window can take).</summary>
+    public void RestartApp()
+    {
+        Log.Info("Restarting the app (safe mode changed)");
+        _singleInstance?.ReleaseMutex();
+        _singleInstance?.Dispose();
+        _singleInstance = null;
+        if (Environment.ProcessPath is { } exe)
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "--show") { UseShellExecute = false });
+        Shutdown();
     }
 
     public void OnSettingsChanged()

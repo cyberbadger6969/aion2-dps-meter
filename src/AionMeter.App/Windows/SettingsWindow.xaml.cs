@@ -43,6 +43,7 @@ public partial class SettingsWindow : Window
     private void Load()
     {
         var s = _meter.Settings;
+        SafeMode.IsChecked = s.SafeMode;
         BarsRelative.IsChecked = s.BarsRelativeToTop;
         ShowBoss.IsChecked = s.ShowBossPanel;
         ShowGear.IsChecked = s.ShowGear;
@@ -100,7 +101,9 @@ public partial class SettingsWindow : Window
     {
         var s = _meter.Settings;
         var captureChanged = false;
+        var safeModeChanged = (SafeMode.IsChecked == true) != s.SafeMode;
 
+        s.SafeMode = SafeMode.IsChecked == true;
         s.BarsRelativeToTop = BarsRelative.IsChecked == true;
         s.ShowBossPanel = ShowBoss.IsChecked == true;
         s.ShowGear = ShowGear.IsChecked == true;
@@ -137,6 +140,11 @@ public partial class SettingsWindow : Window
         Close();
         AppHost.Current.OnSettingsChanged();
         if (language != UiText.Normalize(s.Language)) AppHost.Current.SetLanguage(language);
+        if (safeModeChanged)
+        {
+            s.Save();
+            AppHost.Current.RestartApp();
+        }
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
