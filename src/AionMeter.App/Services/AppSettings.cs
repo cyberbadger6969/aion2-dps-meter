@@ -58,8 +58,10 @@ public sealed class AppSettings
     public bool ShowBossPanel { get; set; } = true;
     /// <summary>The overlay lists only your own row (the toolbar's solo button).</summary>
     public bool SoloMode { get; set; }
-    /// <summary>"Hidden cube nearby" on the overlay while the server has a hidden cube in view. Off by default: unlike the
-    /// meter it points at something the game hides.</summary>
+    /// <summary>The hidden cube card (and listening to the game's sound for it) while the server has a hidden cube in
+    /// view. Off unless ticked — unlocking does not tick it: unlike the meter it points at something the game hides.
+    /// Stored as "CubeSearch" since 0.2.12, so every copy starts with it off again.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("CubeSearch")]
     public bool CubeAlert { get; set; }
     /// <summary>The cube hint was unlocked with its code (Settings в†’ Code); until then it is hidden and off.</summary>
     public bool CubeUnlocked { get; set; }

@@ -347,7 +347,7 @@ public sealed class UiText
     public string RecordHint { get; init; } = "Recordings contain your own game traffic only, including character names. Keep them private.";
     public string UnlockCode { get; init; } = "Code";
     public string UnlockApply { get; init; } = "Apply";
-    public string UnlockOk { get; init; } = "Unlocked: the hidden cube hint is in Overlay, above.";
+    public string UnlockOk { get; init; } = "Unlocked: the hidden cube hint is in Overlay, above — off until you tick it.";
     public string UnlockBad { get; init; } = "Wrong code.";
     public string StatusPrefix { get; init; } = "Status: ";
     public string NpcapMissing { get; init; } = "Npcap not installed";
@@ -698,7 +698,7 @@ public sealed class UiText
         RecordHint = "В записи только ваш игровой трафик, включая ники. Не публикуйте их.",
         UnlockCode = "Код",
         UnlockApply = "Применить",
-        UnlockOk = "Открыто: подсказка о скрытых кубах — выше, в разделе «Оверлей».",
+        UnlockOk = "Открыто: подсказка о скрытых кубах — выше, в разделе «Оверлей»; она выключена, пока не поставите галочку.",
         UnlockBad = "Неверный код.",
         StatusPrefix = "Статус: ",
         NpcapMissing = "Npcap не установлен",

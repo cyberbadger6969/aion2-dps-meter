@@ -23,7 +23,8 @@ public partial class SettingsWindow : Window
         Closed += (_, _) => AppHost.Current.PreviewRowSize(_meter.Settings.RowSize);
     }
 
-    /// <summary>The code opens the hidden cube hint for good (kept in the settings right away).</summary>
+    /// <summary>The code opens the hidden cube hint for good (kept in the settings right away); it stays off until its
+    /// box is ticked.</summary>
     private void Unlock_Click(object sender, RoutedEventArgs e)
     {
         var s = _meter.Settings;
@@ -31,9 +32,7 @@ public partial class SettingsWindow : Window
         if (ok && !s.CubeUnlocked)
         {
             s.CubeUnlocked = true;
-            s.CubeAlert = true;
             s.Save();
-            CubeAlert.IsChecked = true;
         }
         CubePanel.Visibility = s.CubeUnlocked ? Visibility.Visible : Visibility.Collapsed;
         UnlockState.Text = ok ? UiText.Current.UnlockOk : UiText.Current.UnlockBad;
