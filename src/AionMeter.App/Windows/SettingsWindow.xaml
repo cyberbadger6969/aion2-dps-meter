@@ -90,6 +90,9 @@
                             <CheckBox x:Name="ShowGear" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
                                       Content="{Binding ShowGear, Source={x:Static s:UiText.Current}}" />
                             <TextBlock Style="{StaticResource Hint}" Text="{Binding ShowGearHint, Source={x:Static s:UiText.Current}}" />
+                            <CheckBox x:Name="TwoLineRows" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"
+                                      Content="{Binding TwoLineRows, Source={x:Static s:UiText.Current}}" />
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding TwoLineRowsHint, Source={x:Static s:UiText.Current}}" />
                             <!-- Shown only once unlocked with its code (Capture в†’ Code) -->
                             <StackPanel x:Name="CubePanel" Visibility="Collapsed">
                                 <CheckBox x:Name="CubeAlert" Style="{StaticResource DarkCheck}" Margin="0,6,0,0"

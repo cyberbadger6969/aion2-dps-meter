@@ -47,6 +47,7 @@ public partial class SettingsWindow : Window
         BarsRelative.IsChecked = s.BarsRelativeToTop;
         ShowBoss.IsChecked = s.ShowBossPanel;
         ShowGear.IsChecked = s.ShowGear;
+        TwoLineRows.IsChecked = s.TwoLineRows;
         CubeAlert.IsChecked = s.CubeAlert;
         CubePanel.Visibility = s.CubeUnlocked ? Visibility.Visible : Visibility.Collapsed;
         AutoShow.IsChecked = s.AutoShow;
@@ -107,6 +108,7 @@ public partial class SettingsWindow : Window
         s.BarsRelativeToTop = BarsRelative.IsChecked == true;
         s.ShowBossPanel = ShowBoss.IsChecked == true;
         s.ShowGear = ShowGear.IsChecked == true;
+        s.TwoLineRows = TwoLineRows.IsChecked == true;
         s.CubeAlert = CubeAlert.IsChecked == true;
         s.AutoShow = AutoShow.IsChecked == true;
         if (int.TryParse(AutoHideSeconds.Text, out var autoHide)) s.AutoHideSeconds = Math.Clamp(autoHide, 0, 3600);

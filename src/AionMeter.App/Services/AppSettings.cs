@@ -55,6 +55,9 @@ public sealed class AppSettings
     public int RowSize { get; set; } = 100;
     /// <summary>Gear score and combat power after the names in the overlay (when the party roster gave them).</summary>
     public bool ShowGear { get; set; } = true;
+    /// <summary>Two lines per player: the name alone on the first, gear score / combat power and the damage figures on
+    /// the second — readable on a narrow overlay, where one line cuts the names short.</summary>
+    public bool TwoLineRows { get; set; } = true;
     public bool ShowBossPanel { get; set; } = true;
     /// <summary>The overlay lists only your own row (the toolbar's solo button).</summary>
     public bool SoloMode { get; set; }

@@ -48,6 +48,7 @@ public partial class OverlayWindow : Window
         OpacitySlider.Value = _settings.BackgroundOpacity;
         FrameBackground.Opacity = _settings.BackgroundOpacity;
         ApplyLock();
+        ApplyRowLayout();
         ApplyRowSize(_settings.RowSize);
         UpdateModeLabel();
         ApplyHotkeyTips();
@@ -205,9 +206,14 @@ public partial class OverlayWindow : Window
     {
         OpacitySlider.Value = _settings.BackgroundOpacity;
         FrameBackground.Opacity = _settings.BackgroundOpacity;
+        ApplyRowLayout();
         ApplyRowSize(_settings.RowSize);
         UpdateModeLabel();
     }
+
+    /// <summary>One line per player, or two (Settings → "Two lines per player").</summary>
+    private void ApplyRowLayout() =>
+        RowsList.ItemTemplate = (DataTemplate)FindResource(_settings.TwoLineRows ? "RowTemplateTwoLine" : "RowTemplate");
 
     /// <summary>
     /// Row size in percent of the original. The height follows it exactly; text, emblems and the number columns shrink
@@ -217,18 +223,19 @@ public partial class OverlayWindow : Window
     {
         var k = Math.Clamp(percent, AppSettings.MinRowSize, AppSettings.MaxRowSize) / 100.0;
         var f = Math.Sqrt(k);
-        var height = Math.Round(28 * k);
+        var two = _settings.TwoLineRows;
+        var height = Math.Round((two ? 42 : 28) * k);
         Resources["RowHeight"] = height;
         Resources["RowMargin"] = new Thickness(0, 0, 0, Math.Max(1, Math.Round(3 * k)));
         Resources["RowNameFont"] = Math.Round(13.5 * f, 1);
         Resources["RowGearFont"] = Math.Round(12 * f, 1);
         Resources["RowNumberFont"] = Math.Round(13.5 * f, 1);
         Resources["RowSubFont"] = Math.Round(12 * f, 1);
-        Resources["RowGlyphSize"] = Math.Min(Math.Round(20 * f), height - 4);
+        Resources["RowGlyphSize"] = Math.Min(Math.Round((two ? 26 : 20) * f), height - 4);
         Resources["RowRankFont"] = Math.Round(11 * f, 1);
         Resources["RowAccentWidth"] = Math.Max(2, Math.Round(3 * f));
         Resources["ColRankWidth"] = new GridLength(Math.Round(20 * f));
-        Resources["ColGlyphWidth"] = new GridLength(Math.Round(26 * f));
+        Resources["ColGlyphWidth"] = new GridLength(Math.Round((two ? 32 : 26) * f));
         Resources["ColGap"] = new Thickness(Math.Round(10 * f), 0, 0, 0);
     }
 
@@ -243,7 +250,7 @@ public partial class OverlayWindow : Window
     /// </summary>
     private void FitNames()
     {
-        if (ColumnLabels.ActualWidth <= 0) return;
+        if (_settings.TwoLineRows || ColumnLabels.ActualWidth <= 0) return; // two lines: the name column is simply "*"
         var columns = ColumnLabels.ColumnDefinitions;
         double others = 0;
         for (var i = 0; i < columns.Count; i++)

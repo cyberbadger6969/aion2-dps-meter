@@ -248,6 +248,77 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+
+        <!-- The same player on two lines (Settings → "Two lines per player"): the name alone on the first, with the DPS;
+             gear score / combat power and total damage · share on the second, smaller. The name gets all the width the
+             DPS leaves, so a narrow overlay no longer cuts it short. -->
+        <DataTemplate x:Key="RowTemplateTwoLine" DataType="{x:Type vm:RowViewModel}">
+            <Grid Height="{DynamicResource RowHeight}" Margin="{DynamicResource RowMargin}" Cursor="Hand" ToolTip="{Binding Tooltip}"
+                  Background="Transparent" MouseLeftButtonUp="Row_Click" MouseRightButtonUp="Row_RightClick">
+                <Border x:Name="Track" CornerRadius="5" Background="#14FFFFFF" />
+                <Border CornerRadius="5" Background="{Binding FillBrush}" RenderTransformOrigin="0,0.5">
+                    <Border.RenderTransform>
+                        <ScaleTransform ScaleX="{Binding Fill}" />
+                    </Border.RenderTransform>
+                </Border>
+                <Border Width="{DynamicResource RowAccentWidth}" HorizontalAlignment="Left" CornerRadius="5,0,0,5" Background="{Binding AccentBrush}" />
+                <Border CornerRadius="5" BorderThickness="1" BorderBrush="#B3F2C25A"
+                        Visibility="{Binding IsSelf, Converter={StaticResource VisibleIf}}" />
+
+                <Grid Margin="8,0,10,0" Effect="{StaticResource TextShadow}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{DynamicResource ColRankWidth}" />
+                        <ColumnDefinition Width="{DynamicResource ColGlyphWidth}" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{Binding RankText}" FontFamily="{StaticResource NumberFont}" FontSize="{DynamicResource RowRankFont}"
+                               FontWeight="Bold" Foreground="{Binding RankColor}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <c:ClassGlyph Grid.Column="1" Class="{Binding Class}" OnBar="True" Width="{DynamicResource RowGlyphSize}"
+                                  Height="{DynamicResource RowGlyphSize}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="4,0,8,0">
+                        <TextBlock x:Name="NameText2" Text="{Binding Name}" FontSize="{DynamicResource RowNameFont}" FontWeight="SemiBold"
+                                   Foreground="White" TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,10,0" Visibility="{Binding HasGearScore, Converter={StaticResource VisibleIf}}"
+                                        ToolTip="{Binding DataContext.T.TipGs, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,2,3,0">
+                                    <Path Data="M12,2 L20,5 L20,11 C20,16 16.5,20 12,22 C7.5,20 4,16 4,11 L4,5 Z" Fill="#FFD873" />
+                                </Viewbox>
+                                <TextBlock Style="{StaticResource GearText}" Margin="0" Text="{Binding GearScore, Mode=OneWay}" Foreground="#FFD873" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding HasCombatPower, Converter={StaticResource VisibleIf}}"
+                                        ToolTip="{Binding DataContext.T.TipCp, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,2,3,0">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Stroke="#5BDCFF" StrokeThickness="3.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M4,2 L17,15 M20,2 L7,15" />
+                                        <Path Stroke="#5BDCFF" StrokeThickness="2.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M17,15 L22,20 M7,15 L2,20 M14,18.5 L19,13.5 M10,18.5 L5,13.5" />
+                                    </Canvas>
+                                </Viewbox>
+                                <TextBlock Style="{StaticResource GearText}" Margin="0" Text="{Binding CombatPower, Mode=OneWay}" Foreground="#5BDCFF" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding Dps}" Style="{StaticResource RowNumber}" Margin="0" />
+                        <TextBlock Style="{StaticResource RowSub}" Margin="0,1,0,0"><Run Text="{Binding Damage, Mode=OneWay}" /><Run Text=" · " Foreground="#8A93A6" /><Run Text="{Binding Share, Mode=OneWay}" /></TextBlock>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+            <DataTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Track" Property="Background" Value="#26FFFFFF" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsSelf}" Value="True">
+                    <Setter TargetName="NameText2" Property="Foreground" Value="{StaticResource SelfGold}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Margin="8">
@@ -379,7 +450,7 @@
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
                               Padding="8,0,7,0" Margin="-8,0,-7,0" PreviewMouseWheel="Rows_PreviewMouseWheel">
-                    <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False" />
+                    <ItemsControl x:Name="RowsList" ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource RowTemplate}" Focusable="False" />
                 </ScrollViewer>
                 <TextBlock Grid.RowSpan="2" Text="{Binding T.EmptyParty}" FontSize="12"
                            Foreground="#6B7590" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"
