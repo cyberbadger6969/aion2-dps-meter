@@ -207,11 +207,31 @@
                                Foreground="White" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="2,0,0,1"
                                MaxWidth="{DynamicResource NameMaxWidth}" />
 
-                    <!-- Gear score and combat power, right by the name: only players of your party have them (the party roster) -->
-                    <TextBlock Grid.Column="3" Style="{StaticResource GearText}" Visibility="{Binding HasGearScore, Converter={StaticResource VisibleIf}}"
-                               ToolTip="{Binding DataContext.T.TipGs, RelativeSource={RelativeSource AncestorType=Window}}"><Run Text="GS " FontWeight="SemiBold" Foreground="#D5DAE4" /><Run Text="{Binding GearScore, Mode=OneWay}" Foreground="#FFD873" /></TextBlock>
-                    <TextBlock Grid.Column="4" Style="{StaticResource GearText}" Visibility="{Binding HasCombatPower, Converter={StaticResource VisibleIf}}"
-                               ToolTip="{Binding DataContext.T.TipCp, RelativeSource={RelativeSource AncestorType=Window}}"><Run Text="CP " FontWeight="SemiBold" Foreground="#D5DAE4" /><Run Text="{Binding CombatPower, Mode=OneWay}" Foreground="#8FDBFF" /></TextBlock>
+                    <!-- Gear score and combat power, right by the name, the way the game shows them: a small glyph and the
+                         figure — a gold shield for the gear score, cyan crossed swords for the combat power. Only players of
+                         your party have them (the party roster). -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Visibility="{Binding HasGearScore, Converter={StaticResource VisibleIf}}"
+                                ToolTip="{Binding DataContext.T.TipGs, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,0,3,0">
+                            <Path Data="M12,2 L20,5 L20,11 C20,16 16.5,20 12,22 C7.5,20 4,16 4,11 L4,5 Z" Fill="#FFD873" />
+                        </Viewbox>
+                        <TextBlock Style="{StaticResource GearText}" Margin="0,0,0,1" Text="{Binding GearScore, Mode=OneWay}" Foreground="#FFD873" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Visibility="{Binding HasCombatPower, Converter={StaticResource VisibleIf}}"
+                                ToolTip="{Binding DataContext.T.TipCp, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,0,3,0">
+                            <Canvas Width="24" Height="24">
+                                <!-- two blades crossing, each with a guard and a grip at its foot -->
+                                <Path Stroke="#5BDCFF" StrokeThickness="2.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Data="M5,3 L16.5,14.5 M19,3 L7.5,14.5" />
+                                <Path Stroke="#5BDCFF" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Data="M16.5,14.5 L21,19 M7.5,14.5 L3,19 M14,17.5 L18,13.5 M10,17.5 L6,13.5" />
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Style="{StaticResource GearText}" Margin="0,0,0,1" Text="{Binding CombatPower, Mode=OneWay}" Foreground="#5BDCFF" />
+                    </StackPanel>
 
                     <TextBlock Grid.Column="6" Text="{Binding Dps}" Style="{StaticResource RowNumber}" />
                     <TextBlock Grid.Column="7" Text="{Binding Damage}" Style="{StaticResource RowSub}" />
