@@ -198,9 +198,9 @@ GitHub, и ставит его в спокойный момент — сразу
 
 ```
 Npcap (loopback / NIC) ─► PacketPipeline ─► TcpReassembler ─► FrameDecoder ─► PacketParser ─► CombatTracker ─► UI
-   поиск соединения        поток по         порядок, дыры      varint-кадры,     опкоды →         сегменты боя,
-   AION2.exe в TCP-        «пульсу»                            LZ4-бандлы        события          босс, вайп, DPS
-   таблице Windows         0E 00 36
+   слушает все адаптеры;   поток по         порядок, дыры      varint-кадры,     опкоды →         сегменты боя,
+   к процессу игры не      «пульсу»                            LZ4-бандлы        события          босс, вайп, DPS
+   обращается вовсе        0E 00 36
 ```
 
 - `src/AionMeter.Core` — захват, протокол, движок боя, история (без UI)
@@ -212,7 +212,6 @@ Npcap (loopback / NIC) ─► PacketPipeline ─► TcpReassembler ─► FrameD
 ### aionmeter-cli
 
 ```bash
-aionmeter-cli conns                       # процесс игры и его соединения
 aionmeter-cli live 60 --record            # живой захват + запись в captures/*.pcap
 aionmeter-cli replay captures/x.pcap --boss --lang ru
 aionmeter-cli dump captures/x.pcap 0438   # сырые пакеты урона

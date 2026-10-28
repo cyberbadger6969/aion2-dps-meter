@@ -1,4 +1,3 @@
-using System.Net;
 using AionMeter.Core.Events;
 using AionMeter.Core.Game;
 using PacketDotNet;
@@ -9,7 +8,7 @@ namespace AionMeter.Core.Capture;
 
 public sealed class LiveCaptureOptions
 {
-    /// <summary>Npcap device name to force (e.g. a VPN adapter). Null = pick automatically from the game's connections.</summary>
+    /// <summary>Npcap device name to force (e.g. a VPN adapter). Null = listen on every adapter.</summary>
     public string? DeviceName { get; set; }
 
     /// <summary>When set, every captured game packet is also written to a .pcap file in this folder.</summary>
@@ -17,20 +16,30 @@ public sealed class LiveCaptureOptions
 }
 
 /// <summary>
-/// Passive capture of the AION 2 connection through Npcap. It looks up the game's own TCP connections in the
-/// Windows TCP table, opens only the adapter that carries them (the loopback adapter when a ping accelerator relays
-/// the game locally) and filters to those servers. Nothing is ever sent or injected.
+/// Passive capture of the AION 2 connection through Npcap. It listens on every network adapter (the loopback one
+/// included: a ping accelerator relays the game locally) and recognises the game's stream by the game's own
+/// heartbeats, like any other meter does; once found, the kernel filter narrows to that server, and widens again when
+/// the stream goes quiet (a loading screen can move the game to another server). It never looks at the game process,
+/// its memory or the system's connection table, and nothing is ever sent or injected.
 /// </summary>
 public sealed class LiveCapture : IEventSource
 {
+    private const string Broad = "tcp";
+    private const long QuietMs = 5_000;        // no game data for this long: the stream may have moved, listen wide again
+    private const long RetryFailedMs = 60_000; // an adapter that would not open is tried again this often
+    private const int KernelBufferBytes = 16 * 1024 * 1024;
+
     private readonly LiveCaptureOptions _options;
     private readonly PacketPipeline _pipeline;
-    private readonly object _gate = new();
+    private readonly object _gate = new();     // the adapters and the recorder
+    private readonly object _pipeGate = new(); // the pipeline: every open adapter delivers on its own thread
+    private readonly List<LibPcapLiveDevice> _devices = new();
+    private readonly Dictionary<string, long> _failed = new(); // adapter name → when it last refused to open
     private CancellationTokenSource? _cts;
     private Task? _monitor;
-    private LibPcapLiveDevice? _device;
-    private string? _filter;
+    private string _filter = Broad;
     private CaptureFileWriterDevice? _writer;
+    private LinkLayers _writerLink;
     private long _packets;
     private long _events;
     private CaptureStatus _status = new(CaptureState.Stopped, "Capture stopped");
@@ -53,24 +62,27 @@ public sealed class LiveCapture : IEventSource
         File.Exists(Path.Combine(Environment.SystemDirectory, "Npcap", "wpcap.dll")) ||
         File.Exists(Path.Combine(Environment.SystemDirectory, "wpcap.dll"));
 
-    private const int KernelBufferBytes = 16 * 1024 * 1024;
-
-    /// <summary>Packets Npcap delivered and dropped on the open adapter, and holes in the game streams; null while no
-    /// adapter is open. The adapter's counters restart when it is reopened.</summary>
+    /// <summary>Packets Npcap delivered and dropped on the open adapters, and holes in the game streams; null while no
+    /// adapter is open. The adapters' counters restart when they are reopened.</summary>
     public CaptureHealth? Health()
     {
         lock (_gate)
         {
-            if (_device is null) return null;
-            try
+            if (_devices.Count == 0) return null;
+            long received = 0, dropped = 0;
+            foreach (var d in _devices)
             {
-                var s = _device.Statistics;
-                return new CaptureHealth(s.ReceivedPackets, s.DroppedPackets + s.InterfaceDroppedPackets, _pipeline.Gaps);
+                try
+                {
+                    var s = d.Statistics;
+                    received += s.ReceivedPackets;
+                    dropped += s.DroppedPackets + s.InterfaceDroppedPackets;
+                }
+                catch (PcapException)
+                {
+                }
             }
-            catch (PcapException)
-            {
-                return null;
-            }
+            return new CaptureHealth(received, dropped, _pipeline.Gaps);
         }
     }
 
@@ -94,7 +106,7 @@ public sealed class LiveCapture : IEventSource
         _cts?.Cancel();
         try { _monitor?.Wait(2_000); } catch (AggregateException) { }
         _monitor = null;
-        CloseDevice();
+        CloseDevices();
         SetStatus(CaptureState.Stopped, "Capture stopped");
     }
 
@@ -123,7 +135,7 @@ public sealed class LiveCapture : IEventSource
             catch (PcapException ex)
             {
                 SetStatus(CaptureState.Error, "Capture error: " + ex.Message);
-                CloseDevice();
+                CloseDevices();
             }
             try
             {
@@ -136,131 +148,159 @@ public sealed class LiveCapture : IEventSource
         }
     }
 
+    /// <summary>The adapters to listen on: the forced one, or every adapter with an address plus the loopback one.</summary>
+    private List<LibPcapLiveDevice> Wanted()
+    {
+        var all = CaptureDeviceList.Instance.OfType<LibPcapLiveDevice>();
+        if (_options.DeviceName is { Length: > 0 } forced) return all.Where(d => d.Name == forced).ToList();
+        return all.Where(d => d.Addresses.Count > 0 || IsLoopback(d)).ToList();
+    }
+
     private void Refresh()
     {
-        if (_options.DeviceName is { Length: > 0 } forced)
+        var wanted = Wanted();
+        if (wanted.Count == 0)
         {
-            var dev = CaptureDeviceList.Instance.OfType<LibPcapLiveDevice>().FirstOrDefault(d => d.Name == forced);
-            if (dev is null)
+            CloseDevices();
+            SetStatus(CaptureState.Error, _options.DeviceName is { Length: > 0 } ? "Selected network adapter not found" : "No Npcap adapter found");
+            return;
+        }
+        lock (_gate)
+        {
+            // Adapters that are gone (or no longer wanted) close; new ones open; the filter follows the game stream.
+            foreach (var d in _devices.Where(d => wanted.All(w => w.Name != d.Name)).ToList()) CloseDeviceLocked(d);
+            var now = Environment.TickCount64;
+            foreach (var w in wanted)
             {
-                SetStatus(CaptureState.Error, "Selected network adapter not found");
+                if (_devices.Any(d => d.Name == w.Name)) continue;
+                if (_failed.TryGetValue(w.Name, out var at) && now - at < RetryFailedMs) continue;
+                try
+                {
+                    OpenLocked(w);
+                    _failed.Remove(w.Name);
+                }
+                catch (PcapException)
+                {
+                    _failed[w.Name] = now; // a VPN or virtual adapter that will not capture: the others carry on
+                }
+            }
+            if (_devices.Count == 0)
+            {
+                SetStatus(CaptureState.Error, "No Npcap adapter could be opened");
                 return;
             }
-            EnsureDevice(dev, "tcp");
-            ReportFlowStatus(dev);
-            return;
+            ApplyFilterLocked(WantedFilter());
         }
-
-        var pids = GameProcessLocator.FindGameProcessIds();
-        if (pids.Length == 0)
-        {
-            CloseDevice();
-            SetStatus(CaptureState.WaitingForGame, "AION 2 is not running");
-            return;
-        }
-
-        var connections = GameProcessLocator.FindConnections(pids);
-        if (connections.Count == 0)
-        {
-            SetStatus(CaptureState.WaitingForGame, "Waiting for the game to connect…");
-            return;
-        }
-
-        var devices = CaptureDeviceList.Instance.OfType<LibPcapLiveDevice>().ToList();
-        LibPcapLiveDevice? device = null;
-        foreach (var c in connections.OrderByDescending(c => c.RemotePort == PacketPipeline.GamePort))
-        {
-            device = IPAddress.IsLoopback(c.RemoteIp) || IPAddress.IsLoopback(c.LocalIp)
-                ? devices.FirstOrDefault(IsLoopback)
-                : devices.FirstOrDefault(d => d.Addresses.Any(a => c.LocalIp.Equals(a.Addr?.ipAddress)));
-            if (device is not null) break;
-        }
-        if (device is null)
-        {
-            SetStatus(CaptureState.Error, "No Npcap adapter carries the game connection (VPN? pick one in Settings)");
-            return;
-        }
-
-        var hosts = connections.Select(c => $"(host {c.RemoteIp} and port {c.RemotePort})").Distinct().OrderBy(s => s);
-        EnsureDevice(device, "tcp and (" + string.Join(" or ", hosts) + ")");
-        ReportFlowStatus(device);
+        ReportFlowStatus();
     }
 
-    private void ReportFlowStatus(LibPcapLiveDevice device)
+    private void OpenLocked(LibPcapLiveDevice device)
+    {
+        device.OnPacketArrival += OnPacketArrival;
+        try
+        {
+            // A world boss with a crowd floods the game connection: Npcap's default 1 MB kernel buffer overflows
+            // in the bursts, and every packet it drops is a hole in the stream.
+            device.Open(new DeviceConfiguration { Mode = DeviceModes.None, ReadTimeout = 100, BufferSize = KernelBufferBytes });
+            device.Filter = _filter;
+            device.StartCapture();
+        }
+        catch
+        {
+            device.OnPacketArrival -= OnPacketArrival;
+            try { device.Close(); } catch (PcapException) { }
+            throw;
+        }
+        _devices.Add(device);
+    }
+
+    /// <summary>Everything TCP until the game's stream is found, then that server alone; wide again once the stream
+    /// has been quiet for a moment, so a move to another server is picked up from its first packets.</summary>
+    private string WantedFilter()
+    {
+        List<FlowKey> locked;
+        long lastData;
+        lock (_pipeGate)
+        {
+            locked = _pipeline.LockedFlows.ToList();
+            lastData = _pipeline.LastGameDataMs;
+        }
+        if (locked.Count == 0 || DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - lastData > QuietMs) return Broad;
+        var servers = locked.Select(k => $"(host {k.Src} and port {k.SrcPort})").Distinct().OrderBy(s => s);
+        return Broad + " and (" + string.Join(" or ", servers) + ")";
+    }
+
+    private void ApplyFilterLocked(string filter)
+    {
+        if (filter == _filter) return;
+        foreach (var d in _devices)
+        {
+            try
+            {
+                d.Filter = filter;
+            }
+            catch (PcapException)
+            {
+                // Stays on its old filter: wider is only slower, narrower is at worst a few seconds behind.
+            }
+        }
+        _filter = filter;
+    }
+
+    private void ReportFlowStatus()
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var flows = _pipeline.GameFlows;
-        if (flows > 0 && now - _pipeline.LastGameDataMs < 10_000)
+        int flows;
+        string? server;
+        long lastData;
+        lock (_pipeGate)
         {
-            var server = _pipeline.LockedFlows.Select(f => f.Src.ToString()).FirstOrDefault();
+            flows = _pipeline.GameFlows;
+            server = _pipeline.LockedFlows.Select(f => f.Src.ToString()).FirstOrDefault();
+            lastData = _pipeline.LastGameDataMs;
+        }
+        if (flows > 0 && now - lastData < 10_000)
             SetStatus(CaptureState.Capturing, $"Capturing · {server}" + (RecordingPath is null ? "" : " · REC"));
-        }
         else if (flows > 0)
-        {
             SetStatus(CaptureState.WaitingForGame, "Connected · no game traffic for a while");
-        }
         else
         {
-            SetStatus(CaptureState.WaitingForGame, $"Listening on {Describe(device)}…");
+            string where;
+            lock (_gate) where = _devices.Count == 1 ? Describe(_devices[0]) : $"{_devices.Count} adapters";
+            SetStatus(CaptureState.WaitingForGame, $"Listening on {where}…");
         }
     }
 
-    private void EnsureDevice(LibPcapLiveDevice device, string filter)
+    private void CloseDevices()
     {
         lock (_gate)
         {
-            if (_device is not null && _device.Name != device.Name) CloseDeviceLocked();
-            if (_device is null)
-            {
-                device.OnPacketArrival += OnPacketArrival;
-                // A world boss with a crowd floods the game connection: Npcap's default 1 MB kernel buffer overflows
-                // in the bursts, and every packet it drops is a hole in the stream.
-                device.Open(new DeviceConfiguration { Mode = DeviceModes.None, ReadTimeout = 100, BufferSize = KernelBufferBytes });
-                device.Filter = filter;
-                _filter = filter;
-                _device = device;
-                OpenRecorder(device);
-                device.StartCapture();
-            }
-            else if (_filter != filter)
-            {
-                _device.Filter = filter;
-                _filter = filter;
-            }
+            foreach (var d in _devices.ToList()) CloseDeviceLocked(d);
+            _writer?.Close();
+            _writer = null;
+            RecordingPath = null;
+            _filter = Broad;
         }
     }
 
-    private void OpenRecorder(LibPcapLiveDevice device)
+    private void CloseDeviceLocked(LibPcapLiveDevice device)
     {
-        if (_options.RecordDirectory is not { Length: > 0 } dir) return;
-        Directory.CreateDirectory(dir);
-        RecordingPath = Path.Combine(dir, $"aion2_{DateTime.Now:yyyyMMdd_HHmmss}.pcap");
-        _writer = new CaptureFileWriterDevice(RecordingPath);
-        _writer.Open(new DeviceConfiguration { LinkLayerType = device.LinkType });
-    }
-
-    private void CloseDevice()
-    {
-        lock (_gate) CloseDeviceLocked();
-    }
-
-    private void CloseDeviceLocked()
-    {
-        if (_device is null) return;
         try
         {
-            _device.StopCapture();
+            device.StopCapture();
         }
         catch (PcapException)
         {
         }
-        _device.OnPacketArrival -= OnPacketArrival;
-        _device.Close();
-        _device = null;
-        _filter = null;
-        _writer?.Close();
-        _writer = null;
-        RecordingPath = null;
+        device.OnPacketArrival -= OnPacketArrival;
+        try
+        {
+            device.Close();
+        }
+        catch (PcapException)
+        {
+        }
+        _devices.Remove(device);
     }
 
     private void OnPacketArrival(object sender, PacketCapture e)
@@ -269,14 +309,32 @@ public sealed class LiveCapture : IEventSource
         Interlocked.Increment(ref _packets);
         try
         {
-            _writer?.Write(raw);
+            if (_options.RecordDirectory is not null) Record(raw);
             if (SegmentReader.TryRead(raw, out var seg))
-                _pipeline.OnSegment(seg.TimeMs, seg.Key, seg.Seq, seg.Syn, seg.FinOrRst, seg.Payload);
+                lock (_pipeGate) _pipeline.OnSegment(seg.TimeMs, seg.Key, seg.Seq, seg.Syn, seg.FinOrRst, seg.Payload);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             // A malformed packet must never take the capture thread down.
             System.Diagnostics.Debug.WriteLine(ex);
+        }
+    }
+
+    /// <summary>The recording takes the link type of the first packet; adapters of another kind are left out of it.</summary>
+    private void Record(RawCapture raw)
+    {
+        lock (_gate)
+        {
+            if (_writer is null)
+            {
+                if (_options.RecordDirectory is not { Length: > 0 } dir) return;
+                Directory.CreateDirectory(dir);
+                RecordingPath = Path.Combine(dir, $"aion2_{DateTime.Now:yyyyMMdd_HHmmss}.pcap");
+                _writer = new CaptureFileWriterDevice(RecordingPath);
+                _writer.Open(new DeviceConfiguration { LinkLayerType = raw.LinkLayerType });
+                _writerLink = raw.LinkLayerType;
+            }
+            if (raw.LinkLayerType == _writerLink) _writer.Write(raw);
         }
     }
 
@@ -294,6 +352,7 @@ public sealed class LiveCapture : IEventSource
     }
 
     private static bool IsLoopback(LibPcapLiveDevice d) =>
+        d.Loopback ||
         d.Name.Contains("Loopback", StringComparison.OrdinalIgnoreCase) ||
         (d.Description?.Contains("loopback", StringComparison.OrdinalIgnoreCase) ?? false);
 

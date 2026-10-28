@@ -277,21 +277,26 @@ public partial class App : Application
     }
 
     private CaptureState _lastCaptureState = CaptureState.Stopped;
-    private int[] _gameShownFor = [];
+    private long _lastCapturingTick;       // when the game's traffic was last seen
+    private const long GameGapMs = 3 * 60_000; // traffic back sooner than this is a loading screen, not a new launch
 
     /// <summary>
     /// The overlay comes up when the meter starts seeing the game's traffic, once per launch of the game: a reconnect
-    /// after a loading screen is the same game process and does not count.
+    /// after a loading screen comes within a couple of minutes and does not count. (The meter never looks at the game
+    /// process; its traffic is all it knows of the game.)
     /// </summary>
     private void CheckGameStart()
     {
         var state = _meter.CaptureStatus.State;
-        var connected = state == CaptureState.Capturing && _lastCaptureState != CaptureState.Capturing;
+        var capturing = state == CaptureState.Capturing;
+        var connected = capturing && _lastCaptureState != CaptureState.Capturing;
         _lastCaptureState = state;
-        if (!connected || !_meter.Settings.ShowOnStart || _meter.DemoRunning) return;
-        var game = GameProcessLocator.FindGameProcessIds().Order().ToArray();
-        if (game.Length == 0 || game.SequenceEqual(_gameShownFor)) return;
-        _gameShownFor = game;
+        if (!capturing) return;
+        var now = Environment.TickCount64;
+        var lastSeen = _lastCapturingTick;
+        _lastCapturingTick = now;
+        if (!connected || (lastSeen != 0 && now - lastSeen < GameGapMs)) return;
+        if (!_meter.Settings.ShowOnStart || _meter.DemoRunning) return;
         ShowByItself();
     }
 
@@ -481,18 +486,19 @@ public partial class App : Application
     private Version? _installFailed; // not retried by itself: the tray item and the update window remain
 
     /// <summary>
-    /// A downloaded update goes in at a quiet moment: when the game is not running, at once (but not in the meter's first
-    /// minute); while it runs, after ten minutes without a fight. The installer has no window; the meter closes and the
-    /// new version starts by itself.
+    /// A downloaded update goes in at a quiet moment: when no game traffic has been seen for a couple of minutes, at once
+    /// (but not in the meter's first minute); while the game is on, after ten minutes without a fight. The installer has
+    /// no window; the meter closes and the new version starts by itself.
     /// </summary>
     private void CheckPendingUpdate()
     {
         var updates = _meter.Updates;
         if (_installing || !updates.AutoInstall || updates.Downloaded is not { } ready || updates.Available?.Version != ready.Version ||
             ready.Version == _installFailed || _meter.Tracker.LiveFight() is not null) return; // turned off, skipped, failed, or a fight is on
-        var quiet = Environment.TickCount64 - Math.Max(_lastEngagedTick, _startedAt);
+        var now = Environment.TickCount64;
+        var quiet = now - Math.Max(_lastEngagedTick, _startedAt);
         if (quiet < 60_000) return;
-        if (quiet < 10 * 60_000 && GameProcessLocator.FindGameProcessIds().Length > 0) return;
+        if (quiet < 10 * 60_000 && now - _lastCapturingTick < 2 * 60_000) return;
         InstallUpdateNow();
     }
 

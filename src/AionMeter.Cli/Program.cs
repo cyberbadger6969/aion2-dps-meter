@@ -6,7 +6,7 @@ using AionMeter.Core.Events;
 using AionMeter.Core.Game;
 using AionMeter.Core.Protocol;
 
-// AionMeter developer tool: inspect devices / connections, capture live, replay and dump recorded captures.
+// AionMeter developer tool: list devices, capture live, replay and dump recorded captures.
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 var dataDir = Path.Combine(AppContext.BaseDirectory, "data");
 var langAt = Array.IndexOf(args, "--lang");
@@ -15,7 +15,6 @@ var data = GameData.Load(dataDir, langAt >= 0 && langAt + 1 < args.Length ? args
 return args.FirstOrDefault() switch
 {
     "devices" => Devices(),
-    "conns" => Connections(),
     "live" => Live(args.Skip(1).ToArray()),
     "replay" when args.Length > 1 => Replay(args[1]),
     "dump" when args.Length > 1 => Dump(args[1], args.Length > 2 ? args[2] : null),
@@ -35,7 +34,6 @@ int Usage()
 {
     Console.WriteLine("""
         aionmeter-cli devices                       list Npcap adapters
-        aionmeter-cli conns                         show the AION 2 process and its TCP connections
         aionmeter-cli live [seconds] [--record]     capture live, print what was decoded
         aionmeter-cli replay <file.pcap>            run a capture through the meter, print fights
         aionmeter-cli dump <file.pcap> [opcode]     print decoded packets (opcode as hex, e.g. 0438)
@@ -81,15 +79,6 @@ int UpdateCheck(string[] a)
 int Devices()
 {
     foreach (var (name, desc) in LiveCapture.ListDevices()) Console.WriteLine($"{desc,-60} {name}");
-    return 0;
-}
-
-int Connections()
-{
-    var pids = GameProcessLocator.FindGameProcessIds();
-    Console.WriteLine($"AION 2 processes: {string.Join(", ", pids)}");
-    foreach (var c in GameProcessLocator.FindConnections(pids))
-        Console.WriteLine($"  {c.LocalIp}:{c.LocalPort} -> {c.RemoteIp}:{c.RemotePort}");
     return 0;
 }
 

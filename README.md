@@ -269,9 +269,10 @@ screenshots, a social preview and the fight animation (MP4 / GIF, needs ffmpeg) 
 
 ```
 Npcap (loopback / NIC) ─► PacketPipeline ─► TcpReassembler ─► FrameDecoder ─► PacketParser ─► CombatTracker ─► UI
-   finds AION2.exe's        locks onto the     order, gaps        varint frames,    opcodes →        fight segments,
-   TCP connections in       stream by its                         LZ4 bundles       events           boss, wipe, DPS
-   the Windows TCP table    heartbeat 0E 00 36
+   listens on every         locks onto the     order, gaps        varint frames,    opcodes →        fight segments,
+   adapter; the game        stream by its                         LZ4 bundles       events           boss, wipe, DPS
+   process is never         heartbeat 0E 00 36
+   looked at
 ```
 
 - `src/AionMeter.Core` — capture, protocol, combat engine, history, update feed (no UI)
@@ -284,7 +285,6 @@ Npcap (loopback / NIC) ─► PacketPipeline ─► TcpReassembler ─► FrameD
 ### aionmeter-cli
 
 ```bash
-aionmeter-cli conns                          # the game process and its connections
 aionmeter-cli live 60 --record               # live capture + recording to captures/*.pcap
 aionmeter-cli replay captures/x.pcap --boss --lang ru
 aionmeter-cli dump captures/x.pcap 0438      # raw damage packets
