@@ -213,24 +213,25 @@
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0"
                                 Visibility="{Binding HasGearScore, Converter={StaticResource VisibleIf}}"
                                 ToolTip="{Binding DataContext.T.TipGs, RelativeSource={RelativeSource AncestorType=Window}}">
-                        <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,0,3,0">
+                        <!-- the glyphs sit a little low in their box, level with the digits rather than the line -->
+                        <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,2,3,0">
                             <Path Data="M12,2 L20,5 L20,11 C20,16 16.5,20 12,22 C7.5,20 4,16 4,11 L4,5 Z" Fill="#FFD873" />
                         </Viewbox>
-                        <TextBlock Style="{StaticResource GearText}" Margin="0,0,0,1" Text="{Binding GearScore, Mode=OneWay}" Foreground="#FFD873" />
+                        <TextBlock Style="{StaticResource GearText}" Margin="0" Text="{Binding GearScore, Mode=OneWay}" Foreground="#FFD873" />
                     </StackPanel>
                     <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0"
                                 Visibility="{Binding HasCombatPower, Converter={StaticResource VisibleIf}}"
                                 ToolTip="{Binding DataContext.T.TipCp, RelativeSource={RelativeSource AncestorType=Window}}">
-                        <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,0,3,0">
+                        <Viewbox Height="{DynamicResource RowGearFont}" Margin="0,2,3,0">
                             <Canvas Width="24" Height="24">
                                 <!-- two blades crossing, each with a guard and a grip at its foot -->
+                                <Path Stroke="#5BDCFF" StrokeThickness="3.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Data="M4,2 L17,15 M20,2 L7,15" />
                                 <Path Stroke="#5BDCFF" StrokeThickness="2.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M5,3 L16.5,14.5 M19,3 L7.5,14.5" />
-                                <Path Stroke="#5BDCFF" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M16.5,14.5 L21,19 M7.5,14.5 L3,19 M14,17.5 L18,13.5 M10,17.5 L6,13.5" />
+                                      Data="M17,15 L22,20 M7,15 L2,20 M14,18.5 L19,13.5 M10,18.5 L5,13.5" />
                             </Canvas>
                         </Viewbox>
-                        <TextBlock Style="{StaticResource GearText}" Margin="0,0,0,1" Text="{Binding CombatPower, Mode=OneWay}" Foreground="#5BDCFF" />
+                        <TextBlock Style="{StaticResource GearText}" Margin="0" Text="{Binding CombatPower, Mode=OneWay}" Foreground="#5BDCFF" />
                     </StackPanel>
 
                     <TextBlock Grid.Column="6" Text="{Binding Dps}" Style="{StaticResource RowNumber}" />
