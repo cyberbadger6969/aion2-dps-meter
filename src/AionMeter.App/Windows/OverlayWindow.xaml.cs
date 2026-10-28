@@ -96,6 +96,13 @@ public partial class OverlayWindow : Window
         Topmost = false;
         ShowInTaskbar = true; // still shown without taking the focus: a fight bringing it up must not pull it off the game
         Background = new SolidColorBrush(Color.FromRgb(0x0B, 0x0F, 0x17));
+        // The frame's close button hides the meter like the overlay's own button does: a closed window cannot be
+        // shown again, and the next fight would try to.
+        Closing += (_, e) =>
+        {
+            e.Cancel = true;
+            AppHost.Current.SetOverlayVisible(false);
+        };
     }
 
     /// <summary>Called by the app's UI timer (≈5 Hz).</summary>
