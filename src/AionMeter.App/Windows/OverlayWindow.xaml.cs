@@ -227,10 +227,11 @@ public partial class OverlayWindow : Window
         var height = Math.Round((two ? 42 : 28) * k);
         Resources["RowHeight"] = height;
         Resources["RowMargin"] = new Thickness(0, 0, 0, Math.Max(1, Math.Round(3 * k)));
-        Resources["RowNameFont"] = Math.Round(13.5 * f, 1);
+        // Two lines have room for a bigger name and DPS
+        Resources["RowNameFont"] = Math.Round((two ? 15 : 13.5) * f, 1);
         Resources["RowGearFont"] = Math.Round(12 * f, 1);
-        Resources["RowNumberFont"] = Math.Round(13.5 * f, 1);
-        Resources["RowSubFont"] = Math.Round(12 * f, 1);
+        Resources["RowNumberFont"] = Math.Round((two ? 16.5 : 13.5) * f, 1);
+        Resources["RowSubFont"] = Math.Round((two ? 12.5 : 12) * f, 1);
         Resources["RowGlyphSize"] = Math.Min(Math.Round((two ? 26 : 20) * f), height - 4);
         Resources["RowRankFont"] = Math.Round(11 * f, 1);
         Resources["RowAccentWidth"] = Math.Max(2, Math.Round(3 * f));

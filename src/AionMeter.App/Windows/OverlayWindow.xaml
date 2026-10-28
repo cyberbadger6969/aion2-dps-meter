@@ -279,8 +279,13 @@
                                   Height="{DynamicResource RowGlyphSize}" HorizontalAlignment="Left" VerticalAlignment="Center" />
 
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="4,0,8,0">
-                        <TextBlock x:Name="NameText2" Text="{Binding Name}" FontSize="{DynamicResource RowNameFont}" FontWeight="SemiBold"
-                                   Foreground="White" TextTrimming="CharacterEllipsis" />
+                        <!-- Bold white with a dark halo all round, so it reads on any class colour -->
+                        <TextBlock x:Name="NameText2" Text="{Binding Name}" FontSize="{DynamicResource RowNameFont}" FontWeight="Bold"
+                                   Foreground="White" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Effect>
+                                <DropShadowEffect BlurRadius="5" ShadowDepth="0" Opacity="1" Color="Black" />
+                            </TextBlock.Effect>
+                        </TextBlock>
                         <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
                             <StackPanel Orientation="Horizontal" Margin="0,0,10,0" Visibility="{Binding HasGearScore, Converter={StaticResource VisibleIf}}"
                                         ToolTip="{Binding DataContext.T.TipGs, RelativeSource={RelativeSource AncestorType=Window}}">

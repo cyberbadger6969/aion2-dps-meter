@@ -2,11 +2,6 @@
 
 [English](README.md) · **Русский**
 
-> [!WARNING]
-> **С 27 октября 2026 года античит AION 2 (NCGuard), судя по всему, закрывает игру примерно через 8 минут после запуска,
-> если работает этот метр.** Бан аккаунта тоже исключать нельзя. Рекомендуем не пользоваться метром, пока это не
-> выяснится. Если запускаете всё равно — на свой риск.
-
 **[⬇ Скачать установщик](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-Setup.exe)** ·
 [zip без установки](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest/download/AION2DpsMeter-win-x64.zip) ·
 [все файлы последнего релиза](https://github.com/cyberbadger6969/aion2-dps-meter/releases/latest) — ссылки всегда ведут на

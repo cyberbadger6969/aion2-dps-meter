@@ -174,8 +174,6 @@ public sealed class UiText
     public string CubeWarmer { get; init; } = "warmer";
     public string CubeColder { get; init; } = "colder";
     public string CubeSteady { get; init; } = "the louder, the closer";
-    public string AnticheatWarning { get; init; } =
-        "Warning: since 27 October 2026 the AION 2 anti-cheat (NCGuard) appears to close the game about 8 minutes after it starts while this meter is running. An account ban cannot be ruled out.\n\nWe recommend not using the meter until this is cleared up.\n\nRun the meter anyway, at your own risk?\nYes — run it.  No — exit.";
     public string TwoLineRows { get; init; } = "Two lines per player: gear and damage under the name";
     public string TwoLineRowsHint { get; init; } = "Names get the whole width; GS / CP and the damage figures move to a second, smaller line. Off: everything on one line, as before.";
     public string SafeMode { get; init; } = "Safe mode: an ordinary window, not an overlay";
@@ -529,7 +527,6 @@ public sealed class UiText
         CubeWarmer = "теплее",
         CubeColder = "холоднее",
         CubeSteady = "чем громче, тем ближе",
-        AnticheatWarning = "Внимание: с 27 октября 2026 года античит AION 2 (NCGuard), судя по всему, закрывает игру примерно через 8 минут после запуска, если работает этот метр. Бан аккаунта тоже исключать нельзя.\n\nРекомендуем не пользоваться метром, пока это не выяснится.\n\nЗапустить метр всё равно, на свой риск?\nДа — запустить.  Нет — выйти.",
         TwoLineRows = "Две строки на игрока: экипировка и урон под именем",
         TwoLineRowsHint = "Имени достаётся вся ширина; GS / CP и цифры урона уходят на вторую строку помельче. Выкл: всё в одну строку, как раньше.",
         SafeMode = "Безопасный режим: обычное окно вместо оверлея",

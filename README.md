@@ -17,11 +17,6 @@
 
 <p align="center"><b>English</b> · <a href="README.ru.md">Русский</a></p>
 
-> [!WARNING]
-> **Since 27 October 2026 the AION 2 anti-cheat (NCGuard) appears to close the game about 8 minutes after it starts
-> while this meter is running.** An account ban cannot be ruled out. We recommend not using the meter until this is
-> cleared up. If you run it anyway, it is at your own risk.
-
 <p align="center">
   <img src="docs/images/overlay-fight.gif" width="400" alt="The overlay during a boss fight: places change as the damage comes in">
 </p>
