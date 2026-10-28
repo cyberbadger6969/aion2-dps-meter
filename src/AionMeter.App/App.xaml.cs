@@ -110,14 +110,17 @@ public partial class App : Application
             Shutdown();
             return;
         }
-        Func<Core.Game.GameData, IEventSource> factory = data => new LiveCapture(data, new LiveCaptureOptions
+        // --no-capture: a diagnostic run that never opens Npcap (the app, its windows and hotkeys only), to tell whether
+        // it is the packet capture or the program itself that the game's anti-cheat objects to.
+        var noCapture = e.Args.Contains("--no-capture");
+        Func<Core.Game.GameData, IEventSource>? factory = noCapture ? null : data => new LiveCapture(data, new LiveCaptureOptions
         {
             DeviceName = settings.CaptureDevice,
             RecordDirectory = settings.RecordPackets ? Path.Combine(AppSettings.AppDataDir, "captures") : null,
         });
 
         _meter = new MeterService(settings, factory);
-        Log.Info($"Started. Data: {_meter.Data.Skills.Count} skills, {_meter.Data.Npcs.Count} npcs.");
+        Log.Info($"Started. Data: {_meter.Data.Skills.Count} skills, {_meter.Data.Npcs.Count} npcs." + (noCapture ? " NO CAPTURE (--no-capture)." : ""));
         _meter.StartCapture();
 
         _overlay = new OverlayWindow(_meter);
