@@ -178,9 +178,13 @@
                 </Border>
                 <!-- class strip -->
                 <Border Width="{DynamicResource RowAccentWidth}" HorizontalAlignment="Left" CornerRadius="4,0,0,4" Background="{Binding AccentBrush}" />
-                <!-- your own row -->
-                <Border CornerRadius="4" BorderThickness="1" BorderBrush="#B3F2C25A"
-                        Visibility="{Binding IsSelf, Converter={StaticResource VisibleIf}}" />
+                <!-- your own row: a gold frame with a soft glow round the whole bar (the name stays white) -->
+                <Border CornerRadius="4" BorderThickness="2" BorderBrush="#F2C25A"
+                        Visibility="{Binding IsSelf, Converter={StaticResource VisibleIf}}">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.7" Color="#F2C25A" />
+                    </Border.Effect>
+                </Border>
 
                 <Grid Margin="8,0,10,0" Effect="{StaticResource TextShadow}">
                     <Grid.ColumnDefinitions>
@@ -243,9 +247,6 @@
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter TargetName="Track" Property="Background" Value="#26FFFFFF" />
                 </Trigger>
-                <DataTrigger Binding="{Binding IsSelf}" Value="True">
-                    <Setter TargetName="NameText" Property="Foreground" Value="{StaticResource SelfGold}" />
-                </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
 
@@ -262,8 +263,12 @@
                     </Border.RenderTransform>
                 </Border>
                 <Border Width="{DynamicResource RowAccentWidth}" HorizontalAlignment="Left" CornerRadius="5,0,0,5" Background="{Binding AccentBrush}" />
-                <Border CornerRadius="5" BorderThickness="1" BorderBrush="#B3F2C25A"
-                        Visibility="{Binding IsSelf, Converter={StaticResource VisibleIf}}" />
+                <Border CornerRadius="5" BorderThickness="2" BorderBrush="#F2C25A"
+                        Visibility="{Binding IsSelf, Converter={StaticResource VisibleIf}}">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.7" Color="#F2C25A" />
+                    </Border.Effect>
+                </Border>
 
                 <Grid Margin="8,0,10,0" Effect="{StaticResource TextShadow}">
                     <Grid.ColumnDefinitions>
@@ -319,9 +324,6 @@
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter TargetName="Track" Property="Background" Value="#26FFFFFF" />
                 </Trigger>
-                <DataTrigger Binding="{Binding IsSelf}" Value="True">
-                    <Setter TargetName="NameText2" Property="Foreground" Value="{StaticResource SelfGold}" />
-                </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
     </Window.Resources>
